@@ -503,6 +503,8 @@ void loop()
   // uint8_t data[7] = {0xdd, 0xa5, 0x5, 0x0, 0xff, 0xfb, 0x77};
   // for (int j = 0; j < pChrsV.size(); j++)
   // for (int j = 0; j < pChrStV.size(); j++)
+  char buff[256];
+  String str;
   for (int j = 0; j < numberOfAdvDevices; j++)
   {
     delay(2000);
@@ -525,16 +527,36 @@ void loop()
     // Serial.printf("pChrStV.at(j)tV[%d].pChr_rx: %s Value: %s\n", j, pChrStV.at(j).pChr_rx->getUUID().toString().c_str(), pChrStV.at(j).pChr_rx->readValue().c_str());
     //  pChrStV.at(j).pChr_tx->writeValue(data, sizeof(data), true);
     // myBLE.bmsGetInfo5(pChrStV.at(j).pChr_tx);
-    myBleArr[j].bmsGetInfo5_();
+    if (myBleArr[j].pChr_tx)
+    {
+      sprintf(buff, "command to %s: Service = %s, Charastaric = %s\n",
+              myBleArr[j].pChr_tx->getClient()->getPeerAddress().toString().c_str(),
+              myBleArr[j].pChr_tx->getRemoteService()->getUUID().toString().c_str(),
+              myBleArr[j].pChr_tx->getUUID().toString().c_str());
+      myBleArr[j].bmsGetInfo5();
+      str = "Send bmsGetInfo5 command to " + String(buff);
+      Serial.print(str.c_str());
+      delay(1000);
+      Serial.printf("\n");
+      if (myBleArr[j].toggle)
+      {
+        myBleArr[j].bmsGetInfo3();
+        str = "Send bmsGetInfo3 command to " + String(buff);
+      }
+      else
+      {
+        myBleArr[j].bmsGetInfo4();
+        str = "Send bmsGetInfo4 command to " + String(buff);
+      }
+    }
     /*Serial.printf("Send bmsGetInfo5 command to %s: Service = %s, Charastaric = %s\n",
                   pChrStV.at(j).pChr_tx->getClient()->getPeerAddress().toString().c_str(),
                   pChrStV.at(j).pChr_tx->getRemoteService()->getUUID().toString().c_str(),
                   pChrStV.at(j).pChr_tx->getUUID().toString().c_str());*/
-    Serial.printf("Send bmsGetInfo5 command to %s: Service = %s, Charastaric = %s\n",
-                  myBleArr[j].pChr_tx->getClient()->getPeerAddress().toString().c_str(),
-                  myBleArr[j].pChr_tx->getRemoteService()->getUUID().toString().c_str(),
-                  myBleArr[j].pChr_tx->getUUID().toString().c_str());
-    // myBLE.bmsGetInfo3(pChrStV.at(j).pChr_tx);
-    // Serial.printf("pChrStV[%d].pChr_tx: %s, bmsGetInfo3 command sent\n", j, pChrS.pChr_tx->getUUID().toString().c_str());
+    /*if (myBleArr[j].pChr_tx)
+      Serial.printf("Send bmsGetInfo5 command to %s: Service = %s, Charastaric = %s\n",
+                    myBleArr[j].pChr_tx->getClient()->getPeerAddress().toString().c_str(),
+                    myBleArr[j].pChr_tx->getRemoteService()->getUUID().toString().c_str(),
+                    myBleArr[j].pChr_tx->getUUID().toString().c_str());*/
   }
 }

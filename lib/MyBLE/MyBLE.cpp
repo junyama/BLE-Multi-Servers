@@ -19,27 +19,37 @@ public:
     bool toggle = false;
     byte ctrlCommand = 0;
 
-    void bmsGetInfo3(NimBLERemoteCharacteristic *pChr)
+    void bmsGetInfo3()
     {
         //    DD     A5      03     00    FF     FD      77
         uint8_t data[7] = {0xdd, 0xa5, 0x3, 0x0, 0xff, 0xfd, 0x77};
-        sendCommand(pChr, data, sizeof(data));
+        if (pChr_tx)
+        {
+            sendCommand(pChr_tx, data, sizeof(data));
+            toggle = !toggle;
+        }
     }
 
-    void bmsGetInfo4(NimBLERemoteCharacteristic *pChr)
+    void bmsGetInfo4()
     {
         //   DD  A5 04 00  FF  FC  77
         uint8_t data[7] = {0xdd, 0xa5, 0x4, 0x0, 0xff, 0xfc, 0x77};
-        sendCommand(pChr, data, sizeof(data));
+        if (pChr_tx)
+        {
+            sendCommand(pChr_tx, data, sizeof(data));
+            toggle = !toggle;
+        }
     }
 
+    /*
     void bmsGetInfo5(NimBLERemoteCharacteristic *pChr)
     {
         //   DD  A5 05 00  FF  FC  77
         uint8_t packet[7] = {0xdd, 0xa5, 0x5, 0x0, 0xff, 0xfb, 0x77};
         sendCommand(pChr, packet, sizeof(packet));
     }
-    void bmsGetInfo5_()
+    */
+    void bmsGetInfo5()
     {
         //   DD  A5 05 00  FF  FC  77
         uint8_t packet[7] = {0xdd, 0xa5, 0x5, 0x0, 0xff, 0xfb, 0x77};
