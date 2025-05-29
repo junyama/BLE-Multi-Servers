@@ -21,14 +21,14 @@ typedef struct
 } pChrStruct;
 
 static pChrStruct pChrSt;
-//static std::vector<pChrStruct> pChrStV;
+// static std::vector<pChrStruct> pChrStV;
 
 static const NimBLEAdvertisedDevice *advDevice;
 static std::vector<const NimBLEAdvertisedDevice *> advDevices;
 static int numberOfAdvDevices = 0;
-//static std::vector<const std::vector<NimBLERemoteCharacteristic *> *> pChrsV;
-// static NimBLERemoteCharacteristic *pChr_rx;
-// static NimBLERemoteCharacteristic *pChr_tx;
+// static std::vector<const std::vector<NimBLERemoteCharacteristic *> *> pChrsV;
+//  static NimBLERemoteCharacteristic *pChr_rx;
+//  static NimBLERemoteCharacteristic *pChr_tx;
 
 static bool doConnect = false;
 static uint32_t scanTimeMs = 5000; /** scan time in milliseconds, 0 = scan forever */
@@ -127,7 +127,8 @@ class ScanCallbacks : public NimBLEScanCallbacks
   /** Callback to process the results of the completed scan or restart it */
   void onScanEnd(const NimBLEScanResults &results, int reason) override
   {
-    Serial.printf("Scan Ended, reason: %d, device count: %d;\n", reason, results.getCount());
+    Serial.printf("Scan Ended, reason: %d, device count: %d, numberOfAdvDevices: %d;\n", reason, results.getCount(), advDevices.size());
+    numberOfAdvDevices = advDevices.size();
     // NimBLEDevice::getScan()->start(scanTimeMs, false, true);
     if (advDevices.size() != 0 && !doConnect)
     {
@@ -173,9 +174,9 @@ bool connectToServer()
 {
   NimBLEClient *pClient = nullptr;
 
-  //Serial.printf("advDevices.size() = %d\n", advDevices.size());
-  numberOfAdvDevices = advDevices.size();
-  Serial.printf("numberOfAdvDevices = %d\n", numberOfAdvDevices);
+  // Serial.printf("advDevices.size() = %d\n", advDevices.size());
+  // numberOfAdvDevices = advDevices.size();
+  // Serial.printf("numberOfAdvDevices = %d\n", numberOfAdvDevices);
 
   for (int i = 0; i < advDevices.size(); i++)
   {
@@ -351,7 +352,7 @@ bool connectToServer()
           */
         }
         // pChrsV.push_back(pChrs);
-        //pChrStV.push_back(pChrSt);
+        // pChrStV.push_back(pChrSt);
       }
     }
     else
@@ -501,8 +502,8 @@ void loop()
   //
   // uint8_t data[7] = {0xdd, 0xa5, 0x5, 0x0, 0xff, 0xfb, 0x77};
   // for (int j = 0; j < pChrsV.size(); j++)
-  //for (int j = 0; j < pChrStV.size(); j++)
-  for (int j = 0; j < numberOfAdvDevices; j++) 
+  // for (int j = 0; j < pChrStV.size(); j++)
+  for (int j = 0; j < numberOfAdvDevices; j++)
   {
     delay(2000);
     Serial.printf("\n");
