@@ -14,32 +14,45 @@ typedef struct
 class MyBLE
 {
 public:
-    static void bmsGetInfo3(NimBLERemoteCharacteristic *pChr)
+    NimBLERemoteCharacteristic *pChr_rx = nullptr;
+    NimBLERemoteCharacteristic *pChr_tx = nullptr;
+    bool toggle = false;
+    byte ctrlCommand = 0;
+
+    void bmsGetInfo3(NimBLERemoteCharacteristic *pChr)
     {
         //    DD     A5      03     00    FF     FD      77
         uint8_t data[7] = {0xdd, 0xa5, 0x3, 0x0, 0xff, 0xfd, 0x77};
         sendCommand(pChr, data, sizeof(data));
     }
 
-    static void bmsGetInfo4(NimBLERemoteCharacteristic *pChr)
+    void bmsGetInfo4(NimBLERemoteCharacteristic *pChr)
     {
         //   DD  A5 04 00  FF  FC  77
         uint8_t data[7] = {0xdd, 0xa5, 0x4, 0x0, 0xff, 0xfc, 0x77};
         sendCommand(pChr, data, sizeof(data));
     }
 
-    static void bmsGetInfo5(NimBLERemoteCharacteristic *pChr)
+    void bmsGetInfo5(NimBLERemoteCharacteristic *pChr)
     {
         //   DD  A5 05 00  FF  FC  77
         uint8_t packet[7] = {0xdd, 0xa5, 0x5, 0x0, 0xff, 0xfb, 0x77};
         sendCommand(pChr, packet, sizeof(packet));
     }
-    static void sendCommand(NimBLERemoteCharacteristic *pChr, uint8_t *data, uint32_t dataLen)
+    void bmsGetInfo5_()
+    {
+        //   DD  A5 05 00  FF  FC  77
+        uint8_t packet[7] = {0xdd, 0xa5, 0x5, 0x0, 0xff, 0xfb, 0x77};
+        if (pChr_tx)
+            sendCommand(pChr_tx, packet, sizeof(packet));
+    }
+
+    void sendCommand(NimBLERemoteCharacteristic *pChr, uint8_t *data, uint32_t dataLen)
     {
         pChr->writeValue(data, dataLen);
     }
 
-    static bool processDeviceInfo(byte *data, unsigned int dataLen)
+    bool processDeviceInfo(byte *data, unsigned int dataLen)
     {
         char chars[dataLen + 1];
         memcpy(chars, data, dataLen);
@@ -51,7 +64,7 @@ public:
         return true;
     }
 
-    static bool bleCollectPacket(char *data, uint32_t dataSize) // reconstruct packet from BLE incomming data, called by notifyCallback function
+    bool bleCollectPacket(char *data, uint32_t dataSize) // reconstruct packet from BLE incomming data, called by notifyCallback function
     {
         static uint8_t packetstate = 0; // 0 - empty, 1 - first half of packet received, 2- second half of packet received
         static uint8_t packetbuff[40] = {0x0};
@@ -93,7 +106,7 @@ public:
         return retVal;
     }
 
-    static bool bmsProcessPacket(byte *packet)
+    bool bmsProcessPacket(byte *packet)
     {
         const byte cBasicInfo3 = 3;    // type of packet 3= basic info
         const byte cCellInfo4 = 4;     // type of packet 4= individual cell info
