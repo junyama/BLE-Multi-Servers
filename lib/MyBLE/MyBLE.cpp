@@ -11,6 +11,34 @@ typedef struct
     byte dataLen;
 } bmsPacketHeaderStruct;
 
+typedef struct
+{
+    uint16_t Volts = 100; // unit 1mV
+    int32_t Amps;   // unit 1mA
+    int32_t Watts;  // unit 1W
+    uint16_t CapacityRemainAh;
+    uint8_t CapacityRemainPercent; // unit 1%
+    uint32_t CapacityRemainWh;     // unit Wh
+    uint16_t Temp1;                // unit 0.1C
+    uint16_t Temp2;                // unit 0.1C
+    uint16_t BalanceCodeLow;
+    uint16_t BalanceCodeHigh;
+    uint8_t MosfetStatus;
+} packBasicInfoStruct;
+
+typedef struct
+{
+    uint8_t NumOfCells;
+    uint16_t CellVolt[15]; // cell 1 has index 0 :-/
+    uint16_t CellMax;
+    uint16_t CellMin;
+    uint16_t CellDiff; // difference between highest and lowest
+    uint16_t CellAvg;
+    uint16_t CellMedian;
+    uint32_t CellColor[15];
+    uint32_t CellColorDisbalance[15]; // green cell == median, red/violet cell => median + c_cellMaxDisbalance
+} packCellInfoStruct;
+
 class MyBLE
 {
 public:
@@ -18,6 +46,10 @@ public:
     NimBLERemoteCharacteristic *pChr_tx = nullptr;
     bool toggle = false;
     byte ctrlCommand = 0;
+    bool newPacketReceived = false;
+    packBasicInfoStruct packBasicInfo; // here shall be the latest data got from BMS
+    int numberOfTemperature = 2;
+    String deviceName = "UNKNOWN";
 
     void bmsGetInfo3()
     {
@@ -68,6 +100,7 @@ public:
         memcpy(chars, data, dataLen);
         chars[dataLen] = '\0';
         Serial.printf("deviceName = %s\n", chars);
+        deviceName = String(chars);
         // deviceName = String(chars);
         // LOGD(TAG, "deviceName: " + deviceName);
         // M5.Lcd.println(deviceName);
@@ -116,6 +149,49 @@ public:
         return retVal;
     }
 
+    int16_t two_ints_into16(int highbyte, int lowbyte) // turns two bytes into a single long integer
+    {
+        // TRACE;
+        int16_t result = (highbyte);
+        result <<= 8;                // Left shift 8 bits,
+        result = (result | lowbyte); // OR operation, merge the two
+        return result;
+    }
+
+    bool processBasicInfo(packBasicInfoStruct *output, byte *data, unsigned int dataLen)
+    {
+        // TRACE;
+        //  Expected data len
+        /* Jun, it should not be checked for variable length
+        if (dataLen != 0x1B)
+        {
+            LOGD(TAG, "BasicInfo data length invalid: " + String(dataLen));
+            return false;
+        }
+        */
+
+        output->Volts = ((uint32_t)two_ints_into16(data[0], data[1])) * 10; // Resolution 10 mV -> convert to milivolts   eg 4895 > 48950mV
+        Serial.printf("output->Volts = %d\n", output->Volts);
+        output->Amps = ((int32_t)two_ints_into16(data[2], data[3])) * 10;   // Resolution 10 mA -> convert to miliamps
+
+        output->Watts = output->Volts * output->Amps / 1000000; // W
+
+        output->CapacityRemainAh = ((uint16_t)two_ints_into16(data[4], data[5])) * 10;
+        output->CapacityRemainPercent = ((uint8_t)data[19]);
+
+        // output->CapacityRemainWh = (output->CapacityRemainAh * c_cellNominalVoltage) / 1000000 * packCellInfo.NumOfCells;
+
+        output->Temp1 = (((uint16_t)two_ints_into16(data[23], data[24])) - 2731);
+        output->Temp2 = (((uint16_t)two_ints_into16(data[25], data[26])) - 2731);
+        if (numberOfTemperature == 1)
+            output->Temp2 = output->Temp1;
+        output->BalanceCodeLow = (two_ints_into16(data[12], data[13]));
+        output->BalanceCodeHigh = (two_ints_into16(data[14], data[15]));
+        output->MosfetStatus = ((byte)data[20]);
+
+        return true;
+    }
+
     bool bmsProcessPacket(byte *packet)
     {
         const byte cBasicInfo3 = 3;    // type of packet 3= basic info
@@ -143,16 +219,18 @@ public:
         Serial.printf("Decision based on packet header type (%d)\n", pHeader->type);
         switch (pHeader->type)
         {
-        /*case cBasicInfo3:
+        case cBasicInfo3:
         {
-            //MyLOG::DISABLE_LOGD = true;
-            //LOGD(TAG, "bmsProcessPacket, process BasicInfo");
-            //MyLOG::DISABLE_LOGD = false;
+            // MyLOG::DISABLE_LOGD = true;
+            // LOGD(TAG, "bmsProcessPacket, process BasicInfo");
+            // MyLOG::DISABLE_LOGD = false;
+            Serial.printf("bmsProcessPacket, process BasicInfo3. Type: %d\n", pHeader->type);
             result = processBasicInfo(&packBasicInfo, data, dataLen);
+            Serial.printf("packBasicInfo.Volts = %d\n", packBasicInfo.Volts);
             newPacketReceived = true;
             break;
         }
-        case cCellInfo4:
+        /*case cCellInfo4:
         {
             MyLOG::DISABLE_LOGD = true;
             LOGD(TAG, "bmsProcessPacket, process CellInfo");
@@ -174,7 +252,7 @@ public:
             // LOGD(TAG, "bmsProcessPacket, process DeviceName");
             Serial.printf("bmsProcessPacket, process DeviceName. Type: %d\n", pHeader->type);
             result = processDeviceInfo(data, dataLen);
-            // newPacketReceived = true;
+            newPacketReceived = true;
             break;
         }
         default:

@@ -18,10 +18,24 @@ typedef struct
 {
   NimBLERemoteCharacteristic *pChr_rx;
   NimBLERemoteCharacteristic *pChr_tx;
-} pChrStruct;
+  String deviceName;
+} MyBleStruct;
 
-static pChrStruct pChrSt;
-// static std::vector<pChrStruct> pChrStV;
+static MyBleStruct myBleStruct;
+static std::vector<MyBleStruct> myBleStructV;
+
+void sendCommand(NimBLERemoteCharacteristic *pChr, uint8_t *data, uint32_t dataLen)
+{
+  pChr->writeValue(data, dataLen);
+}
+
+void bmsGetInfo5(NimBLERemoteCharacteristic *pChr_tx)
+{
+  //   DD  A5 05 00  FF  FC  77
+  uint8_t packet[7] = {0xdd, 0xa5, 0x5, 0x0, 0xff, 0xfb, 0x77};
+  if (pChr_tx)
+    sendCommand(pChr_tx, packet, sizeof(packet));
+}
 
 static const NimBLEAdvertisedDevice *advDevice;
 static std::vector<const NimBLEAdvertisedDevice *> advDevices;
@@ -263,25 +277,27 @@ bool connectToServer()
     pSvc = pClient->getService(serviceUUID);
     if (pSvc)
     {
-      //
+      new (myBleArr + i) MyBLE();
       // pChr_rx = nullptr;
-      pChrSt.pChr_rx = nullptr;
+      myBleStruct.pChr_rx = nullptr;
 
       // pChr_rx = pSvc->getCharacteristic(charUUID_rx);
-      pChrSt.pChr_rx = pSvc->getCharacteristic(charUUID_rx);
+      myBleStruct.pChr_rx = pSvc->getCharacteristic(charUUID_rx);
       myBleArr[i].pChr_rx = pSvc->getCharacteristic(charUUID_rx);
 
-      if (!pChrSt.pChr_rx || !myBleArr[i].pChr_rx)
+      myBleArr[i].deviceName = "INIT";
+
+      if (!myBleStruct.pChr_rx || !myBleArr[i].pChr_rx)
       {
         Serial.printf("charUUID_rx not found.\n");
       }
       // pChr_tx = nullptr;
-      pChrSt.pChr_tx = nullptr;
+      myBleStruct.pChr_tx = nullptr;
       // pChr_tx = pSvc->getCharacteristic(charUUID_tx);
-      pChrSt.pChr_tx = pSvc->getCharacteristic(charUUID_tx);
+      myBleStruct.pChr_tx = pSvc->getCharacteristic(charUUID_tx);
       myBleArr[i].pChr_tx = pSvc->getCharacteristic(charUUID_tx);
 
-      if (!pChrSt.pChr_tx || !myBleArr[i].pChr_tx)
+      if (!myBleStruct.pChr_tx || !myBleArr[i].pChr_tx)
       {
         Serial.printf("charUUID_tx not found.\n");
       }
@@ -290,7 +306,7 @@ bool connectToServer()
       //}
       // Serial.printf("pChrs->size() = %d\n", (int)pChrs->size());
       // if (pChrs)
-      if (pChrSt.pChr_rx && pChrSt.pChr_tx && myBleArr[i].pChr_rx && myBleArr[i].pChr_tx)
+      if (myBleStruct.pChr_rx && myBleStruct.pChr_tx && myBleArr[i].pChr_rx && myBleArr[i].pChr_tx)
       {
         // for (int i = 0; i < pChrs->size(); i++)
         {
@@ -330,9 +346,9 @@ bool connectToServer()
           }
           */
 
-          if (pChrSt.pChr_rx->canNotify() && myBleArr[i].pChr_rx->canNotify())
+          if (myBleStruct.pChr_rx->canNotify() && myBleArr[i].pChr_rx->canNotify())
           {
-            if (!pChrSt.pChr_rx->subscribe(true, notifyCB) || !myBleArr[i].pChr_rx->subscribe(true, notifyCB))
+            if (!myBleStruct.pChr_rx->subscribe(true, notifyCB) || !myBleArr[i].pChr_rx->subscribe(true, notifyCB))
             {
               pClient->disconnect();
               return false;
@@ -352,7 +368,7 @@ bool connectToServer()
           */
         }
         // pChrsV.push_back(pChrs);
-        // pChrStV.push_back(pChrSt);
+        myBleStructV.push_back(myBleStruct);
       }
     }
     else
@@ -502,7 +518,7 @@ void loop()
   //
   // uint8_t data[7] = {0xdd, 0xa5, 0x5, 0x0, 0xff, 0xfb, 0x77};
   // for (int j = 0; j < pChrsV.size(); j++)
-  // for (int j = 0; j < pChrStV.size(); j++)
+  // for (int j = 0; j < myBleStructV.size(); j++)
   char buff[256];
   String str;
   for (int j = 0; j < numberOfAdvDevices; j++)
@@ -510,7 +526,7 @@ void loop()
     delay(2000);
     Serial.printf("\n");
     // auto pChrs = pChrsV.at(j);
-    // auto pChrS = pChrStV.at(j);
+    // auto pChrS = myBleStructV.at(j);
     /*
     for (int i = 0; i < pChrs->size(); i++)
     {
@@ -524,35 +540,43 @@ void loop()
       }
     }
     */
-    // Serial.printf("pChrStV.at(j)tV[%d].pChr_rx: %s Value: %s\n", j, pChrStV.at(j).pChr_rx->getUUID().toString().c_str(), pChrStV.at(j).pChr_rx->readValue().c_str());
-    //  pChrStV.at(j).pChr_tx->writeValue(data, sizeof(data), true);
-    // myBLE.bmsGetInfo5(pChrStV.at(j).pChr_tx);
+    // Serial.printf("myBleStructV.at(j)tV[%d].pChr_rx: %s Value: %s\n", j, myBleStructV.at(j).pChr_rx->getUUID().toString().c_str(), myBleStructV.at(j).pChr_rx->readValue().c_str());
+    //  myBleStructV.at(j).pChr_tx->writeValue(data, sizeof(data), true);
+    // myBLE.bmsGetInfo5(myBleStructV.at(j).pChr_tx);
     if (myBleArr[j].pChr_tx)
     {
       sprintf(buff, "command to %s: Service = %s, Charastaric = %s\n",
               myBleArr[j].pChr_tx->getClient()->getPeerAddress().toString().c_str(),
               myBleArr[j].pChr_tx->getRemoteService()->getUUID().toString().c_str(),
               myBleArr[j].pChr_tx->getUUID().toString().c_str());
-      myBleArr[j].bmsGetInfo5();
+      //myBleArr[j].bmsGetInfo5();
+      bmsGetInfo5(myBleStructV[j].pChr_tx);
       str = "Send bmsGetInfo5 command to " + String(buff);
       Serial.print(str.c_str());
+      Serial.printf("main, myBleArr[%d].deviceName = %s\n", j, myBleArr[j].deviceName.c_str());
+      Serial.printf("main, myBleStructV[%d].deviceName = %s\n", j, myBleStructV[j].deviceName.c_str());
       delay(1000);
       Serial.printf("\n");
       if (myBleArr[j].toggle)
       {
         myBleArr[j].bmsGetInfo3();
         str = "Send bmsGetInfo3 command to " + String(buff);
+        Serial.print(str.c_str());
+        Serial.printf("myBleArr[%d].packBasicInfo.Volts = %d\n", j, myBleArr[j].packBasicInfo.Volts);
       }
       else
       {
         myBleArr[j].bmsGetInfo4();
         str = "Send bmsGetInfo4 command to " + String(buff);
+        Serial.print(str.c_str());
       }
     }
+    else
+      Serial.printf("myBleArr[%d].pChr_tx == null\n", j);
     /*Serial.printf("Send bmsGetInfo5 command to %s: Service = %s, Charastaric = %s\n",
-                  pChrStV.at(j).pChr_tx->getClient()->getPeerAddress().toString().c_str(),
-                  pChrStV.at(j).pChr_tx->getRemoteService()->getUUID().toString().c_str(),
-                  pChrStV.at(j).pChr_tx->getUUID().toString().c_str());*/
+                  myBleStructV.at(j).pChr_tx->getClient()->getPeerAddress().toString().c_str(),
+                  myBleStructV.at(j).pChr_tx->getRemoteService()->getUUID().toString().c_str(),
+                  myBleStructV.at(j).pChr_tx->getUUID().toString().c_str());*/
     /*if (myBleArr[j].pChr_tx)
       Serial.printf("Send bmsGetInfo5 command to %s: Service = %s, Charastaric = %s\n",
                     myBleArr[j].pChr_tx->getClient()->getPeerAddress().toString().c_str(),
