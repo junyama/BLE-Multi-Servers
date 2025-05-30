@@ -37,7 +37,7 @@ static NimBLEUUID serviceUUID = BLEUUID("0000ff00-0000-1000-8000-00805f9b34fb");
 static NimBLEUUID charUUID_tx = BLEUUID("0000ff02-0000-1000-8000-00805f9b34fb"); // xiaoxiang bms original module
 static NimBLEUUID charUUID_rx = BLEUUID("0000ff01-0000-1000-8000-00805f9b34fb"); // xiaoxiang bms original module
 
-MyBLE myBLE;
+//MyBLE myBLE;
 MyBLE myBleArr[3];
 
 /**  None of these are required as they will be handled by the library with defaults. **
@@ -155,6 +155,18 @@ public:
 } myBLE;
 */
 // MyBLE myBLE;
+int getIndexOfMyBleArr(NimBLERemoteCharacteristic *pRemoteCharacteristic)
+{
+  auto peerAddress = pRemoteCharacteristic->getClient()->getPeerAddress();
+  for (int i = 0; i < numberOfAdvDevices; i++)
+  {
+    if (peerAddress == myBleArr[i].pChr_rx->getClient()->getPeerAddress())
+    {
+      return i;
+    }
+  }
+  return 0;
+}
 
 /** Notification / Indication receiving handler callback */
 void notifyCB(NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify)
@@ -162,11 +174,11 @@ void notifyCB(NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData,
   std::string str = (isNotify == true) ? "Notification" : "Indication";
   str += " from ";
   str += pRemoteCharacteristic->getClient()->getPeerAddress().toString();
-  str += ": Service = " + pRemoteCharacteristic->getRemoteService()->getUUID().toString();
+  str += ", Service = " + pRemoteCharacteristic->getRemoteService()->getUUID().toString();
   str += ", Characteristic = " + pRemoteCharacteristic->getUUID().toString();
   str += ", Value = " + std::string((char *)pData, length);
   Serial.printf("%s\n", str.c_str());
-  myBLE.bleCollectPacket((char *)pData, length);
+  myBleArr[getIndexOfMyBleArr(pRemoteCharacteristic)].bleCollectPacket((char *)pData, length);
 }
 
 /** Handles the provisioning of clients and connects / interfaces with the server */
@@ -536,19 +548,26 @@ void loop()
       myBleArr[j].bmsGetInfo5();
       str = "Send bmsGetInfo5 command to " + String(buff);
       Serial.print(str.c_str());
+      Serial.printf("main, myBleArr[%d].deviceName = %s\n", j, myBleArr[j].deviceName.c_str());
       delay(1000);
       Serial.printf("\n");
       if (myBleArr[j].toggle)
       {
         myBleArr[j].bmsGetInfo3();
         str = "Send bmsGetInfo3 command to " + String(buff);
+        Serial.print(str.c_str());
+        Serial.printf("main, myBleArr[%d].packBasicInfo.Volts = %d\n", j, myBleArr[j].packBasicInfo.Volts);
       }
       else
       {
         myBleArr[j].bmsGetInfo4();
         str = "Send bmsGetInfo4 command to " + String(buff);
+        Serial.print(str.c_str());
+        Serial.printf("main, myBleArr[%d].packCellInfo.CellDiff = %d\n", j, myBleArr[j].packCellInfo.CellDiff);
       }
     }
+    else
+      Serial.printf("myBleArr[%d].pChr_tx == null\n", j);
     /*Serial.printf("Send bmsGetInfo5 command to %s: Service = %s, Charastaric = %s\n",
                   pChrStV.at(j).pChr_tx->getClient()->getPeerAddress().toString().c_str(),
                   pChrStV.at(j).pChr_tx->getRemoteService()->getUUID().toString().c_str(),
