@@ -2,6 +2,7 @@
 #define MY_BLE_CPP
 
 #include <NimBLEDevice.h>
+//#include <MyNotifyCB.cpp>
 
 typedef struct
 {
@@ -52,6 +53,8 @@ public:
     packCellInfoStruct packCellInfo;   // here shall be the latest data got from BMS
     int numberOfTemperature = 2;
     String deviceName = "UNKNOWN";
+
+    NimBLEClientCallbacks clientCallbacks;
 
     void bmsGetInfo3()
     {
@@ -297,10 +300,9 @@ public:
         }
         case cCellInfo4:
         {
-            // MyLOG::DISABLE_LOGD = true;
-            // LOGD(TAG, "bmsProcessPacket, process CellInfo");
-            // MyLOG::DISABLE_LOGD = false;
+            Serial.printf("bmsProcessPacket, process CellInfo4. Type: %d\n", pHeader->type);
             result = processCellInfo(&packCellInfo, data, dataLen);
+            Serial.printf("packCellInfo.CellDiff = %d\n", packCellInfo.CellDiff);
             newPacketReceived = true;
             break;
         }
