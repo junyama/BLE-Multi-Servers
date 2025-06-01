@@ -12,8 +12,11 @@
 
 #include <M5Core2.h>
 
+#include "PowerSaving2.hpp"
+#include "MyLcd2.hpp"
 #include "MyBLE.cpp"
 #include "MyScanCallBacks.cpp"
+#include "MyLog.cpp"
 
 /*typedef struct
 {
@@ -35,8 +38,12 @@
 // static uint32_t scanTimeMs = 5000; /** scan time in milliseconds, 0 = scan forever */
 
 // static NimBLEUUID serviceUUID = BLEUUID("0000ff00-0000-1000-8000-00805f9b34fb"); // xiaoxiang bms original module
-static NimBLEUUID charUUID_tx = BLEUUID("0000ff02-0000-1000-8000-00805f9b34fb"); // xiaoxiang bms original module
-static NimBLEUUID charUUID_rx = BLEUUID("0000ff01-0000-1000-8000-00805f9b34fb"); // xiaoxiang bms original module
+// static NimBLEUUID myScanCallbacks.charUUID_tx = BLEUUID("0000ff02-0000-1000-8000-00805f9b34fb"); // xiaoxiang bms original module
+// static NimBLEUUID charUUID_rx = BLEUUID("0000ff01-0000-1000-8000-00805f9b34fb"); // xiaoxiang bms original module
+
+const char *TAG = "main";
+PowerSaving2 powerSaving;
+MyLcd2 myLcd;
 
 // MyBLE myBLE;
 MyBLE myBleArr[3];
@@ -122,7 +129,7 @@ void notifyCB(NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData,
   str += ", Service = " + pRemoteCharacteristic->getRemoteService()->getUUID().toString();
   str += ", Characteristic = " + pRemoteCharacteristic->getUUID().toString();
   str += ", Value = " + std::string((char *)pData, length);
-  Serial.printf("%s\n", str.c_str());
+  DEBUG_PRINT("%s\n", str.c_str());
   myBleArr[getIndexOfMyBleArr(pRemoteCharacteristic)].bleCollectPacket((char *)pData, length);
 }
 
@@ -150,10 +157,10 @@ bool connectToServer()
       {
         if (!pClient->connect(myScanCallbacks.advDevices.at(i), false))
         {
-          Serial.printf("Reconnect failed\n");
+          DEBUG_PRINT("Reconnect failed\n");
           return false;
         }
-        Serial.printf("Reconnected client\n");
+        DEBUG_PRINT("Reconnected client\n");
       }
       else
       {
@@ -170,13 +177,13 @@ bool connectToServer()
     {
       if (NimBLEDevice::getCreatedClientCount() >= NIMBLE_MAX_CONNECTIONS)
       {
-        Serial.printf("Max clients reached - no more connections available\n");
+        DEBUG_PRINT("Max clients reached - no more connections available\n");
         return false;
       }
 
       pClient = NimBLEDevice::createClient();
 
-      Serial.printf("New client created\n");
+      DEBUG_PRINT("New client created\n");
 
       pClient->setClientCallbacks(&clientCallbacks, false);
       /**
@@ -194,7 +201,7 @@ bool connectToServer()
       {
         /** Created a client but failed to connect, don't need to keep it as it has no data */
         NimBLEDevice::deleteClient(pClient);
-        Serial.printf("Failed to connect, deleted client\n");
+        DEBUG_PRINT("Failed to connect, deleted client\n");
         myScanCallbacks.advDevices.clear();
         return false;
       }
@@ -204,12 +211,12 @@ bool connectToServer()
     {
       if (!pClient->connect(myScanCallbacks.advDevices.at(i)))
       {
-        Serial.printf("Failed to connect\n");
+        DEBUG_PRINT("Failed to connect\n");
         return false;
       }
     }
 
-    Serial.printf("Connected to: %s RSSI: %d\n", pClient->getPeerAddress().toString().c_str(), pClient->getRssi());
+    DEBUG_PRINT("Connected to: %s RSSI: %d\n", pClient->getPeerAddress().toString().c_str(), pClient->getRssi());
 
     /** Now we can read/write/subscribe the characteristics of the services we are interested in */
     NimBLERemoteService *pSvc = nullptr;
@@ -226,21 +233,21 @@ bool connectToServer()
 
       // pChr_rx = pSvc->getCharacteristic(charUUID_rx);
       // pChrSt.pChr_rx = pSvc->getCharacteristic(charUUID_rx);
-      myBleArr[i].pChr_rx = pSvc->getCharacteristic(charUUID_rx);
+      myBleArr[i].pChr_rx = pSvc->getCharacteristic(myScanCallbacks.charUUID_rx);
 
       if (!myBleArr[i].pChr_rx)
       {
-        Serial.printf("charUUID_rx not found.\n");
+        DEBUG_PRINT("charUUID_rx not found.\n");
       }
       // pChr_tx = nullptr;
       // pChrSt.pChr_tx = nullptr;
-      // pChr_tx = pSvc->getCharacteristic(charUUID_tx);
-      // pChrSt.pChr_tx = pSvc->getCharacteristic(charUUID_tx);
-      myBleArr[i].pChr_tx = pSvc->getCharacteristic(charUUID_tx);
+      // pChr_tx = pSvc->getCharacteristic(myScanCallbacks.charUUID_tx);
+      // pChrSt.pChr_tx = pSvc->getCharacteristic(myScanCallbacks.charUUID_tx);
+      myBleArr[i].pChr_tx = pSvc->getCharacteristic(myScanCallbacks.charUUID_tx);
 
       if (!myBleArr[i].pChr_tx)
       {
-        Serial.printf("charUUID_tx not found.\n");
+        DEBUG_PRINT("charUUID_tx not found.\n");
       }
       //
       // pChrs = &pSvc->getCharacteristics();
@@ -314,7 +321,7 @@ bool connectToServer()
     }
     else
     {
-      Serial.printf("serviceUUID not found.\n");
+      DEBUG_PRINT("serviceUUID not found.\n");
     }
 
     /*
@@ -384,14 +391,17 @@ bool connectToServer()
     */
   }
   myScanCallbacks.advDevices.clear();
-  Serial.println("Done with this device!");
+  DEBUG_PRINT("Done with this device!\n");
   return true;
 }
 
 void setup()
 {
+  M5.begin(); // Init M5Core2.
   Serial.begin(9600);
-  Serial.printf("Starting NimBLE Client\n");
+
+  powerSaving.disable();
+  DEBUG_PRINT("Starting NimBLE Client\n");
 
   /** Initialize NimBLE and set the device name */
   NimBLEDevice::init("NimBLE-Client");
@@ -434,25 +444,25 @@ void setup()
 
   /** Start scanning for advertisers */
   pScan->start(myScanCallbacks.scanTimeMs);
-  Serial.printf("Scanning for peripherals\n");
+  DEBUG_PRINT("Scanning for peripherals\n");
 }
 
 void loop()
 {
   /** Loop here until we find a device we want to connect to */
   delay(3000);
-  Serial.printf("\n");
+  DEBUG_PRINT("\n");
   if (myScanCallbacks.doConnect)
   {
     myScanCallbacks.doConnect = false;
     /** Found a device we want to connect to, do it now */
     if (connectToServer())
     {
-      Serial.printf("Success! we should now be getting notifications.\n");
+      DEBUG_PRINT("Success! we should now be getting notifications.\n");
     }
     else
     {
-      Serial.printf("Failed to connect, starting scan\n");
+      DEBUG_PRINT("Failed to connect, starting scan\n");
     }
 
     // NimBLEDevice::getScan()->start(scanTimeMs, false, true);
@@ -466,13 +476,19 @@ void loop()
   for (int j = 0; j < myScanCallbacks.numberOfAdvDevices; j++)
   {
     delay(2000);
-    Serial.printf("\nmyBleArr[%d]========================\n", j);
-    Serial.printf("main, deviceName = %s\n", myBleArr[j].deviceName.c_str());
-    Serial.printf("main, packBasicInfo.Volts = %dmV\n", myBleArr[j].packBasicInfo.Volts);
-    Serial.printf("main, packBasicInfo.Amps = %dmA\n", myBleArr[j].packBasicInfo.Amps);
-    Serial.printf("main, packBasicInfo.CapacityRemainPercent = %d%%\n", myBleArr[j].packBasicInfo.CapacityRemainPercent);
-    Serial.printf("main, packCellInfo.CellDiff = %dmV\n", myBleArr[j].packCellInfo.CellDiff);
-    Serial.printf("===================================\n");
+    DEBUG_PRINT("\n");
+    DEBUG_PRINT("myBleArr[%d]========================\n", j);
+    DEBUG_PRINT("deviceName = %s\n", myBleArr[j].deviceName.c_str());
+    DEBUG_PRINT("packBasicInfo.Volts = %dmV\n", myBleArr[j].packBasicInfo.Volts);
+    DEBUG_PRINT("packBasicInfo.Amps = %dmA\n", myBleArr[j].packBasicInfo.Amps);
+    DEBUG_PRINT("packBasicInfo.CapacityRemainPercent = %d%%\n", myBleArr[j].packBasicInfo.CapacityRemainPercent);
+    DEBUG_PRINT("packCellInfo.CellDiff = %dmV\n", myBleArr[j].packCellInfo.CellDiff);
+    DEBUG_PRINT("===================================\n");
+    myLcd.bmsInfoArr[j].deviceName = myBleArr[j].deviceName;
+    myLcd.updateBmsInfo(j, myBleArr[j].packBasicInfo.Volts / 1000, myBleArr[j].packBasicInfo.Amps / 1000,
+                        myBleArr[j].packCellInfo.CellDiff,
+                        myBleArr[j].packBasicInfo.Temp1 / 10, myBleArr[j].packBasicInfo.Temp2 / 10,
+                        myBleArr[j].packBasicInfo.CapacityRemainPercent);
     // auto pChrs = pChrsV.at(j);
     // auto pChrS = pChrStV.at(j);
     /*
@@ -499,24 +515,24 @@ void loop()
               myBleArr[j].pChr_tx->getUUID().toString().c_str());
       myBleArr[j].bmsGetInfo5();
       str = "Send bmsGetInfo5 command to " + String(buff);
-      Serial.print(str.c_str());
+      DEBUG_PRINT(str.c_str());
       delay(1000);
-      Serial.printf("\n");
+      DEBUG_PRINT("\n");
       if (myBleArr[j].toggle)
       {
         myBleArr[j].bmsGetInfo3();
         str = "Send bmsGetInfo3 command to " + String(buff);
-        Serial.print(str.c_str());
+        DEBUG_PRINT(str.c_str());
       }
       else
       {
         myBleArr[j].bmsGetInfo4();
         str = "Send bmsGetInfo4 command to " + String(buff);
-        Serial.print(str.c_str());
+        DEBUG_PRINT(str.c_str());
       }
     }
     else
-      Serial.printf("myBleArr[%d].pChr_tx == null\n", j);
+      DEBUG_PRINT("myBleArr[%d].pChr_tx == null\n", j);
     /*Serial.printf("Send bmsGetInfo5 command to %s: Service = %s, Charastaric = %s\n",
                   pChrStV.at(j).pChr_tx->getClient()->getPeerAddress().toString().c_str(),
                   pChrStV.at(j).pChr_tx->getRemoteService()->getUUID().toString().c_str(),

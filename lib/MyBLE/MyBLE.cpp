@@ -2,7 +2,8 @@
 #define MY_BLE_CPP
 
 #include <NimBLEDevice.h>
-//#include <MyNotifyCB.cpp>
+#include "MyLog.cpp"
+// #include <MyNotifyCB.cpp>
 
 typedef struct
 {
@@ -43,6 +44,8 @@ typedef struct
 class MyBLE
 {
 public:
+    const char *TAG = "MyBLE";
+
     NimBLERemoteCharacteristic *pChr_rx = nullptr;
     NimBLERemoteCharacteristic *pChr_tx = nullptr;
     NimBLEAddress peerAddress;
@@ -96,7 +99,7 @@ public:
         char chars[dataLen + 1];
         memcpy(chars, data, dataLen);
         chars[dataLen] = '\0';
-        Serial.printf("deviceName = %s\n", chars);
+        DEBUG_PRINT("deviceName = %s\n", chars);
         deviceName = String(chars);
         // LOGD(TAG, "deviceName: " + deviceName);
         // M5.Lcd.println(deviceName);
@@ -134,7 +137,7 @@ public:
 
         if (packetstate == 2) // got full packet
         {
-            Serial.println("got full packet");
+            DEBUG_PRINT("got full packet");
             uint8_t packet[dataSize + previousDataSize];
             memcpy(packet, packetbuff, dataSize + previousDataSize);
 
@@ -167,7 +170,7 @@ public:
         */
 
         output->Volts = ((uint32_t)two_ints_into16(data[0], data[1])) * 10; // Resolution 10 mV -> convert to milivolts   eg 4895 > 48950mV
-        Serial.printf("output->Volts = %d\n", output->Volts);
+        DEBUG_PRINT("output->Volts = %d\n", output->Volts);
         output->Amps = ((int32_t)two_ints_into16(data[2], data[3])) * 10; // Resolution 10 mA -> convert to miliamps
 
         output->Watts = output->Volts * output->Amps / 1000000; // W
@@ -287,22 +290,22 @@ public:
 
         bool result = false;
 
-        Serial.printf("Decision based on packet header type (%d)\n", pHeader->type);
+        DEBUG_PRINT("Decision based on packet header type (%d)\n", pHeader->type);
         switch (pHeader->type)
         {
         case cBasicInfo3:
         {
-            Serial.printf("bmsProcessPacket, process BasicInfo3. Type: %d\n", pHeader->type);
+            DEBUG_PRINT("bmsProcessPacket, process BasicInfo3. Type: %d\n", pHeader->type);
             result = processBasicInfo(&packBasicInfo, data, dataLen);
-            Serial.printf("packBasicInfo.Volts = %d\n", packBasicInfo.Volts);
+            DEBUG_PRINT("packBasicInfo.Volts = %d\n", packBasicInfo.Volts);
             newPacketReceived = true;
             break;
         }
         case cCellInfo4:
         {
-            Serial.printf("bmsProcessPacket, process CellInfo4. Type: %d\n", pHeader->type);
+            DEBUG_PRINT("bmsProcessPacket, process CellInfo4. Type: %d\n", pHeader->type);
             result = processCellInfo(&packCellInfo, data, dataLen);
-            Serial.printf("packCellInfo.CellDiff = %d\n", packCellInfo.CellDiff);
+            DEBUG_PRINT("packCellInfo.CellDiff = %d\n", packCellInfo.CellDiff);
             newPacketReceived = true;
             break;
         }
@@ -317,7 +320,7 @@ public:
         {
             // MyLOG::DISABLE_LOGD = false;
             // LOGD(TAG, "bmsProcessPacket, process DeviceName");
-            Serial.printf("bmsProcessPacket, process DeviceName. Type: %d\n", pHeader->type);
+            DEBUG_PRINT("bmsProcessPacket, process DeviceName. Type: %d\n", pHeader->type);
             result = processDeviceInfo(data, dataLen);
             newPacketReceived = true;
             break;

@@ -2,13 +2,19 @@
 #define MY_SCAN_CPP
 
 #include <NimBLEDevice.h>
+#include "MyLog.cpp"
 
 /** Define a class to handle the callbacks when scan events are received */
 class MyScanCallbacks : public NimBLEScanCallbacks
 {
+private:
+  const char *TAG = "MyScanCallbacks";
+
 public:
   const NimBLEUUID serviceUUID = BLEUUID("0000ff00-0000-1000-8000-00805f9b34fb"); // xiaoxiang bms original module
-  
+  const NimBLEUUID charUUID_tx = BLEUUID("0000ff02-0000-1000-8000-00805f9b34fb"); // xiaoxiang bms original module
+  const NimBLEUUID charUUID_rx = BLEUUID("0000ff01-0000-1000-8000-00805f9b34fb"); // xiaoxiang bms original module
+
   uint32_t scanTimeMs = 5000; /** scan time in milliseconds, 0 = scan forever */
   std::vector<const NimBLEAdvertisedDevice *> advDevices;
   int numberOfAdvDevices = 0;
@@ -16,10 +22,10 @@ public:
 
   void onResult(const NimBLEAdvertisedDevice *advertisedDevice) override
   {
-    Serial.printf("Advertised Device found: %s\n", advertisedDevice->toString().c_str());
+    DEBUG_PRINT("Advertised Device found: %s\n", advertisedDevice->toString().c_str());
     if (advertisedDevice->isAdvertisingService(serviceUUID))
     {
-      Serial.printf("Found Our Service\n");
+      DEBUG_PRINT("Found Our Service\n");
       /** stop scan before connecting */
       // NimBLEDevice::getScan()->stop(); //Jun: comment out
       /** Save the device reference in a global for the client to use*/
@@ -32,7 +38,7 @@ public:
       {
         // advDevice = advertisedDevice;
         advDevices.push_back(advertisedDevice);
-        Serial.printf("onResult:advDevices.size()=%d\n", advDevices.size());
+        DEBUG_PRINT("onResult:advDevices.size()=%d\n", advDevices.size());
       }
       else
       {
@@ -40,13 +46,13 @@ public:
         {
           if (advDevices.at(i)->getAddress().equals(advertisedDevice->getAddress()))
           {
-            Serial.printf("onResult:device already added\n");
+            DEBUG_PRINT("onResult:device already added\n");
             return;
           }
         }
         // advDevice = advertisedDevice;
         advDevices.push_back(advertisedDevice);
-        Serial.printf("onResult:advDevices.size()=%d\n", advDevices.size());
+        DEBUG_PRINT("onResult:advDevices.size()=%d\n", advDevices.size());
       }
       // END
     }
@@ -55,7 +61,7 @@ public:
   /** Callback to process the results of the completed scan or restart it */
   void onScanEnd(const NimBLEScanResults &results, int reason) override
   {
-    Serial.printf("Scan Ended, reason: %d, device count: %d, numberOfAdvDevices: %d;\n", reason, results.getCount(), advDevices.size());
+    DEBUG_PRINT("Scan Ended, reason: %d, device count: %d, numberOfAdvDevices: %d;\n", reason, results.getCount(), advDevices.size());
     numberOfAdvDevices = advDevices.size();
     // NimBLEDevice::getScan()->start(scanTimeMs, false, true);
     if (advDevices.size() != 0 && !doConnect)
