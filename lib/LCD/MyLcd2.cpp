@@ -56,11 +56,11 @@ void MyLcd2::showBatteryInfo()
     M5.Lcd.print(bmsInfoArr[bmsIndexShown].deviceName);
     M5.Lcd.setCursor(1, 17, 7);
     M5.Lcd.setTextColor(GREEN, BLACK);
-    sprintf(str, "%05.2f", bmsInfoArr[bmsIndexShown].volt);
+    sprintf(str, "%05.2f", bmsInfoArr[bmsIndexShown].volt / 1000);
     M5.Lcd.print(str);
     M5.Lcd.setTextFont(4);
     M5.Lcd.print("V");
-    sprintf(str, "%05.2f", bmsInfoArr[bmsIndexShown].current);
+    sprintf(str, "%05.2f", bmsInfoArr[bmsIndexShown].current / 1000);
     M5.Lcd.setCursor(158, 17, 7);
     M5.Lcd.print(str);
     M5.Lcd.setTextFont(4);
@@ -76,7 +76,7 @@ void MyLcd2::showBatteryInfo()
     M5.Lcd.setTextFont(4);
     M5.Lcd.print("%");
     M5.Lcd.setCursor(1, 131, 7);
-    sprintf(str, "%05.2f", bmsInfoArr[bmsIndexShown].temparature1);
+    sprintf(str, "%05.2f", bmsInfoArr[bmsIndexShown].temparature1 / 10);
     M5.Lcd.print(str);
     M5.Lcd.setTextFont(4);
     M5.Lcd.print("C");

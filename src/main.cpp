@@ -17,6 +17,7 @@
 #include "MyBLE.cpp"
 #include "MyScanCallBacks.cpp"
 #include "MyLog.cpp"
+#include "MyTimer.cpp"
 
 /*typedef struct
 {
@@ -44,6 +45,8 @@
 const char *TAG = "main";
 PowerSaving2 powerSaving;
 MyLcd2 myLcd;
+MyTimer myTimer(0, 10000);
+MyTimer myTimerArr[3];
 
 // MyBLE myBLE;
 MyBLE myBleArr[3];
@@ -142,6 +145,7 @@ bool connectToServer()
   // numberOfAdvDevices = advDevices.size();
   // Serial.printf("numberOfAdvDevices = %d\n", numberOfAdvDevices);
 
+  unsigned long initalMesurementTime = 0;
   for (int i = 0; i < myScanCallbacks.advDevices.size(); i++)
   {
     /** Check if we have a client we should reuse first **/
@@ -238,6 +242,15 @@ bool connectToServer()
       if (!myBleArr[i].pChr_rx)
       {
         DEBUG_PRINT("charUUID_rx not found.\n");
+        return false;
+      }
+      if (myBleArr[i].pChr_rx->canNotify())
+      {
+        if (!myBleArr[i].pChr_rx->subscribe(true, notifyCB))
+        {
+          pClient->disconnect();
+          return false;
+        }
       }
       // pChr_tx = nullptr;
       // pChrSt.pChr_tx = nullptr;
@@ -248,12 +261,15 @@ bool connectToServer()
       if (!myBleArr[i].pChr_tx)
       {
         DEBUG_PRINT("charUUID_tx not found.\n");
+        return false;
       }
       //
       // pChrs = &pSvc->getCharacteristics();
       //}
       // Serial.printf("pChrs->size() = %d\n", (int)pChrs->size());
       // if (pChrs)
+
+      /*
       if (myBleArr[i].pChr_rx && myBleArr[i].pChr_tx)
       {
         // for (int i = 0; i < pChrs->size(); i++)
@@ -292,7 +308,7 @@ bool connectToServer()
               return false;
             }
           }
-          */
+          //
 
           if (myBleArr[i].pChr_rx->canNotify())
           {
@@ -302,6 +318,7 @@ bool connectToServer()
               return false;
             }
           }
+          */
 
           /*
           else if (pChrs->at(i)->canIndicate())
@@ -313,15 +330,16 @@ bool connectToServer()
               return false;
             }
           }
-          */
+          //
         }
         // pChrsV.push_back(pChrs);
         // pChrStV.push_back(pChrSt);
-      }
+      }*/
     }
     else
     {
       DEBUG_PRINT("serviceUUID not found.\n");
+      return false;
     }
 
     /*
@@ -389,10 +407,56 @@ bool connectToServer()
     Serial.printf("Done with this device!\n");
     return true;
     */
+    myBleArr[i].deviceName = String(myScanCallbacks.advDevices[i]->getName().c_str());
+    DEBUG_PRINT("myBleArr[%d].deviceName = %s\n", i, myBleArr[i].deviceName.c_str());
+    new (myTimerArr + i) MyTimer(initalMesurementTime, 5000);
+    DEBUG_PRINT("myTimerArr[%d].lastMeasurment = %d, measurmentIntervalMs = %d\n", i, myTimerArr[i].lastMeasurment,
+                myTimerArr[i].measurmentIntervalMs);
+    initalMesurementTime += 1000;
   }
   myScanCallbacks.advDevices.clear();
   DEBUG_PRINT("Done with this device!\n");
   return true;
+}
+
+void detectButton(int numberOfPages)
+{
+  M5.update(); // Read the press state of the key.
+  if (M5.BtnA.wasReleased() || M5.BtnA.pressedFor(1000, 200))
+  {
+    if (powerSaving.lcdState)
+    {
+      powerSaving.enable();
+    }
+    else
+    {
+      powerSaving.disable();
+    }
+  }
+  else if (M5.BtnB.wasReleased() || M5.BtnB.pressedFor(1000, 200))
+  {
+    if (++myLcd.bmsIndexShown > numberOfPages - 1)
+      myLcd.bmsIndexShown = 0;
+    DEBUG_PRINT("Button B pushed with bmsIndex: %d", +myLcd.bmsIndexShown);
+    myLcd.showBatteryInfo();
+  }
+  else if (M5.BtnC.wasReleased() || M5.BtnC.pressedFor(1000, 200))
+  {
+    M5.shutdown();
+  }
+}
+
+void printBatteryInfo(MyBLE myBle)
+{
+  DEBUG_PRINT("===================================\n");
+  DEBUG_PRINT("deviceName = %s\n", myBle.deviceName.c_str());
+  DEBUG_PRINT("packBasicInfo.Volts = %d\n", myBle.packBasicInfo.Volts);
+  DEBUG_PRINT("packBasicInfo.Amps = %d\n", myBle.packBasicInfo.Amps);
+  DEBUG_PRINT("packCellInfo.CellDiff = %d\n", myBle.packCellInfo.CellDiff);
+  DEBUG_PRINT("packBasicInfo.CapacityRemainPercent = %d\n", myBle.packBasicInfo.CapacityRemainPercent);
+  DEBUG_PRINT("packBasicInfo.Temp1 = %d\n", myBle.packBasicInfo.Temp1);
+  DEBUG_PRINT("packBasicInfo.Temp2 = %d\n", myBle.packBasicInfo.Temp2);
+  DEBUG_PRINT("===================================\n");
 }
 
 void setup()
@@ -449,98 +513,70 @@ void setup()
 
 void loop()
 {
+  detectButton(myScanCallbacks.numberOfAdvDevices);
   /** Loop here until we find a device we want to connect to */
-  delay(3000);
-  DEBUG_PRINT("\n");
   if (myScanCallbacks.doConnect)
   {
     myScanCallbacks.doConnect = false;
-    /** Found a device we want to connect to, do it now */
+    DEBUG_PRINT("Found a device we want to connect to, do it now.\n");
     if (connectToServer())
     {
       DEBUG_PRINT("Success! we should now be getting notifications.\n");
     }
     else
     {
-      DEBUG_PRINT("Failed to connect, starting scan\n");
+      DEBUG_PRINT("Failed to connect, goint to reset\n");
+      //NimBLEDevice::getScan()->start(myScanCallbacks.scanTimeMs, false, true);
+      delay(3000);
+      M5.shutdown();
     }
-
-    // NimBLEDevice::getScan()->start(scanTimeMs, false, true);
   }
-  //
-  // uint8_t data[7] = {0xdd, 0xa5, 0x5, 0x0, 0xff, 0xfb, 0x77};
-  // for (int j = 0; j < pChrsV.size(); j++)
-  // for (int j = 0; j < pChrStV.size(); j++)
-  char buff[256];
-  String str;
-  for (int j = 0; j < myScanCallbacks.numberOfAdvDevices; j++)
+  else
   {
-    delay(2000);
-    DEBUG_PRINT("\n");
-    DEBUG_PRINT("myBleArr[%d]========================\n", j);
-    DEBUG_PRINT("deviceName = %s\n", myBleArr[j].deviceName.c_str());
-    DEBUG_PRINT("packBasicInfo.Volts = %dmV\n", myBleArr[j].packBasicInfo.Volts);
-    DEBUG_PRINT("packBasicInfo.Amps = %dmA\n", myBleArr[j].packBasicInfo.Amps);
-    DEBUG_PRINT("packBasicInfo.CapacityRemainPercent = %d%%\n", myBleArr[j].packBasicInfo.CapacityRemainPercent);
-    DEBUG_PRINT("packCellInfo.CellDiff = %dmV\n", myBleArr[j].packCellInfo.CellDiff);
-    DEBUG_PRINT("===================================\n");
-    myLcd.bmsInfoArr[j].deviceName = myBleArr[j].deviceName;
-    myLcd.updateBmsInfo(j, myBleArr[j].packBasicInfo.Volts / 1000, myBleArr[j].packBasicInfo.Amps / 1000,
-                        myBleArr[j].packCellInfo.CellDiff,
-                        myBleArr[j].packBasicInfo.Temp1 / 10, myBleArr[j].packBasicInfo.Temp2 / 10,
-                        myBleArr[j].packBasicInfo.CapacityRemainPercent);
-    // auto pChrs = pChrsV.at(j);
-    // auto pChrS = pChrStV.at(j);
-    /*
-    for (int i = 0; i < pChrs->size(); i++)
+    // DEBUG_PRINT("Not Found a device yet and chck again or already foundd and skip to send commands\n");
+  }
+
+  // delay(3000);
+  if (myTimer.timeout(millis()))
+  {
+    // DEBUG_PRINT("\n");
+    for (int j = 0; j < myScanCallbacks.numberOfAdvDevices; j++)
     {
-      if (pChrs->at(i)->canRead())
+      // delay(2000);
+      printBatteryInfo(myBleArr[j]);
+      myLcd.bmsInfoArr[j].deviceName = myBleArr[j].deviceName;
+      myLcd.updateBmsInfo(j, myBleArr[j].packBasicInfo.Volts, myBleArr[j].packBasicInfo.Amps,
+                          myBleArr[j].packCellInfo.CellDiff,
+                          myBleArr[j].packBasicInfo.Temp1, myBleArr[j].packBasicInfo.Temp2,
+                          myBleArr[j].packBasicInfo.CapacityRemainPercent);
+
+      if (myBleArr[j].pChr_tx)
       {
-        Serial.printf("canRead[%d, %d]: %s Value: %s\n", j, i, pChrs->at(i)->getUUID().toString().c_str(), pChrs->at(i)->readValue().c_str());
-      }
-      if (pChrs->at(i)->canWrite())
-      {
-        Serial.printf("canWrite[%d, %d]: %s Value: %s\n", j, i, pChrs->at(i)->getUUID().toString().c_str(), pChrs->at(i)->readValue().c_str());
-      }
-    }
-    */
-    // Serial.printf("pChrStV.at(j)tV[%d].pChr_rx: %s Value: %s\n", j, pChrStV.at(j).pChr_rx->getUUID().toString().c_str(), pChrStV.at(j).pChr_rx->readValue().c_str());
-    //  pChrStV.at(j).pChr_tx->writeValue(data, sizeof(data), true);
-    // myBLE.bmsGetInfo5(pChrStV.at(j).pChr_tx);
-    if (myBleArr[j].pChr_tx)
-    {
-      sprintf(buff, "command to %s: Service = %s, Charastaric = %s\n",
-              myBleArr[j].pChr_tx->getClient()->getPeerAddress().toString().c_str(),
-              myBleArr[j].pChr_tx->getRemoteService()->getUUID().toString().c_str(),
-              myBleArr[j].pChr_tx->getUUID().toString().c_str());
-      myBleArr[j].bmsGetInfo5();
-      str = "Send bmsGetInfo5 command to " + String(buff);
-      DEBUG_PRINT(str.c_str());
-      delay(1000);
-      DEBUG_PRINT("\n");
-      if (myBleArr[j].toggle)
-      {
-        myBleArr[j].bmsGetInfo3();
-        str = "Send bmsGetInfo3 command to " + String(buff);
-        DEBUG_PRINT(str.c_str());
+        char buff[256];
+        sprintf(buff, "command to %s: Service = %s, Charastaric = %s\n",
+                myBleArr[j].pChr_tx->getClient()->getPeerAddress().toString().c_str(),
+                myBleArr[j].pChr_tx->getRemoteService()->getUUID().toString().c_str(),
+                myBleArr[j].pChr_tx->getUUID().toString().c_str());
+        // myBleArr[j].bmsGetInfo5();
+        String string = "Send bmsGetInfo5 command to " + String(buff) + "\n";
+        // DEBUG_PRINT(string.c_str());
+        // delay(1000);
+        // DEBUG_PRINT("\n");
+        if (myBleArr[j].toggle)
+        {
+          myBleArr[j].bmsGetInfo3();
+          string = "Send bmsGetInfo3 command to " + String(buff) + "\n";
+          DEBUG_PRINT(string.c_str());
+        }
+        else
+        {
+          myBleArr[j].bmsGetInfo4();
+          string = "Send bmsGetInfo4 command to " + String(buff);
+          DEBUG_PRINT(string.c_str());
+        }
       }
       else
-      {
-        myBleArr[j].bmsGetInfo4();
-        str = "Send bmsGetInfo4 command to " + String(buff);
-        DEBUG_PRINT(str.c_str());
-      }
+        DEBUG_PRINT("myBleArr[%d].pChr_tx == null\n", j);
     }
-    else
-      DEBUG_PRINT("myBleArr[%d].pChr_tx == null\n", j);
-    /*Serial.printf("Send bmsGetInfo5 command to %s: Service = %s, Charastaric = %s\n",
-                  pChrStV.at(j).pChr_tx->getClient()->getPeerAddress().toString().c_str(),
-                  pChrStV.at(j).pChr_tx->getRemoteService()->getUUID().toString().c_str(),
-                  pChrStV.at(j).pChr_tx->getUUID().toString().c_str());*/
-    /*if (myBleArr[j].pChr_tx)
-      Serial.printf("Send bmsGetInfo5 command to %s: Service = %s, Charastaric = %s\n",
-                    myBleArr[j].pChr_tx->getClient()->getPeerAddress().toString().c_str(),
-                    myBleArr[j].pChr_tx->getRemoteService()->getUUID().toString().c_str(),
-                    myBleArr[j].pChr_tx->getUUID().toString().c_str());*/
   }
 }

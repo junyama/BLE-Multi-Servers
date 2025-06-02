@@ -137,7 +137,7 @@ public:
 
         if (packetstate == 2) // got full packet
         {
-            DEBUG_PRINT("got full packet");
+            DEBUG_PRINT("got full packet\n");
             uint8_t packet[dataSize + previousDataSize];
             memcpy(packet, packetbuff, dataSize + previousDataSize);
 
