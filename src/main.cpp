@@ -9,6 +9,9 @@
 
 #include <Arduino.h>
 #include <ArduinoJson.h>
+#include <WiFi.h>
+#include <WiFiMulti.h>
+
 #include <NimBLEDevice.h>
 
 #include <M5Core2.h>
@@ -20,65 +23,86 @@
 #include "MyLog.cpp"
 #include "MyTimer.cpp"
 #include "MySdCard.hpp"
-
-/*typedef struct
-{
-  NimBLERemoteCharacteristic *pChr_rx;
-  NimBLERemoteCharacteristic *pChr_tx;
-} pChrStruct;*/
-
-// static pChrStruct pChrSt;
-//  static std::vector<pChrStruct> pChrStV;
-
-// static const NimBLEAdvertisedDevice *advDevice;
-// static std::vector<const NimBLEAdvertisedDevice *> advDevices;
-// static int numberOfAdvDevices = 0;
-// static std::vector<const std::vector<NimBLERemoteCharacteristic *> *> pChrsV;
-//  static NimBLERemoteCharacteristic *pChr_rx;
-//  static NimBLERemoteCharacteristic *pChr_tx;
-
-// static bool doConnect = false;
-// static uint32_t scanTimeMs = 5000; /** scan time in milliseconds, 0 = scan forever */
-
-// static NimBLEUUID serviceUUID = BLEUUID("0000ff00-0000-1000-8000-00805f9b34fb"); // xiaoxiang bms original module
-// static NimBLEUUID myScanCallbacks.charUUID_tx = BLEUUID("0000ff02-0000-1000-8000-00805f9b34fb"); // xiaoxiang bms original module
-// static NimBLEUUID charUUID_rx = BLEUUID("0000ff01-0000-1000-8000-00805f9b34fb"); // xiaoxiang bms original module
+#include "MyWiFi.cpp"
+#include "MyMqtt.cpp"
+#include "VoltMater.hpp"
+#include "LipoMater.hpp"
 
 const char *TAG = "main";
 JsonDocument configJson;
+WiFiMulti wifiMulti;
+WiFiClient wifiClient;
 PowerSaving2 powerSaving;
 MyLcd2 myLcd;
 MyTimer myTimer(0, 10000);
 MyTimer myTimerArr[3];
-
-// MyBLE myBLE;
+VoltMater voltMater;
+LipoMater lipoMater;
 MyBLE myBleArr[3];
-
-NimBLEClientCallbacks clientCallbacks;
+MyMqtt myMqtt;
 
 MyScanCallbacks myScanCallbacks;
+NimBLEClientCallbacks clientCallbacks;
 
 void loadConfig();
 void saveConfig();
 
-int getIndexOfMyBleArr(NimBLERemoteCharacteristic *pRemoteCharacteristic);
+void wifiScann();
+int wifiConnect();
+void setupDateTime();
+
+/*
+void reConnectMqttServer();
+void publish(String topic, String message);
+void publishJson(String topic, JsonDocument doc, bool retained);
+void publishHaDiscovery();
+void publishHaDiscovery2(JsonDocument deviceObj);
+void mqttCallback(char *topic_, byte *payload, unsigned int length);
+*/
 
 /** Notification / Indication receiving handler callback */
 void notifyCB(NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify);
+int getIndexOfMyBleArr(NimBLERemoteCharacteristic *pRemoteCharacteristic);
 
 /** Handles the provisioning of clients and connects / interfaces with the server */
 bool connectToServer();
 
 void detectButton(int numberOfPages);
-
 void printBatteryInfo(MyBLE myBle);
 
 void setup()
 {
   M5.begin(); // Init M5Core2.
   Serial.begin(9600);
-  MySdCard::deleteFile(SD, "/log.txt");
+  // MySdCard::deleteFile(SD, "/log.txt");
   MySdCard::setup();
+  loadConfig();
+  DEBUG_PRINT("loadConfig() done\n");
+
+  // setup WiFi //
+  WiFi.mode(WIFI_STA);
+  WiFi.hostname("JunBMS");
+
+  // Add list of wifi networks
+  for (int i = 0; i < configJson["wifi"].size(); i++)
+  {
+    wifiMulti.addAP(configJson["wifi"][i]["ssid"], configJson["wifi"][i]["pass"]);
+  }
+  
+  DEBUG_PRINT("going to scann WiFi\n");
+  wifiScann();
+
+  DEBUG_PRINT("going to connect WiFi\n");
+  if (wifiConnect() != 0)
+  {
+    DEBUG_PRINT("failed to connect WiFi and exiting\n");
+    exit(-1);
+  }
+  DEBUG_PRINT("WiFi setup done\n");
+
+  // setup DateTime
+  DEBUG_PRINT("Going to setup date\n");
+  setupDateTime();
 
   powerSaving.disable();
   DEBUG_PRINT("Starting NimBLE Client\n");
@@ -125,6 +149,7 @@ void setup()
   /** Start scanning for advertisers */
   pScan->start(myScanCallbacks.scanTimeMs);
   DEBUG_PRINT("Scanning for peripherals\n");
+  myMqtt.setup(configJson, wifiClient, myBleArr, &voltMater, &lipoMater);
 }
 
 void loop()

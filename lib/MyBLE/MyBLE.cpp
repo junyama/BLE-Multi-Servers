@@ -1,6 +1,7 @@
 #ifndef MY_BLE_CPP
 #define MY_BLE_CPP
 
+#include <ArduinoJson.h>
 #include <NimBLEDevice.h>
 #include "MyLog.cpp"
 // #include <MyNotifyCB.cpp>
@@ -56,8 +57,38 @@ public:
     packCellInfoStruct packCellInfo;   // here shall be the latest data got from BMS
     int numberOfTemperature = 2;
     String deviceName = "UNKNOWN";
+    String mac;
+    String topic;
+    byte commandParam = 0;
 
     NimBLEClientCallbacks clientCallbacks;
+
+    JsonDocument getState()
+    {
+        JsonDocument doc;
+        doc["deviceName"] = deviceName;
+        doc["batteryVoltage"] = String(packBasicInfo.Volts / 1000.0);
+        doc["batteryCurrent"] = String(packBasicInfo.Amps / 1000.0);
+        doc["batteryTemp1"] = String(packBasicInfo.Temp1 / 10.0);
+        if (numberOfTemperature == 2)
+            doc["batteryTemp2"] = String(packBasicInfo.Temp2 / 10.0);
+        doc["batteryChargePercentage"] = String(packBasicInfo.CapacityRemainPercent);
+        doc["chargeStatus"] = String(packBasicInfo.MosfetStatus & 1);
+        doc["dischargeStatus"] = String((packBasicInfo.MosfetStatus & 2) >> 1);
+        //doc["connectionStatus"] = String(isConnected());
+        // JsonDocument doc2 = voltMater.getVoltage();
+        // doc["calVoltage"] = doc2["calVoltage"];
+        // doc["lipoVoltage"] = String(M5.Axp.GetBatVoltage());
+        // doc["lipoCurrent"] = String(M5.Axp.GetBatCurrent());
+        return doc;
+    }
+    
+    void mosfetCtrl(int chargeStatus, int dischargeStatus)
+    {
+        // LOGD(TAG, "/mosfetCtrl called");
+        ctrlCommand = 1;
+        commandParam = (byte)chargeStatus + (byte)dischargeStatus * 2;
+    }
 
     void bmsGetInfo3()
     {
