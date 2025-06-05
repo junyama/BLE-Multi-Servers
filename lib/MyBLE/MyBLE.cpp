@@ -58,7 +58,7 @@ public:
     int numberOfTemperature = 2;
     String deviceName = "UNKNOWN";
     String mac;
-    String topic;
+    String topic = "UNOT_DEFINED";
     byte commandParam = 0;
 
     NimBLEClientCallbacks clientCallbacks;

@@ -39,6 +39,7 @@ MyTimer myTimerArr[3];
 VoltMater voltMater;
 LipoMater lipoMater;
 MyBLE myBleArr[3];
+//std::vector<const MyBLE *> *bleDevices;
 MyMqtt myMqtt;
 
 MyScanCallbacks myScanCallbacks;
@@ -88,7 +89,7 @@ void setup()
   {
     wifiMulti.addAP(configJson["wifi"][i]["ssid"], configJson["wifi"][i]["pass"]);
   }
-  
+
   DEBUG_PRINT("going to scann WiFi\n");
   wifiScann();
 
@@ -149,7 +150,6 @@ void setup()
   /** Start scanning for advertisers */
   pScan->start(myScanCallbacks.scanTimeMs);
   DEBUG_PRINT("Scanning for peripherals\n");
-  myMqtt.setup(configJson, wifiClient, myBleArr, &voltMater, &lipoMater);
 }
 
 void loop()
@@ -163,6 +163,8 @@ void loop()
     if (connectToServer())
     {
       DEBUG_PRINT("Success! we should now be getting notifications.\n");
+      myMqtt.setup(configJson, wifiClient, myBleArr, myScanCallbacks.numberOfAdvDevices,
+                   &voltMater, &lipoMater);
     }
     else
     {

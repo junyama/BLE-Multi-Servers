@@ -14,7 +14,7 @@
 class MyMqtt
 {
 private:
-    const char *TAG;
+    const char *TAG = "MyMqtt";
 
 public:
     bool mqttDisabled;
@@ -27,7 +27,7 @@ public:
     String mqttPass;         // const
     String systemTopic;      // const
     JsonDocument configJson; // const
-    MyBLE *myBleArr[3];
+    MyBLE *myBleArr;
     int numberOfBleDevices; // const
     JsonArray deviceList;   // const
     VoltMater *voltMater;
@@ -37,18 +37,39 @@ public:
     {
     }
 
-    void setup(JsonDocument configJson_, WiFiClient wifiClient, MyBLE *myBleArr, VoltMater *voltMater, LipoMater *lipoMater)
+    void setup(JsonDocument configJson_, WiFiClient wifiClient, MyBLE *myBleArr_, int numberOfBleDevices_, VoltMater *voltMater, LipoMater *lipoMater)
     {
         configJson = configJson_;
         String server = configJson["mqtt"]["server"];
         mqttServer = server;
-        int port = configJson["mqtt"]["port"];
-        mqttPort = port;
+        mqttPort = (int)configJson["mqtt"]["port"];
         String user = configJson["mqtt"]["user"];
         mqttUser = user;
         String pass = configJson["mqtt"]["password"];
         mqttPass = pass;
         deviceList = configJson["devices"].as<JsonArray>();
+        DEBUG_PRINT("deviceList.size() = %d\n", deviceList.size());
+        myBleArr = myBleArr_;
+        numberOfBleDevices = numberOfBleDevices_;
+        DEBUG_PRINT("numberOfBleDevices = %d\n", numberOfBleDevices);
+        for (int bleIndex = 0; bleIndex < numberOfBleDevices; bleIndex++)
+        {
+            for (int deviceIndex = 0; deviceIndex < deviceList.size(); deviceIndex++)
+            {
+                //DEBUG_PRINT("bleIndex = %d deviceIndex = %d\n", bleIndex, deviceIndex);
+                String mac = deviceList[deviceIndex]["mac"];
+                DEBUG_PRINT("myBleArr[%d].mac = %s, deviceList[%d][\"mac\"] = %s\n", bleIndex, myBleArr[bleIndex].mac.c_str(), deviceIndex, mac.c_str());
+                if (myBleArr[bleIndex].mac.equals(mac))
+                {
+                    String topic = deviceList[deviceIndex]["topic"];
+                    myBleArr[bleIndex].topic = topic;
+                    myBleArr[bleIndex].numberOfTemperature = (int)deviceList[deviceIndex]["numberOfTemperature"];
+                    DEBUG_PRINT("myBleArr[%d].topic = %s, numberOfTemperature = %d\n", bleIndex,
+                        myBleArr[bleIndex].topic.c_str(), myBleArr[bleIndex].numberOfTemperature);
+                    break;
+                }
+            }
+        }
 
         PubSubClient mqttClient(wifiClient);
     }
@@ -213,22 +234,22 @@ public:
         bool connectionStatus;
         for (int bleIndex = 0; bleIndex < numberOfBleDevices; bleIndex++)
         {
-            DEBUG_PRINT("myBleArr[%d].topic = %s", bleIndex, myBleArr[bleIndex]->topic.c_str());
-            // DEBUG_PRINT("myBleArr[%d].available = %d", bleIndex, myBleArr[bleIndex]->available);
-            // if (!myBleArr[bleIndex]->available)
+            DEBUG_PRINT("myBleArr[%d].topic = %s", bleIndex, myBleArr[bleIndex].topic.c_str());
+            // DEBUG_PRINT("myBleArr[%d].available = %d", bleIndex, myBleArr[bleIndex].available);
+            // if (!myBleArr[bleIndex].available)
             {
                 DEBUG_PRINT("myBleArr[%d] is not available so continue.", bleIndex);
                 continue;
             }
-            String deviceTopic = myBleArr[bleIndex]->topic;
-            chargeStatus = myBleArr[bleIndex]->packBasicInfo.MosfetStatus & 1;
-            dischargeStatus = (myBleArr[bleIndex]->packBasicInfo.MosfetStatus & 2) >> 1;
-            // connectionStatus = myBleArr[bleIndex]->isConnected();
+            String deviceTopic = myBleArr[bleIndex].topic;
+            chargeStatus = myBleArr[bleIndex].packBasicInfo.MosfetStatus & 1;
+            dischargeStatus = (myBleArr[bleIndex].packBasicInfo.MosfetStatus & 2) >> 1;
+            // connectionStatus = myBleArr[bleIndex].isConnected();
 
             if (String(topic_).equals("cmnd/" + deviceTopic + "getBmsState"))
             {
                 DEBUG_PRINT("responding to getBmsState of %s!", deviceTopic.c_str());
-                publishJson(("stat/" + deviceTopic + "RESULT").c_str(), myBleArr[bleIndex]->getState(), false);
+                publishJson(("stat/" + deviceTopic + "RESULT").c_str(), myBleArr[bleIndex].getState(), false);
                 return;
             }
             /*
@@ -244,13 +265,13 @@ public:
                 }
                 else if (msgStr.equals("0"))
                 {
-                    myBleArr[bleIndex]->disconnectFromServer();
+                    myBleArr[bleIndex].disconnectFromServer();
                     msgStr = "OFF";
                     connectionStatus = false;
                 }
                 else if (msgStr.equals("1"))
                 {
-                    myBleArr[bleIndex]->connectToServer();
+                    myBleArr[bleIndex].connectToServer();
                     msgStr = "ON";
                     connectionStatus = true;
                 }
@@ -280,19 +301,19 @@ public:
                     }
                     else if (msgStr.equals("0"))
                     {
-                        myBleArr[bleIndex]->mosfetCtrl(0, dischargeStatus);
+                        myBleArr[bleIndex].mosfetCtrl(0, dischargeStatus);
                         chargeStatus = 0;
                         msgStr = "OFF";
                     }
                     else if (msgStr.equals("1"))
                     {
-                        myBleArr[bleIndex]->mosfetCtrl(1, dischargeStatus);
+                        myBleArr[bleIndex].mosfetCtrl(1, dischargeStatus);
                         chargeStatus = 1;
                         msgStr = "ON";
                     }
                     else if (msgStr.equals("toggle"))
                     {
-                        myBleArr[bleIndex]->mosfetCtrl((chargeStatus ^ 1), dischargeStatus);
+                        myBleArr[bleIndex].mosfetCtrl((chargeStatus ^ 1), dischargeStatus);
                         chargeStatus = chargeStatus ^ 1;
                         msgStr = "TOGGLE";
                     }
@@ -315,19 +336,19 @@ public:
                     }
                     else if (msgStr.equals("0"))
                     {
-                        myBleArr[bleIndex]->mosfetCtrl(chargeStatus, 0);
+                        myBleArr[bleIndex].mosfetCtrl(chargeStatus, 0);
                         dischargeStatus = 0;
                         msgStr = "OFF";
                     }
                     else if (msgStr.equals("1"))
                     {
-                        myBleArr[bleIndex]->mosfetCtrl(chargeStatus, 1);
+                        myBleArr[bleIndex].mosfetCtrl(chargeStatus, 1);
                         dischargeStatus = 1;
                         msgStr = "ON";
                     }
                     else if (msgStr.equals("toggle"))
                     {
-                        myBleArr[bleIndex]->mosfetCtrl(chargeStatus, (dischargeStatus ^ 1));
+                        myBleArr[bleIndex].mosfetCtrl(chargeStatus, (dischargeStatus ^ 1));
                         dischargeStatus = dischargeStatus ^ 1;
                         msgStr = "TOGGLE";
                     }

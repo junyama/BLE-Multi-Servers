@@ -85,7 +85,6 @@ bool connectToServer()
       }
 
       pClient = NimBLEDevice::createClient();
-
       DEBUG_PRINT("New client created\n");
 
       pClient->setClientCallbacks(&clientCallbacks, false);
@@ -170,6 +169,8 @@ bool connectToServer()
     }
     myBleArr[i].deviceName = String(myScanCallbacks.advDevices[i]->getName().c_str());
     DEBUG_PRINT("myBleArr[%d].deviceName = %s\n", i, myBleArr[i].deviceName.c_str());
+    myBleArr[i].mac = String(myScanCallbacks.advDevices.at(i)->getAddress().toString().c_str());
+    DEBUG_PRINT("myBleArr[%d].mac = %s\n", i, myBleArr[i].mac.c_str());
     new (myTimerArr + i) MyTimer(initalMesurementTime, 5000);
     DEBUG_PRINT("myTimerArr[%d].lastMeasurment = %d, measurmentIntervalMs = %d\n", i, myTimerArr[i].lastMeasurment,
                 myTimerArr[i].measurmentIntervalMs);
