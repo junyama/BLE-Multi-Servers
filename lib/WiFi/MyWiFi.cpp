@@ -18,7 +18,6 @@ void wifiScann()
   }
   else
   {
-    Serial.print(n);
     DEBUG_PRINT("networks found\n");
     for (int i = 0; i < n; ++i)
     {

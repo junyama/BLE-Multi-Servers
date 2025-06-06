@@ -3,7 +3,7 @@
 
 #include "VoltMater.hpp"
 
-//using namespace MyLOG;
+// using namespace MyLOG;
 
 void VoltMater::setup(JsonDocument deviceObj)
 {
@@ -11,11 +11,11 @@ void VoltMater::setup(JsonDocument deviceObj)
     int i = 1;
     while (!vmeter.begin(&Wire, M5_UNIT_VMETER_I2C_ADDR, 32, 33, 400000U))
     {
-        DEBUG_PRINT("%d: Unit vmeter Init Fail", i);
-        //M5.Lcd.println("Unit vmeter Init Fail");
+        DEBUG_PRINT("%d: Unit vmeter Init Fail\n", i);
+        // M5.Lcd.println("Unit vmeter Init Fail");
         if (i > 2)
         {
-            DEBUG_PRINT("gave up using volt mater.");
+            DEBUG_PRINT("gave up using volt mater.\n");
             M5.Lcd.println("gave up using volt mater.");
             available = false;
             return;
@@ -52,6 +52,7 @@ bool VoltMater::timeout(int currentTime)
     if ((currentTime - lastMeasurment) >= measurmentIntervalMs)
     {
         DEBUG_PRINT("millis() - lastMeasument: %d - %d >= measurmentIntervalMs: %d\n", currentTime, lastMeasurment, measurmentIntervalMs);
+        lastMeasurment = currentTime;
         return true;
     }
     else
@@ -69,7 +70,9 @@ JsonDocument VoltMater::getState()
         calVoltage = floor(voltage / 10) / 100;
         doc["calVoltage"] = calVoltage;
         doc["rawADC"] = adc_raw;
-    } else {
+    }
+    else
+    {
         doc["calADC"] = 0.0;
         doc["calVoltage"] = 0.0;
         calVoltage = 0.0;

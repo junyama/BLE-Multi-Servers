@@ -17,7 +17,7 @@
 class LipoMater
 {
 private:
-    const String TAG = "LipoMater";
+    const char *TAG = "LipoMater";
 
 public:
     bool available = false;

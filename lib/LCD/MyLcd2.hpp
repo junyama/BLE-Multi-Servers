@@ -10,13 +10,14 @@
 class MyLcd2
 {
 private:
-	const String TAG = "MyLcd";
+	const char* TAG = "MyLcd";
 	int height;
 	int width;
 	bool isBatteryInfoShown = false;
 	typedef struct
 	{
 		String deviceName = "== UNKOWN ==";
+		String mac = "== UNKNOWN ==";
 		float volt = 0.0;	 // unit 1mV
 		float current = 0.0; // unit 1mA
 		float cellDiff = 0.0;

@@ -3,7 +3,7 @@
 
 #include "MyLcd2.hpp"
 
-//using namespace MyLOG;
+// using namespace MyLOG;
 
 MyLcd2::MyLcd2()
 {
@@ -31,9 +31,9 @@ void MyLcd2::println(String text)
 
 void MyLcd2::updateBmsInfo(int bmsIndex, float volt, float current, float cellDiff, float temparature1, float temparature2, int capacityRemain)
 {
-    //LOGD(TAG, "showBatteryInfo called with bmsIndex: " + String(bmsIndex));
-    //LOGD(TAG, "show volt: " + String(volt));
-    //LOGD(TAG, "show current: " + String(current));
+    // LOGD(TAG, "showBatteryInfo called with bmsIndex: " + String(bmsIndex));
+    // LOGD(TAG, "show volt: " + String(volt));
+    // LOGD(TAG, "show current: " + String(current));
 
     bmsInfoArr[bmsIndex].volt = volt;
     bmsInfoArr[bmsIndex].current = current;
@@ -47,13 +47,14 @@ void MyLcd2::updateBmsInfo(int bmsIndex, float volt, float current, float cellDi
 
 void MyLcd2::showBatteryInfo()
 {
-    //LOGD(TAG, "showBatteryInfo() called with bmsIndex: " + String(bmsIndexShown));
+    // LOGD(TAG, "showBatteryInfo() called with bmsIndex: " + String(bmsIndexShown));
     char str[16];
     M5.Lcd.clear();
     M5.Lcd.setTextSize(1);
     M5.Lcd.setCursor(10, 1, 2);
     M5.Lcd.setTextColor(WHITE, BLACK);
     M5.Lcd.print(bmsInfoArr[bmsIndexShown].deviceName);
+    M5.Lcd.print("(" + bmsInfoArr[bmsIndexShown].mac + ")");
     M5.Lcd.setCursor(1, 17, 7);
     M5.Lcd.setTextColor(GREEN, BLACK);
     sprintf(str, "%05.2f", bmsInfoArr[bmsIndexShown].volt / 1000);

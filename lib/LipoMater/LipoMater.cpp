@@ -3,7 +3,7 @@
 
 #include "LipoMater.hpp"
 
-//using namespace MyLOG;
+// using namespace MyLOG;
 
 void LipoMater::setup(JsonDocument deviceObj)
 {
@@ -21,6 +21,7 @@ bool LipoMater::timeout(int currentTime)
     if ((currentTime - lastMeasurment) >= measurmentIntervalMs)
     {
         DEBUG_PRINT("millis() - lastMeasument: %d - %d >= measurmentIntervalMs: %d\n", currentTime, lastMeasurment, measurmentIntervalMs);
+        lastMeasurment = currentTime;
         return true;
     }
     else

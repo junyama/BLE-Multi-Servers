@@ -17,7 +17,7 @@
 class VoltMater
 {
 private:
-    const String TAG = "VoltMater";
+    const char *TAG = "VoltMater";
     ADS1115 vmeter;
     float resolution = 0.0;
     float calibration_factor = 0.0;
