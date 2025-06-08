@@ -22,6 +22,7 @@
 #include "MyLcd2.hpp"
 #include "MyBLE.cpp"
 #include "MyScanCallBacks.cpp"
+#include "MyClientCallBacks.cpp"
 #include "MyLog.cpp"
 #include "MyTimer.cpp"
 #include "MySdCard.hpp"
@@ -48,7 +49,7 @@ MyBLE myBleArr[3];
 // MyMqtt myMqtt;
 
 MyScanCallbacks myScanCallbacks;
-NimBLEClientCallbacks clientCallbacks;
+MyClientCallbacks clientCallbacks(myBleArr);
 
 void loadConfig();
 void saveConfig();
@@ -306,11 +307,13 @@ void mqttCallback(char *topic_, byte *payload, unsigned int length)
   {
     DEBUG_PRINT("myBleArr[%d].topic = %s\n", bleIndex, myBleArr[bleIndex].topic.c_str());
     // DEBUG_PRINT("myBleArr[%d].available = %d", bleIndex, myBleArr[bleIndex].available);
-    // if (!myBleArr[bleIndex].available)
+    /*
+    if (!myBleArr[bleIndex].available)
     {
       DEBUG_PRINT("myBleArr[%d] is not available so continue.\n", bleIndex);
       continue;
     }
+    */
     String deviceTopic = myBleArr[bleIndex].topic;
     chargeStatus = myBleArr[bleIndex].packBasicInfo.MosfetStatus & 1;
     dischargeStatus = (myBleArr[bleIndex].packBasicInfo.MosfetStatus & 2) >> 1;
@@ -318,45 +321,10 @@ void mqttCallback(char *topic_, byte *payload, unsigned int length)
 
     if (String(topic_).equals("cmnd/" + deviceTopic + "getBmsState"))
     {
-      DEBUG_PRINT("responding to getBmsState of %s!\n", deviceTopic.c_str());
+      DEBUG_PRINT("responding to getBmsState of %s\n", deviceTopic.c_str());
       publishJson(("stat/" + deviceTopic + "RESULT").c_str(), myBleArr[bleIndex].getState(), false);
       return;
     }
-    /*
-    if (String(topic_).equals("cmnd/" + deviceTopic + "connection"))
-    {
-        DEBUG_PRINT("connection status: %d", connectionStatus);
-        if (msgStr.equals(""))
-        {
-            if (connectionStatus)
-                msgStr = "ON";
-            else
-                msgStr = "OFF";
-        }
-        else if (msgStr.equals("0"))
-        {
-            myBleArr[bleIndex].disconnectFromServer();
-            msgStr = "OFF";
-            connectionStatus = false;
-        }
-        else if (msgStr.equals("1"))
-        {
-            myBleArr[bleIndex].connectToServer();
-            msgStr = "ON";
-            connectionStatus = true;
-        }
-        else
-        {
-            msgStr = "INVALID";
-        }
-        DEBUG_PRINT("responding to connection");
-        publish(("stat/" + deviceTopic + "CONNECTION").c_str(), msgStr.c_str());
-        msgStr = "{\"connectionStatus\": " + String(connectionStatus) + "}";
-        publish(("stat/" + deviceTopic + "RESULT").c_str(), msgStr.c_str());
-        publish(("stat/" + deviceTopic + "STATE").c_str(), msgStr.c_str());
-        return;
-    }*/
-
     if ((String(topic_).equals("cmnd/" + deviceTopic + "charge")) || ((String(topic_).equals("cmnd/" + deviceTopic + "discharge"))))
     {
       if (String(topic_).equals("cmnd/" + deviceTopic + "charge"))
@@ -439,7 +407,7 @@ void mqttCallback(char *topic_, byte *payload, unsigned int length)
 
 /** Notification / Indication receiving handler callback */
 void notifyCB(NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify);
-int getIndexOfMyBleArr(NimBLERemoteCharacteristic *pRemoteCharacteristic);
+int getIndexOfMyBleArr(NimBLEClient *client);
 
 /** Handles the provisioning of clients and connects / interfaces with the server */
 bool connectToServer();
@@ -551,7 +519,6 @@ void loop()
       {
         reConnectMqttServer();
       }
-      mqttClient.loop();
       publishHaDiscovery();
     }
     else
@@ -570,6 +537,8 @@ void loop()
   // delay(3000);
 
   // DEBUG_PRINT("\n");
+  // if (clientCallbacks.BLE_client_connected)
+  //{
   for (int j = 0; j < myScanCallbacks.numberOfAdvDevices; j++)
   {
     if (myTimer.timeout(millis()))
@@ -627,4 +596,8 @@ void loop()
     myLcd.updateLipoInfo();
     publishJson("stat/" + lipoMater.topic + "STATE", lipoMater.getState(), true);
   }
+  //}
+  // else
+  // myScanCallbacks.doConnect = true;
+  mqttClient.loop();
 }

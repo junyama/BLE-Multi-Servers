@@ -10,9 +10,10 @@ extern MyBLE myBleArr[3];
 extern NimBLEClientCallbacks clientCallbacks;
 extern MyTimer myTimerArr[3];
 
-int getIndexOfMyBleArr(NimBLERemoteCharacteristic *pRemoteCharacteristic)
+//int getIndexOfMyBleArr(NimBLERemoteCharacteristic *pRemoteCharacteristic)
+int getIndexOfMyBleArr(NimBLEClient *client)
 {
-  auto peerAddress = pRemoteCharacteristic->getClient()->getPeerAddress();
+  auto peerAddress = client->getPeerAddress();
   for (int i = 0; i < myScanCallbacks.numberOfAdvDevices; i++)
   {
     if (peerAddress == myBleArr[i].pChr_rx->getClient()->getPeerAddress())
@@ -33,7 +34,7 @@ void notifyCB(NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData,
   str += ", Characteristic = " + pRemoteCharacteristic->getUUID().toString();
   str += ", Value = " + std::string((char *)pData, length);
   DEBUG_PRINT("%s\n", str.c_str());
-  myBleArr[getIndexOfMyBleArr(pRemoteCharacteristic)].bleCollectPacket((char *)pData, length);
+  myBleArr[getIndexOfMyBleArr(pRemoteCharacteristic->getClient())].bleCollectPacket((char *)pData, length);
 }
 
 bool connectToServer()
@@ -45,7 +46,7 @@ bool connectToServer()
   // Serial.printf("numberOfAdvDevices = %d\n", numberOfAdvDevices);
 
   unsigned long initalMesurementTime = 0;
-  for (int i = 0; i < myScanCallbacks.advDevices.size(); i++)
+  for (int i = 0; i < myScanCallbacks.numberOfAdvDevices; i++)
   {
     /** Check if we have a client we should reuse first **/
     if (NimBLEDevice::getCreatedClientCount())

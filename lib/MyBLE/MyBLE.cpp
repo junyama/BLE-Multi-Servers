@@ -75,17 +75,70 @@ public:
         doc["batteryChargePercentage"] = String(packBasicInfo.CapacityRemainPercent);
         doc["chargeStatus"] = String(packBasicInfo.MosfetStatus & 1);
         doc["dischargeStatus"] = String((packBasicInfo.MosfetStatus & 2) >> 1);
-        //doc["connectionStatus"] = String(isConnected());
-        // JsonDocument doc2 = voltMater.getVoltage();
-        // doc["calVoltage"] = doc2["calVoltage"];
-        // doc["lipoVoltage"] = String(M5.Axp.GetBatVoltage());
-        // doc["lipoCurrent"] = String(M5.Axp.GetBatCurrent());
+        // doc["connectionStatus"] = String(isConnected());
+        //  JsonDocument doc2 = voltMater.getVoltage();
+        //  doc["calVoltage"] = doc2["calVoltage"];
+        //  doc["lipoVoltage"] = String(M5.Axp.GetBatVoltage());
+        //  doc["lipoCurrent"] = String(M5.Axp.GetBatCurrent());
         return doc;
     }
-    
+
+    byte calcChecksum(byte *packet)
+    {
+        /*
+        if (packet == nullptr)
+        {
+            return false;
+        }
+        */
+
+        bmsPacketHeaderStruct *pHeader = (bmsPacketHeaderStruct *)packet;
+        int checksumLen = pHeader->dataLen + 2; // status + data len + data
+
+        /*
+        if (pHeader->start != 0xDD)
+        {
+            return false;
+        }
+        */
+
+        int offset = 2; // header 0xDD and command type are skipped
+
+        byte checksum = 0;
+        for (int i = 0; i < checksumLen; i++)
+        {
+            checksum += packet[offset + i];
+        }
+
+        // printf("checksum: %x\n", checksum);
+
+        return checksum = ((checksum ^ 0xFF) + 1) & 0xFF;
+        // printf("checksum v2: %x\n", checksum);
+    }
+
+    void bmsMosfetCtrl()
+    {
+        DEBUG_PRINT("bmsMosfetCtrl: %s", commandParam);
+        byte mosfetParam = commandParam ^ 3;
+        uint8_t packet[9] = {0xdd, 0x5a, 0xe1, 0x02, 0x00, 0x00, 0xff, 0x00, 0x77};
+        packet[5] = mosfetParam;
+        packet[7] = calcChecksum(packet);
+        sendCommand(pChr_tx, packet, sizeof(packet));
+
+        char buff[5];
+        String printStr = "";
+        for (byte i = 0; i < 9; i++)
+        {
+            sprintf(buff, "0x%x ", packet[i]);
+            String str = buff;
+            printStr += str;
+        }
+        DEBUG_PRINT("%s sent", printStr.c_str());
+    }
+
     void mosfetCtrl(int chargeStatus, int dischargeStatus)
     {
-        // LOGD(TAG, "/mosfetCtrl called");
+        DEBUG_PRINT("/mosfetCtrl(%d, %d) called\n", chargeStatus, dischargeStatus);
         ctrlCommand = 1;
         commandParam = (byte)chargeStatus + (byte)dischargeStatus * 2;
     }
