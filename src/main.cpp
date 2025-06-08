@@ -57,7 +57,19 @@ void wifiScann();
 int wifiConnect();
 void setupDateTime();
 
-// void mqttSetup();
+bool mqttDisabled;
+// PubSubClient *mqttClient;
+const int mqttMessageSizeLimit = 256; // const
+String mqttServer;
+JsonArray mqttServerArr;
+int mqttPort;         // const
+String mqttUser;      // const
+String mqttPass;      // const
+String systemTopic;   // const
+JsonArray deviceList; // const
+
+// void mqttServerSetup();
+// void mqttDeviceSetup();
 // void reConnectMqttServer();
 void publish(String topic, String message);
 // void publishJson(String topic, JsonDocument doc, bool retained);
@@ -65,34 +77,32 @@ void publish(String topic, String message);
 // void publishHaDiscovery2(JsonDocument deviceObj);
 void mqttCallback(char *topic_, byte *payload, unsigned int length);
 
-bool mqttDisabled;
-// PubSubClient *mqttClient;
-const int mqttMessageSizeLimit = 256; // const
-String mqttServer;
-String mqttServerArr[3];
-int mqttPort;         // const
-String mqttUser;      // const
-String mqttPass;      // const
-String systemTopic;   // const
-JsonArray deviceList; // const
-
-void mqttSetup()
+void mqttServerSetup()
 {
+  DEBUG_PRINT("mqttServerSetup() called\n");
   String server = configJson["mqtt"]["server"];
   mqttServer = server;
-  // myLcd.println("Going to setup BLE\n");
+  mqttServerArr = configJson["mqtt"]["servers"].as<JsonArray>();
   mqttPort = (int)configJson["mqtt"]["port"];
   String user = configJson["mqtt"]["user"];
   mqttUser = user;
   String pass = configJson["mqtt"]["password"];
   mqttPass = pass;
+  String topic = configJson["mqtt"]["topic"];
+  systemTopic = topic;
+
   mqttClient.setServer(mqttServer.c_str(), mqttPort);
   mqttClient.setCallback(mqttCallback);
+}
+
+void mqttDeviceSetup()
+{
+  DEBUG_PRINT("mqttDeviceSetup() called\n");
   deviceList = configJson["devices"].as<JsonArray>();
-  DEBUG_PRINT("deviceList.size() = %d\n", deviceList.size());
+  DEBUG_PRINT("mqttDeviceSetup: deviceList.size() = %d\n", deviceList.size());
   // myBleArr = myBleArr_;
   int numberOfBleDevices = myScanCallbacks.numberOfAdvDevices;
-  DEBUG_PRINT("numberOfBleDevices = %d\n", numberOfBleDevices);
+  DEBUG_PRINT("mqttDeviceSetup: numberOfBleDevices = %d\n", numberOfBleDevices);
   for (int deviceIndex = 0; deviceIndex < deviceList.size(); deviceIndex++)
   {
     JsonDocument deviceObj = deviceList[deviceIndex];
@@ -103,13 +113,13 @@ void mqttSetup()
       {
         // DEBUG_PRINT("bleIndex = %d deviceIndex = %d\n", bleIndex, deviceIndex);
         String mac = deviceObj["mac"];
-        DEBUG_PRINT("myBleArr[%d].mac = %s, deviceList[%d][\"mac\"] = %s\n", bleIndex, myBleArr[bleIndex].mac.c_str(), deviceIndex, mac.c_str());
+        DEBUG_PRINT("mqttDeviceSetup: myBleArr[%d].mac = %s, deviceList[%d][\"mac\"] = %s\n", bleIndex, myBleArr[bleIndex].mac.c_str(), deviceIndex, mac.c_str());
         if (myBleArr[bleIndex].mac.equals(mac))
         {
           String topic = deviceObj["mqtt"]["topic"];
           myBleArr[bleIndex].topic = topic;
           myBleArr[bleIndex].numberOfTemperature = (int)deviceObj["numberOfTemperature"];
-          DEBUG_PRINT("myBleArr[%d].topic = %s, numberOfTemperature = %d\n", bleIndex,
+          DEBUG_PRINT("mqttDeviceSetup: myBleArr[%d].topic = %s, numberOfTemperature = %d\n", bleIndex,
                       myBleArr[bleIndex].topic.c_str(), myBleArr[bleIndex].numberOfTemperature);
           break;
         }
@@ -126,13 +136,13 @@ void mqttSetup()
       lipoMater.setup(deviceObj);
     }
   }
-  // PubSubClient mqttClient(wifiClient);
 }
 
 void reConnectMqttServer()
 {
   DEBUG_PRINT("reConnectMqttServer() called\n");
   int i = 1;
+  int j = 0;
   while (!mqttClient.connected())
   {
     DEBUG_PRINT("Attempting MQTT connection...\n");
@@ -140,7 +150,10 @@ void reConnectMqttServer()
     String clientId = "M5Stack-";
     clientId += String(random(0xffff), HEX);
     // Attempt to connect.
-    DEBUG_PRINT("mqttUser: %s, mqttPass: %s\n", mqttUser.c_str(), mqttPass.c_str());
+    String str = mqttServerArr[j];
+    mqttServer = str;
+    DEBUG_PRINT("mqttServer: %s, mqttUser: %s, mqttPass: %s\n", mqttServer.c_str(), mqttUser.c_str(), mqttPass.c_str());
+    mqttClient.setServer(mqttServer.c_str(), mqttPort);
     bool isConnected = mqttClient.connect(clientId.c_str(), mqttUser.c_str(), mqttPass.c_str());
     // if (client->connect(clientId.c_str()))
     if (isConnected)
@@ -181,7 +194,7 @@ void reConnectMqttServer()
       if (i == 3)
       {
         DEBUG_PRINT("failed to reConnectMqttServer a few times. Use the second mqttServer\n");
-        String mqttServerConf2 = configJson["mqtt"]["server2"];
+        String mqttServerConf2 = mqttServerArr[++j];
         if (mqttServerConf2 != "null")
         {
           mqttServer = mqttServerConf2;
@@ -471,7 +484,7 @@ void setup()
   setupDateTime();
   myLcd.println("setup date done");
 
-  mqttSetup();
+  mqttServerSetup();
 
   powerSaving.disable();
 
@@ -533,8 +546,13 @@ void loop()
     if (connectToServer())
     {
       DEBUG_PRINT("Success! we should now be getting notifications.\n");
-      // setup(configJson, &mqttClient, myBleArr, myScanCallbacks.numberOfAdvDevices,&voltMater, &lipoMater);
-      // mqttClient.setCallback(mqttCallback);
+      mqttDeviceSetup();
+      if (!mqttClient.connected())
+      {
+        reConnectMqttServer();
+      }
+      mqttClient.loop();
+      publishHaDiscovery();
     }
     else
     {
@@ -563,6 +581,7 @@ void loop()
                           myBleArr[j].packCellInfo.CellDiff,
                           myBleArr[j].packBasicInfo.Temp1, myBleArr[j].packBasicInfo.Temp2,
                           myBleArr[j].packBasicInfo.CapacityRemainPercent);
+      publishJson("stat/" + myBleArr[j].topic + "STATE", myBleArr[j].getState(), true);
     }
 
     if (myBleArr[j].pChr_tx)
@@ -601,16 +620,11 @@ void loop()
   if (voltMater.available && voltMater.timeout(millis()))
   {
     myLcd.updateVoltMaterInfo(voltMater.calVoltage);
-    // publishJson("stat/" + voltMater.topic + "STATE", voltMater.getState(), true);
+    publishJson("stat/" + voltMater.topic + "STATE", voltMater.getState(), true);
   }
   if (lipoMater.available && lipoMater.timeout(millis()))
   {
     myLcd.updateLipoInfo();
-    // publishJson("stat/" + lipoMater.topic + "STATE", lipoMater.getState(), true);
+    publishJson("stat/" + lipoMater.topic + "STATE", lipoMater.getState(), true);
   }
-  if (!mqttClient.connected())
-  {
-    reConnectMqttServer();
-  }
-  mqttClient.loop();
 }
