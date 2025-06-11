@@ -9,19 +9,22 @@ private:
 
 public:
     MyBLE *myBleArr;
+    std::vector<MyBLE> *bleDevices;
     int numberOfAdvDevices;
-    bool *BLE_client_connected[3];
 
-    MyClientCallbacks(MyBLE *myBleArr_) : myBleArr(myBleArr_)
+    MyClientCallbacks(MyBLE *myBleArr_, std::vector<MyBLE> *bleDevices_) : myBleArr(myBleArr_), bleDevices(bleDevices_)
     {
     }
 
-    int getIndexOfMyBleArr(NimBLEClient *client)
+    int getIndexOfMyBleArr(NimBLEClient *pClient)
     {
-        auto peerAddress = client->getPeerAddress();
+        String peerAddress = String(pClient->getPeerAddress().toString().c_str());
+        DEBUG_PRINT("numberOfAdvDevices = %d\n", numberOfAdvDevices);
         for (int i = 0; i < numberOfAdvDevices; i++)
         {
-            if (peerAddress == myBleArr[i].pChr_rx->getClient()->getPeerAddress())
+            String address = myBleArr[i].mac;
+            DEBUG_PRINT("myBleArr[%d].mac = %s\n", i, address.c_str());
+            if (peerAddress.equals(address))
             {
                 return i;
             }
@@ -31,14 +34,17 @@ public:
 
     void onConnect(NimBLEClient *pClient) override
     {
-        // BLE_client_connected = true;
-        DEBUG_PRINT("Connected\n");
+        DEBUG_PRINT("Connected to %s\n", pClient->getPeerAddress().toString().c_str());
+        int index = getIndexOfMyBleArr(pClient);
+        myBleArr[index].connected = true;
     }
 
     void onDisconnect(NimBLEClient *pClient, int reason) override
     {
-        // BLE_client_connected = false;
-        DEBUG_PRINT("%s Disconnected, reason = %d - Starting scan\n", pClient->getPeerAddress().toString().c_str(), reason);
+        //myBleArr[getIndexOfMyBleArr(pClient)].connected = false;
+        DEBUG_PRINT("Disconnected from %s, reason = %d\n", pClient->getPeerAddress().toString().c_str(), reason);
+        int index = getIndexOfMyBleArr(pClient);
+        myBleArr[index].connected = false;
         // NimBLEDevice::getScan()->start(scanTimeMs, false, true);
     }
 

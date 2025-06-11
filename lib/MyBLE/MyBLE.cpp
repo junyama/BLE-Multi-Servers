@@ -44,24 +44,72 @@ typedef struct
 
 class MyBLE
 {
-public:
+private:
     const char *TAG = "MyBLE";
 
+public:
     NimBLERemoteCharacteristic *pChr_rx = nullptr;
     NimBLERemoteCharacteristic *pChr_tx = nullptr;
     NimBLEAddress peerAddress;
     bool toggle = false;
     byte ctrlCommand = 0;
     bool newPacketReceived = false;
-    packBasicInfoStruct packBasicInfo; // here shall be the latest data got from BMS
-    packCellInfoStruct packCellInfo;   // here shall be the latest data got from BMS
+    packBasicInfoStruct packBasicInfo = {}; // here shall be the latest data got from BMS
+    packCellInfoStruct packCellInfo = {};   // here shall be the latest data got from BMS
     int numberOfTemperature = 2;
     String deviceName = "UNKNOWN";
-    String mac;
+    String mac = "UNKNOWN";
     String topic = "NOT_DEFINED";
     byte commandParam = 0;
+    bool connected = false;
 
     NimBLEClientCallbacks clientCallbacks;
+
+    MyBLE()
+    {
+    }
+
+    MyBLE(NimBLEAddress peerAddress_) : peerAddress(peerAddress_)
+    {
+    }
+
+    MyBLE(const MyBLE &obj) : peerAddress(obj.peerAddress)
+    {
+    }
+
+    void processCtrlCommand()
+    {
+        DEBUG_PRINT("processCtrlCommand called with ctrlCommand: %d\n", ctrlCommand);
+        char buff[256];
+        sprintf(buff, "command to %s: Service = %s, Charastaric = %s\n",
+                pChr_tx->getClient()->getPeerAddress().toString().c_str(),
+                pChr_tx->getRemoteService()->getUUID().toString().c_str(),
+                pChr_tx->getUUID().toString().c_str());
+        String string;
+        switch (ctrlCommand) // ctrlCommand or alternate Info3 and Info4
+        {
+        case 1:
+            bmsMosfetCtrl();
+            ctrlCommand = 0;
+            newPacketReceived = false;
+            break;
+        /*default:
+            if (toggle)
+            {
+                bmsGetInfo3();
+                string = "Send bmsGetInfo3 command to " + String(buff) + "\n";
+                DEBUG_PRINT(string.c_str());
+                newPacketReceived = false;
+            }
+            else
+            {
+                bmsGetInfo4();
+                string = "Send bmsGetInfo4 command to " + String(buff) + "\n";
+                DEBUG_PRINT(string.c_str());
+                newPacketReceived = false;
+            }*/
+        }
+    }
 
     JsonDocument getState()
     {
@@ -118,7 +166,7 @@ public:
 
     void bmsMosfetCtrl()
     {
-        DEBUG_PRINT("bmsMosfetCtrl: %s", commandParam);
+        DEBUG_PRINT("bmsMosfetCtrl: %d\n", commandParam);
         byte mosfetParam = commandParam ^ 3;
         uint8_t packet[9] = {0xdd, 0x5a, 0xe1, 0x02, 0x00, 0x00, 0xff, 0x00, 0x77};
         packet[5] = mosfetParam;
@@ -133,12 +181,12 @@ public:
             String str = buff;
             printStr += str;
         }
-        DEBUG_PRINT("%s sent", printStr.c_str());
+        DEBUG_PRINT("%s sent\n", printStr.c_str());
     }
 
     void mosfetCtrl(int chargeStatus, int dischargeStatus)
     {
-        DEBUG_PRINT("/mosfetCtrl(%d, %d) called\n", chargeStatus, dischargeStatus);
+        DEBUG_PRINT("mosfetCtrl(%d, %d) called\n", chargeStatus, dischargeStatus);
         ctrlCommand = 1;
         commandParam = (byte)chargeStatus + (byte)dischargeStatus * 2;
     }
@@ -393,13 +441,12 @@ public:
             newPacketReceived = true;
             break;
         }
-        /*case cMOSFETCtrl:
+        case cMOSFETCtrl:
         {
-            MyLOG::DISABLE_LOGD = false;
-            LOGD(TAG, "bmsProcessPacket, process MOSFETCtrl");
+            DEBUG_PRINT("bmsProcessPacket, process MOSFETCtrl\n");
             newPacketReceived = true;
             break;
-        }*/
+        }
         case cDeviceName5:
         {
             // MyLOG::DISABLE_LOGD = false;

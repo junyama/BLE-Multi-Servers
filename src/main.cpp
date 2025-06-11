@@ -23,6 +23,7 @@
 #include "MyBLE.cpp"
 #include "MyScanCallBacks.cpp"
 #include "MyClientCallBacks.cpp"
+
 #include "MyLog.cpp"
 #include "MyTimer.cpp"
 #include "MySdCard.hpp"
@@ -45,11 +46,11 @@ MyTimer myTimerArr[3];
 VoltMater voltMater;
 LipoMater lipoMater;
 MyBLE myBleArr[3];
-// std::vector<const MyBLE *> *bleDevices;
+std::vector<MyBLE> *bleDevices;
 // MyMqtt myMqtt;
 
-MyScanCallbacks myScanCallbacks;
-MyClientCallbacks clientCallbacks(myBleArr);
+MyScanCallbacks myScanCallbacks(myBleArr, bleDevices);
+MyClientCallbacks myClientCallbacks(myBleArr, bleDevices);
 
 void loadConfig();
 void saveConfig();
@@ -413,7 +414,7 @@ int getIndexOfMyBleArr(NimBLEClient *client);
 bool connectToServer();
 
 void detectButton(int numberOfPages);
-void printBatteryInfo(MyBLE myBle);
+void printBatteryInfo(int bleIndex, int numberOfAdvDevices, MyBLE myBle);
 
 void setup()
 {
@@ -511,6 +512,7 @@ void loop()
   {
     myScanCallbacks.doConnect = false;
     DEBUG_PRINT("Found a device we want to connect to, do it now.\n");
+    myClientCallbacks.numberOfAdvDevices = myScanCallbacks.numberOfAdvDevices;
     if (connectToServer())
     {
       DEBUG_PRINT("Success! we should now be getting notifications.\n");
@@ -537,54 +539,81 @@ void loop()
   // delay(3000);
 
   // DEBUG_PRINT("\n");
-  // if (clientCallbacks.BLE_client_connected)
-  //{
-  for (int j = 0; j < myScanCallbacks.numberOfAdvDevices; j++)
-  {
-    if (myTimer.timeout(millis()))
-    {
-      printBatteryInfo(myBleArr[j]);
-      myLcd.bmsInfoArr[j].deviceName = myBleArr[j].deviceName;
-      myLcd.bmsInfoArr[j].mac = myBleArr[j].mac;
-      myLcd.updateBmsInfo(j, myBleArr[j].packBasicInfo.Volts, myBleArr[j].packBasicInfo.Amps,
-                          myBleArr[j].packCellInfo.CellDiff,
-                          myBleArr[j].packBasicInfo.Temp1, myBleArr[j].packBasicInfo.Temp2,
-                          myBleArr[j].packBasicInfo.CapacityRemainPercent);
-      publishJson("stat/" + myBleArr[j].topic + "STATE", myBleArr[j].getState(), true);
-    }
 
-    if (myBleArr[j].pChr_tx)
-      if (myTimerArr[j].timeout(millis()))
+  //{
+  for (int bleIndex = 0; bleIndex < myScanCallbacks.numberOfAdvDevices; bleIndex++)
+  {
+    if (!myBleArr[bleIndex].connected)
+    {
+      DEBUG_PRINT("myBleArr[%d].connected == false\n", bleIndex);
+      continue;
+    }
+    /**/
+    if (myTimer.timeout(millis())) // timeout to process a command and show status updated by asynchronus notifications
+    {
+      /*
+      myBleArr[bleIndex].processCtrlCommand();
+
+      printBatteryInfo(bleIndex, myScanCallbacks.numberOfAdvDevices, myBleArr[bleIndex]);
+      myLcd.bmsInfoArr[bleIndex].deviceName = myBleArr[bleIndex].deviceName;
+      DEBUG_PRINT("loop: myLcd.bmsInfoArr[%d].deviceName: %s\n", bleIndex, myLcd.bmsInfoArr[bleIndex].deviceName.c_str());
+      myLcd.bmsInfoArr[bleIndex].mac = myBleArr[bleIndex].mac;
+      myLcd.updateBmsInfo(bleIndex, myBleArr[bleIndex].packBasicInfo.Volts, myBleArr[bleIndex].packBasicInfo.Amps,
+                          myBleArr[bleIndex].packCellInfo.CellDiff,
+                          myBleArr[bleIndex].packBasicInfo.Temp1, myBleArr[bleIndex].packBasicInfo.Temp2,
+                          myBleArr[bleIndex].packBasicInfo.CapacityRemainPercent);
+      publishJson("stat/" + myBleArr[bleIndex].topic + "STATE", myBleArr[bleIndex].getState(), true);
+      */
+    }
+    
+    if (myBleArr[bleIndex].pChr_tx)
+    {
+      if (myTimerArr[bleIndex].timeout(millis())) // timeout to send commands
       {
+        {
+          myBleArr[bleIndex].processCtrlCommand();
+
+          printBatteryInfo(bleIndex, myScanCallbacks.numberOfAdvDevices, myBleArr[bleIndex]);
+          myLcd.bmsInfoArr[bleIndex].deviceName = myBleArr[bleIndex].deviceName;
+          DEBUG_PRINT("loop: myLcd.bmsInfoArr[%d].deviceName: %s\n", bleIndex, myLcd.bmsInfoArr[bleIndex].deviceName.c_str());
+          myLcd.bmsInfoArr[bleIndex].mac = myBleArr[bleIndex].mac;
+          myLcd.updateBmsInfo(bleIndex, myBleArr[bleIndex].packBasicInfo.Volts, myBleArr[bleIndex].packBasicInfo.Amps,
+                              myBleArr[bleIndex].packCellInfo.CellDiff,
+                              myBleArr[bleIndex].packBasicInfo.Temp1, myBleArr[bleIndex].packBasicInfo.Temp2,
+                              myBleArr[bleIndex].packBasicInfo.CapacityRemainPercent);
+          publishJson("stat/" + myBleArr[bleIndex].topic + "STATE", myBleArr[bleIndex].getState(), true);
+        }
+
         {
           char buff[256];
           sprintf(buff, "command to %s: Service = %s, Charastaric = %s\n",
-                  myBleArr[j].pChr_tx->getClient()->getPeerAddress().toString().c_str(),
-                  myBleArr[j].pChr_tx->getRemoteService()->getUUID().toString().c_str(),
-                  myBleArr[j].pChr_tx->getUUID().toString().c_str());
-          // myBleArr[j].bmsGetInfo5();
+                  myBleArr[bleIndex].pChr_tx->getClient()->getPeerAddress().toString().c_str(),
+                  myBleArr[bleIndex].pChr_tx->getRemoteService()->getUUID().toString().c_str(),
+                  myBleArr[bleIndex].pChr_tx->getUUID().toString().c_str());
+          // myBleArr[bleIndex].bmsGetInfo5();
           String string = "Send bmsGetInfo5 command to " + String(buff) + "\n";
           // DEBUG_PRINT(string.c_str());
           // delay(1000);
           // DEBUG_PRINT("\n");
-          if (myBleArr[j].toggle)
+          if (myBleArr[bleIndex].toggle)
           {
-            myBleArr[j].bmsGetInfo3();
+            myBleArr[bleIndex].bmsGetInfo3();
             string = "Send bmsGetInfo3 command to " + String(buff) + "\n";
             DEBUG_PRINT(string.c_str());
           }
           else
           {
-            myBleArr[j].bmsGetInfo4();
+            myBleArr[bleIndex].bmsGetInfo4();
             string = "Send bmsGetInfo4 command to " + String(buff) + "\n";
             DEBUG_PRINT(string.c_str());
           }
         }
       }
-      else
-      {
-        // DEBUG_PRINT("myBleArr[%d].pChr_tx == null\n", j);
-      }
+    }
+    else
+    {
+      DEBUG_PRINT("myBleArr[%d].pChr_tx == null\n", bleIndex);
+    }
   }
   if (voltMater.available && voltMater.timeout(millis()))
   {

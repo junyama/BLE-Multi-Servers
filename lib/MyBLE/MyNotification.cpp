@@ -1,13 +1,14 @@
 #include <NimBLEDevice.h>
 #include "MyBLE.cpp"
 #include "MyScanCallbacks.cpp"
+#include "MyClientCallbacks.cpp"
 #include "MyLog.cpp"
 #include "MyTimer.cpp"
 
 extern char *TAG;
 extern MyScanCallbacks myScanCallbacks;
 extern MyBLE myBleArr[3];
-extern NimBLEClientCallbacks clientCallbacks;
+extern MyClientCallbacks myClientCallbacks;
 extern MyTimer myTimerArr[3];
 
 //int getIndexOfMyBleArr(NimBLERemoteCharacteristic *pRemoteCharacteristic)
@@ -88,7 +89,7 @@ bool connectToServer()
       pClient = NimBLEDevice::createClient();
       DEBUG_PRINT("New client created\n");
 
-      pClient->setClientCallbacks(&clientCallbacks, false);
+      pClient->setClientCallbacks(&myClientCallbacks, false);
       /**
        *  Set initial connection parameters:
        *  These settings are safe for 3 clients to connect reliably, can go faster if you have less
@@ -168,10 +169,12 @@ bool connectToServer()
       DEBUG_PRINT("serviceUUID not found.\n");
       return false;
     }
+    /*
     myBleArr[i].deviceName = String(myScanCallbacks.advDevices[i]->getName().c_str());
     DEBUG_PRINT("myBleArr[%d].deviceName = %s\n", i, myBleArr[i].deviceName.c_str());
     myBleArr[i].mac = String(myScanCallbacks.advDevices.at(i)->getAddress().toString().c_str());
     DEBUG_PRINT("myBleArr[%d].mac = %s\n", i, myBleArr[i].mac.c_str());
+    */
     new (myTimerArr + i) MyTimer(initalMesurementTime, 5000);
     DEBUG_PRINT("myTimerArr[%d].lastMeasurment = %d, measurmentIntervalMs = %d\n", i, myTimerArr[i].lastMeasurment,
                 myTimerArr[i].measurmentIntervalMs);
@@ -182,9 +185,9 @@ bool connectToServer()
   return true;
 }
 
-void printBatteryInfo(MyBLE myBle)
+void printBatteryInfo(int bleIndex, int numberOfAdvDevices, MyBLE myBle)
 {
-  DEBUG_PRINT("===================================\n");
+  DEBUG_PRINT("== %d/%d =============================\n", bleIndex, numberOfAdvDevices);
   DEBUG_PRINT("deviceName = %s\n", myBle.deviceName.c_str());
   DEBUG_PRINT("packBasicInfo.Volts = %d\n", myBle.packBasicInfo.Volts);
   DEBUG_PRINT("packBasicInfo.Amps = %d\n", myBle.packBasicInfo.Amps);

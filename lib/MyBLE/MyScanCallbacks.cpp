@@ -3,12 +3,14 @@
 
 #include <NimBLEDevice.h>
 #include "MyLog.cpp"
+#include "MyBLE.cpp"
 
 /** Define a class to handle the callbacks when scan events are received */
 class MyScanCallbacks : public NimBLEScanCallbacks
 {
 private:
   const char *TAG = "MyScanCallbacks";
+  //MyBLE myBle;
 
 public:
   const NimBLEUUID serviceUUID = BLEUUID("0000ff00-0000-1000-8000-00805f9b34fb"); // xiaoxiang bms original module
@@ -19,6 +21,13 @@ public:
   std::vector<const NimBLEAdvertisedDevice *> advDevices;
   int numberOfAdvDevices = 0;
   bool doConnect = false;
+  MyBLE *myBleArr;
+  std::vector<MyBLE> *bleDevices;
+
+  MyScanCallbacks(MyBLE *myBleArr_, std::vector<MyBLE> *bleDevices_)
+      : myBleArr(myBleArr_), bleDevices(bleDevices_)
+  {
+  }
 
   void onResult(const NimBLEAdvertisedDevice *advertisedDevice) override
   {
@@ -52,7 +61,7 @@ public:
         }
         // advDevice = advertisedDevice;
         advDevices.push_back(advertisedDevice);
-        DEBUG_PRINT("onResult:advDevices.size()=%d\n", advDevices.size());
+        DEBUG_PRINT("onResult:advDevices.size(): %d\n", advDevices.size());
       }
       // END
     }
@@ -61,8 +70,18 @@ public:
   /** Callback to process the results of the completed scan or restart it */
   void onScanEnd(const NimBLEScanResults &results, int reason) override
   {
-    DEBUG_PRINT("Scan Ended, reason: %d, device count: %d, numberOfAdvDevices: %d;\n", reason, results.getCount(), advDevices.size());
+    DEBUG_PRINT("Scan Ended, reason: %d, device count: %d, numberOfAdvDevices: %d\n", reason, results.getCount(), advDevices.size());
     numberOfAdvDevices = advDevices.size();
+    for (int bleIndex = 0; bleIndex < numberOfAdvDevices; bleIndex++)
+    {
+      std::string address = advDevices[bleIndex]->getAddress().toString();
+      myBleArr[bleIndex].mac = String(address.c_str());
+      DEBUG_PRINT("myBleArr[%d].mac set by %s\n", bleIndex, address.c_str());
+      std::string deviceName = advDevices[bleIndex]->getName();
+      myBleArr[bleIndex].deviceName = String(deviceName.c_str());
+      DEBUG_PRINT("myBleArr[%d].deviceName set by %s\n", bleIndex, myBleArr[bleIndex].deviceName.c_str());
+      //bleDevices->push_back(MyBLE(advDevices[bleIndex]->getAddress())); //crash
+    }
     // NimBLEDevice::getScan()->start(scanTimeMs, false, true);
     if (advDevices.size() != 0 && !doConnect)
     {
