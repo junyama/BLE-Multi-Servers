@@ -41,8 +41,9 @@ PubSubClient mqttClient(wifiClient);
 
 PowerSaving2 powerSaving;
 MyLcd2 myLcd;
-MyTimer myTimer(0, 10000);
+// MyTimer myTimer(0, 10000);
 MyTimer myTimerArr[3];
+MyTimer myTimerArr2[3];
 VoltMater voltMater;
 LipoMater lipoMater;
 MyBLE myBleArr[3];
@@ -548,10 +549,9 @@ void loop()
       DEBUG_PRINT("myBleArr[%d].connected == false\n", bleIndex);
       continue;
     }
-    /**/
+    /*
     if (myTimer.timeout(millis())) // timeout to process a command and show status updated by asynchronus notifications
     {
-      /*
       myBleArr[bleIndex].processCtrlCommand();
 
       printBatteryInfo(bleIndex, myScanCallbacks.numberOfAdvDevices, myBleArr[bleIndex]);
@@ -563,38 +563,43 @@ void loop()
                           myBleArr[bleIndex].packBasicInfo.Temp1, myBleArr[bleIndex].packBasicInfo.Temp2,
                           myBleArr[bleIndex].packBasicInfo.CapacityRemainPercent);
       publishJson("stat/" + myBleArr[bleIndex].topic + "STATE", myBleArr[bleIndex].getState(), true);
-      */
     }
-    
+    */
+
     if (myBleArr[bleIndex].pChr_tx)
     {
-      if (myTimerArr[bleIndex].timeout(millis())) // timeout to send commands
+      DEBUG_PRINT("loop(): myBleArr[%d].newPacketReceived: %d\n", bleIndex, myBleArr[bleIndex].newPacketReceived);
+      bool timeout = false;
+      if (timeout = myTimerArr[bleIndex].timeout(millis()) || myBleArr[bleIndex].newPacketReceived) // timeout to send commands
       {
+        myBleArr[bleIndex].processCtrlCommand();
+        //}
+        if (timeout)
         {
-          myBleArr[bleIndex].processCtrlCommand();
-
+          //
           printBatteryInfo(bleIndex, myScanCallbacks.numberOfAdvDevices, myBleArr[bleIndex]);
           myLcd.bmsInfoArr[bleIndex].deviceName = myBleArr[bleIndex].deviceName;
-          DEBUG_PRINT("loop: myLcd.bmsInfoArr[%d].deviceName: %s\n", bleIndex, myLcd.bmsInfoArr[bleIndex].deviceName.c_str());
+          DEBUG_PRINT("loop(): myLcd.bmsInfoArr[%d].deviceName: %s\n", bleIndex, myLcd.bmsInfoArr[bleIndex].deviceName.c_str());
           myLcd.bmsInfoArr[bleIndex].mac = myBleArr[bleIndex].mac;
           myLcd.updateBmsInfo(bleIndex, myBleArr[bleIndex].packBasicInfo.Volts, myBleArr[bleIndex].packBasicInfo.Amps,
                               myBleArr[bleIndex].packCellInfo.CellDiff,
                               myBleArr[bleIndex].packBasicInfo.Temp1, myBleArr[bleIndex].packBasicInfo.Temp2,
                               myBleArr[bleIndex].packBasicInfo.CapacityRemainPercent);
-          publishJson("stat/" + myBleArr[bleIndex].topic + "STATE", myBleArr[bleIndex].getState(), true);
-        }
+          //
+          // publishJson("stat/" + myBleArr[bleIndex].topic + "STATE", myBleArr[bleIndex].getState(), true);
 
-        {
+          /*
           char buff[256];
           sprintf(buff, "command to %s: Service = %s, Charastaric = %s\n",
                   myBleArr[bleIndex].pChr_tx->getClient()->getPeerAddress().toString().c_str(),
                   myBleArr[bleIndex].pChr_tx->getRemoteService()->getUUID().toString().c_str(),
                   myBleArr[bleIndex].pChr_tx->getUUID().toString().c_str());
           // myBleArr[bleIndex].bmsGetInfo5();
-          String string = "Send bmsGetInfo5 command to " + String(buff) + "\n";
+          //String string = "Send bmsGetInfo5 command to " + String(buff) + "\n";
           // DEBUG_PRINT(string.c_str());
           // delay(1000);
           // DEBUG_PRINT("\n");
+          String string;
           if (myBleArr[bleIndex].toggle)
           {
             myBleArr[bleIndex].bmsGetInfo3();
@@ -607,8 +612,34 @@ void loop()
             string = "Send bmsGetInfo4 command to " + String(buff) + "\n";
             DEBUG_PRINT(string.c_str());
           }
+          */
+        }
+        else
+        {
+          // publishJson("stat/" + myBleArr[bleIndex].topic + "STATE", myBleArr[bleIndex].getState(), true);
         }
       }
+      else
+      {
+        DEBUG_PRINT("No timeout && No new packet\n");
+        if (!myBleArr[bleIndex].newPacketReceived)
+        {
+          // publishJson("stat/" + myBleArr[bleIndex].topic + "STATE", myBleArr[bleIndex].getState(), true);
+        }
+      }
+
+      /*if (timeout = myTimerArr2[bleIndex].timeout(millis())) // timeout to send commands
+      {
+        printBatteryInfo(bleIndex, myScanCallbacks.numberOfAdvDevices, myBleArr[bleIndex]);
+        myLcd.bmsInfoArr[bleIndex].deviceName = myBleArr[bleIndex].deviceName;
+        DEBUG_PRINT("loop(): myLcd.bmsInfoArr[%d].deviceName: %s\n", bleIndex, myLcd.bmsInfoArr[bleIndex].deviceName.c_str());
+        myLcd.bmsInfoArr[bleIndex].mac = myBleArr[bleIndex].mac;
+        myLcd.updateBmsInfo(bleIndex, myBleArr[bleIndex].packBasicInfo.Volts, myBleArr[bleIndex].packBasicInfo.Amps,
+                            myBleArr[bleIndex].packCellInfo.CellDiff,
+                            myBleArr[bleIndex].packBasicInfo.Temp1, myBleArr[bleIndex].packBasicInfo.Temp2,
+                            myBleArr[bleIndex].packBasicInfo.CapacityRemainPercent);
+        publishJson("stat/" + myBleArr[bleIndex].topic + "STATE", myBleArr[bleIndex].getState(), true);
+      }*/
     }
     else
     {

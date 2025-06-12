@@ -10,8 +10,9 @@ extern MyScanCallbacks myScanCallbacks;
 extern MyBLE myBleArr[3];
 extern MyClientCallbacks myClientCallbacks;
 extern MyTimer myTimerArr[3];
+extern MyTimer myTimerArr2[3];
 
-//int getIndexOfMyBleArr(NimBLERemoteCharacteristic *pRemoteCharacteristic)
+// int getIndexOfMyBleArr(NimBLERemoteCharacteristic *pRemoteCharacteristic)
 int getIndexOfMyBleArr(NimBLEClient *client)
 {
   auto peerAddress = client->getPeerAddress();
@@ -47,6 +48,7 @@ bool connectToServer()
   // Serial.printf("numberOfAdvDevices = %d\n", numberOfAdvDevices);
 
   unsigned long initalMesurementTime = 0;
+  unsigned long initalMesurementTime2 = 0;
   for (int i = 0; i < myScanCallbacks.numberOfAdvDevices; i++)
   {
     /** Check if we have a client we should reuse first **/
@@ -175,10 +177,14 @@ bool connectToServer()
     myBleArr[i].mac = String(myScanCallbacks.advDevices.at(i)->getAddress().toString().c_str());
     DEBUG_PRINT("myBleArr[%d].mac = %s\n", i, myBleArr[i].mac.c_str());
     */
-    new (myTimerArr + i) MyTimer(initalMesurementTime, 5000);
+    new (myTimerArr + i) MyTimer(initalMesurementTime, 3000);
     DEBUG_PRINT("myTimerArr[%d].lastMeasurment = %d, measurmentIntervalMs = %d\n", i, myTimerArr[i].lastMeasurment,
                 myTimerArr[i].measurmentIntervalMs);
-    initalMesurementTime += 1000;
+    initalMesurementTime += 200;
+    new (myTimerArr2 + i) MyTimer(initalMesurementTime2, 10000);
+    DEBUG_PRINT("myTimerArr2[%d].lastMeasurment = %d, measurmentIntervalMs = %d\n", i, myTimerArr2[i].lastMeasurment,
+                myTimerArr[i].measurmentIntervalMs);
+    initalMesurementTime2 += 1000;
   }
   myScanCallbacks.advDevices.clear();
   DEBUG_PRINT("Done with this device!\n");

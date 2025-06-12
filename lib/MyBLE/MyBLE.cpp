@@ -90,10 +90,11 @@ public:
         {
         case 1:
             bmsMosfetCtrl();
+            //delay(100); not effective
             ctrlCommand = 0;
             newPacketReceived = false;
             break;
-        /*default:
+        default:
             if (toggle)
             {
                 bmsGetInfo3();
@@ -107,7 +108,7 @@ public:
                 string = "Send bmsGetInfo4 command to " + String(buff) + "\n";
                 DEBUG_PRINT(string.c_str());
                 newPacketReceived = false;
-            }*/
+            }
         }
     }
 
