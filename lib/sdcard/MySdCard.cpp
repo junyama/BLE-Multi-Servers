@@ -10,10 +10,10 @@ const String MySdCard::TAG = "MySdCard";
 void MySdCard::setup()
 {
     while (false == SD.begin(GPIO_NUM_4, SPI, 15000000)) {
-    M5.Lcd.println("Insert SD card...\n");
+    M5.Lcd.println("Insert SD card...");
     delay(2000);
   }
-  M5.Lcd.println("SD card recognized!\n");
+  M5.Lcd.println("SD card recognized!");
 
 }
 

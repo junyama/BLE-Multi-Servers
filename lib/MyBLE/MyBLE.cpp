@@ -42,6 +42,9 @@ typedef struct
     uint32_t CellColorDisbalance[15]; // green cell == median, red/violet cell => median + c_cellMaxDisbalanceAdd commentMore actions
 } packCellInfoStruct;
 
+void publish(String topic, String message);
+void publishJson(String topic, JsonDocument doc, bool retained);
+
 class MyBLE
 {
 private:
@@ -77,6 +80,7 @@ public:
     {
     }
 
+    /*
     void processCtrlCommand()
     {
         DEBUG_PRINT("processCtrlCommand called with ctrlCommand: %d\n", ctrlCommand);
@@ -90,7 +94,7 @@ public:
         {
         case 1:
             bmsMosfetCtrl();
-            //delay(100); not effective
+            // delay(100); not effective
             ctrlCommand = 0;
             newPacketReceived = false;
             break;
@@ -111,6 +115,41 @@ public:
             }
         }
     }
+    */
+
+    void sendInfoCommand()
+    {
+        DEBUG_PRINT("processCtrlCommand called with infoCommand: %d\n", ctrlCommand);
+        char buff[256];
+        sprintf(buff, "command to %s: Service = %s, Charastaric = %s\n",
+                pChr_tx->getClient()->getPeerAddress().toString().c_str(),
+                pChr_tx->getRemoteService()->getUUID().toString().c_str(),
+                pChr_tx->getUUID().toString().c_str());
+        String string;
+        if (toggle)
+        {
+            bmsGetInfo3();
+            string = "Send bmsGetInfo3 command to " + String(buff) + "\n";
+            DEBUG_PRINT(string.c_str());
+            newPacketReceived = false;
+        }
+        else
+        {
+            bmsGetInfo4();
+            string = "Send bmsGetInfo4 command to " + String(buff) + "\n";
+            DEBUG_PRINT(string.c_str());
+            newPacketReceived = false;
+        }
+    }
+
+    JsonDocument getMosfetState()
+    {
+        JsonDocument doc;
+        doc["deviceName"] = deviceName;
+        doc["chargeStatus"] = String(packBasicInfo.MosfetStatus & 1);
+        doc["dischargeStatus"] = String((packBasicInfo.MosfetStatus & 2) >> 1);
+        return doc;
+    }
 
     JsonDocument getState()
     {
@@ -122,13 +161,13 @@ public:
         if (numberOfTemperature == 2)
             doc["batteryTemp2"] = String(packBasicInfo.Temp2 / 10.0);
         doc["batteryChargePercentage"] = String(packBasicInfo.CapacityRemainPercent);
-        doc["chargeStatus"] = String(packBasicInfo.MosfetStatus & 1);
-        doc["dischargeStatus"] = String((packBasicInfo.MosfetStatus & 2) >> 1);
-        // doc["connectionStatus"] = String(isConnected());
-        //  JsonDocument doc2 = voltMater.getVoltage();
-        //  doc["calVoltage"] = doc2["calVoltage"];
-        //  doc["lipoVoltage"] = String(M5.Axp.GetBatVoltage());
-        //  doc["lipoCurrent"] = String(M5.Axp.GetBatCurrent());
+        // doc["chargeStatus"] = String(packBasicInfo.MosfetStatus & 1);
+        // doc["dischargeStatus"] = String((packBasicInfo.MosfetStatus & 2) >> 1);
+        //  doc["connectionStatus"] = String(isConnected());
+        //   JsonDocument doc2 = voltMater.getVoltage();
+        //   doc["calVoltage"] = doc2["calVoltage"];
+        //   doc["lipoVoltage"] = String(M5.Axp.GetBatVoltage());
+        //   doc["lipoCurrent"] = String(M5.Axp.GetBatCurrent());
         return doc;
     }
 
@@ -190,6 +229,7 @@ public:
         DEBUG_PRINT("mosfetCtrl(%d, %d) called\n", chargeStatus, dischargeStatus);
         ctrlCommand = 1;
         commandParam = (byte)chargeStatus + (byte)dischargeStatus * 2;
+        bmsMosfetCtrl();
     }
 
     void bmsGetInfo3()
@@ -200,6 +240,7 @@ public:
         {
             sendCommand(pChr_tx, data, sizeof(data));
             toggle = !toggle;
+            // publish("MyBLE", "bmsGetInfo3() called");
         }
     }
 
@@ -431,6 +472,7 @@ public:
             DEBUG_PRINT("bmsProcessPacket, process BasicInfo3. Type: %d\n", pHeader->type);
             result = processBasicInfo(&packBasicInfo, data, dataLen);
             DEBUG_PRINT("packBasicInfo.Volts = %d\n", packBasicInfo.Volts);
+            // publishJson("stat/" + topic + "STATE", getState(), true); //crash
             newPacketReceived = true;
             break;
         }

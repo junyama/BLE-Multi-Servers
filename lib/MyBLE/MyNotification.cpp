@@ -177,7 +177,7 @@ bool connectToServer()
     myBleArr[i].mac = String(myScanCallbacks.advDevices.at(i)->getAddress().toString().c_str());
     DEBUG_PRINT("myBleArr[%d].mac = %s\n", i, myBleArr[i].mac.c_str());
     */
-    new (myTimerArr + i) MyTimer(initalMesurementTime, 3000);
+    new (myTimerArr + i) MyTimer(initalMesurementTime, 5000);
     DEBUG_PRINT("myTimerArr[%d].lastMeasurment = %d, measurmentIntervalMs = %d\n", i, myTimerArr[i].lastMeasurment,
                 myTimerArr[i].measurmentIntervalMs);
     initalMesurementTime += 200;

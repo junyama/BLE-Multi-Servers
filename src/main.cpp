@@ -44,13 +44,14 @@ MyLcd2 myLcd;
 // MyTimer myTimer(0, 10000);
 MyTimer myTimerArr[3];
 MyTimer myTimerArr2[3];
+int timeoutCount = 0;
 VoltMater voltMater;
 LipoMater lipoMater;
 MyBLE myBleArr[3];
 std::vector<MyBLE> *bleDevices;
 // MyMqtt myMqtt;
 
-MyScanCallbacks myScanCallbacks(myBleArr, bleDevices);
+MyScanCallbacks myScanCallbacks(myBleArr, bleDevices, &myLcd);
 MyClientCallbacks myClientCallbacks(myBleArr, bleDevices);
 
 void loadConfig();
@@ -399,9 +400,15 @@ void mqttCallback(char *topic_, byte *payload, unsigned int length)
         DEBUG_PRINT("responding to discharge!\n");
         publish(("stat/" + deviceTopic + "DISCARGE").c_str(), msgStr.c_str());
       }
-      msgStr = "{\"chargeStatus\": " + String(chargeStatus) + ", \"dischargeStatus\": " + String(dischargeStatus) + "}";
-      publish(("stat/" + deviceTopic + "RESULT").c_str(), msgStr.c_str());
-      publish(("stat/" + deviceTopic + "STATE").c_str(), msgStr.c_str());
+      // msgStr = "{\"chargeStatus\": " + String(chargeStatus) + ", \"dischargeStatus\": " + String(dischargeStatus) + "}";
+      // publish(("stat/" + deviceTopic + "RESULT").c_str(), msgStr.c_str());
+      // publish(("stat/" + deviceTopic + "STATE").c_str(), msgStr.c_str());
+      JsonDocument mosfetState;
+      mosfetState["chargeStatus"] = chargeStatus;
+      mosfetState["dischargeStatus"] = dischargeStatus;
+      publishJson(("stat/" + deviceTopic + "STATE").c_str(), mosfetState, true);
+      publishJson(("stat/" + deviceTopic + "RESULT").c_str(), mosfetState, true);
+
       return;
     }
   }
@@ -508,6 +515,7 @@ void setup()
 void loop()
 {
   detectButton(myScanCallbacks.numberOfAdvDevices);
+  mqttClient.loop();
   /** Loop here until we find a device we want to connect to */
   if (myScanCallbacks.doConnect)
   {
@@ -528,20 +536,11 @@ void loop()
     {
       DEBUG_PRINT("Failed to connect, goint to reset\n");
       myLcd.println("Failed to connect, goint to reset");
-      // NimBLEDevice::getScan()->start(myScanCallbacks.scanTimeMs, false, true);
       delay(5000);
       M5.shutdown(1);
     }
   }
-  else
-  {
-    // DEBUG_PRINT("Not Found a device yet and chck again or already foundd and skip to send commands\n");
-  }
-  // delay(3000);
 
-  // DEBUG_PRINT("\n");
-
-  //{
   for (int bleIndex = 0; bleIndex < myScanCallbacks.numberOfAdvDevices; bleIndex++)
   {
     if (!myBleArr[bleIndex].connected)
@@ -549,101 +548,23 @@ void loop()
       DEBUG_PRINT("myBleArr[%d].connected == false\n", bleIndex);
       continue;
     }
-    /*
-    if (myTimer.timeout(millis())) // timeout to process a command and show status updated by asynchronus notifications
-    {
-      myBleArr[bleIndex].processCtrlCommand();
-
-      printBatteryInfo(bleIndex, myScanCallbacks.numberOfAdvDevices, myBleArr[bleIndex]);
-      myLcd.bmsInfoArr[bleIndex].deviceName = myBleArr[bleIndex].deviceName;
-      DEBUG_PRINT("loop: myLcd.bmsInfoArr[%d].deviceName: %s\n", bleIndex, myLcd.bmsInfoArr[bleIndex].deviceName.c_str());
-      myLcd.bmsInfoArr[bleIndex].mac = myBleArr[bleIndex].mac;
-      myLcd.updateBmsInfo(bleIndex, myBleArr[bleIndex].packBasicInfo.Volts, myBleArr[bleIndex].packBasicInfo.Amps,
-                          myBleArr[bleIndex].packCellInfo.CellDiff,
-                          myBleArr[bleIndex].packBasicInfo.Temp1, myBleArr[bleIndex].packBasicInfo.Temp2,
-                          myBleArr[bleIndex].packBasicInfo.CapacityRemainPercent);
-      publishJson("stat/" + myBleArr[bleIndex].topic + "STATE", myBleArr[bleIndex].getState(), true);
-    }
-    */
-
     if (myBleArr[bleIndex].pChr_tx)
     {
-      DEBUG_PRINT("loop(): myBleArr[%d].newPacketReceived: %d\n", bleIndex, myBleArr[bleIndex].newPacketReceived);
       bool timeout = false;
-      if (timeout = myTimerArr[bleIndex].timeout(millis()) || myBleArr[bleIndex].newPacketReceived) // timeout to send commands
+      if (timeout = myTimerArr[bleIndex].timeout(millis()))
       {
-        myBleArr[bleIndex].processCtrlCommand();
-        //}
-        if (timeout)
-        {
-          //
-          printBatteryInfo(bleIndex, myScanCallbacks.numberOfAdvDevices, myBleArr[bleIndex]);
-          myLcd.bmsInfoArr[bleIndex].deviceName = myBleArr[bleIndex].deviceName;
-          DEBUG_PRINT("loop(): myLcd.bmsInfoArr[%d].deviceName: %s\n", bleIndex, myLcd.bmsInfoArr[bleIndex].deviceName.c_str());
-          myLcd.bmsInfoArr[bleIndex].mac = myBleArr[bleIndex].mac;
-          myLcd.updateBmsInfo(bleIndex, myBleArr[bleIndex].packBasicInfo.Volts, myBleArr[bleIndex].packBasicInfo.Amps,
-                              myBleArr[bleIndex].packCellInfo.CellDiff,
-                              myBleArr[bleIndex].packBasicInfo.Temp1, myBleArr[bleIndex].packBasicInfo.Temp2,
-                              myBleArr[bleIndex].packBasicInfo.CapacityRemainPercent);
-          //
-          // publishJson("stat/" + myBleArr[bleIndex].topic + "STATE", myBleArr[bleIndex].getState(), true);
-
-          /*
-          char buff[256];
-          sprintf(buff, "command to %s: Service = %s, Charastaric = %s\n",
-                  myBleArr[bleIndex].pChr_tx->getClient()->getPeerAddress().toString().c_str(),
-                  myBleArr[bleIndex].pChr_tx->getRemoteService()->getUUID().toString().c_str(),
-                  myBleArr[bleIndex].pChr_tx->getUUID().toString().c_str());
-          // myBleArr[bleIndex].bmsGetInfo5();
-          //String string = "Send bmsGetInfo5 command to " + String(buff) + "\n";
-          // DEBUG_PRINT(string.c_str());
-          // delay(1000);
-          // DEBUG_PRINT("\n");
-          String string;
-          if (myBleArr[bleIndex].toggle)
-          {
-            myBleArr[bleIndex].bmsGetInfo3();
-            string = "Send bmsGetInfo3 command to " + String(buff) + "\n";
-            DEBUG_PRINT(string.c_str());
-          }
-          else
-          {
-            myBleArr[bleIndex].bmsGetInfo4();
-            string = "Send bmsGetInfo4 command to " + String(buff) + "\n";
-            DEBUG_PRINT(string.c_str());
-          }
-          */
-        }
-        else
-        {
-          // publishJson("stat/" + myBleArr[bleIndex].topic + "STATE", myBleArr[bleIndex].getState(), true);
-        }
+        myBleArr[bleIndex].sendInfoCommand();
       }
-      else
+      DEBUG_PRINT("timeout: %d, myBleArr[%d].newPacketReceived: %d\n", timeout, bleIndex, myBleArr[bleIndex].newPacketReceived);
+      if (myBleArr[bleIndex].newPacketReceived)
       {
-        DEBUG_PRINT("No timeout && No new packet\n");
-        if (!myBleArr[bleIndex].newPacketReceived)
-        {
-          // publishJson("stat/" + myBleArr[bleIndex].topic + "STATE", myBleArr[bleIndex].getState(), true);
-        }
-      }
-
-      /*if (timeout = myTimerArr2[bleIndex].timeout(millis())) // timeout to send commands
-      {
-        printBatteryInfo(bleIndex, myScanCallbacks.numberOfAdvDevices, myBleArr[bleIndex]);
-        myLcd.bmsInfoArr[bleIndex].deviceName = myBleArr[bleIndex].deviceName;
-        DEBUG_PRINT("loop(): myLcd.bmsInfoArr[%d].deviceName: %s\n", bleIndex, myLcd.bmsInfoArr[bleIndex].deviceName.c_str());
-        myLcd.bmsInfoArr[bleIndex].mac = myBleArr[bleIndex].mac;
+        myBleArr[bleIndex].newPacketReceived = false;
         myLcd.updateBmsInfo(bleIndex, myBleArr[bleIndex].packBasicInfo.Volts, myBleArr[bleIndex].packBasicInfo.Amps,
                             myBleArr[bleIndex].packCellInfo.CellDiff,
                             myBleArr[bleIndex].packBasicInfo.Temp1, myBleArr[bleIndex].packBasicInfo.Temp2,
                             myBleArr[bleIndex].packBasicInfo.CapacityRemainPercent);
         publishJson("stat/" + myBleArr[bleIndex].topic + "STATE", myBleArr[bleIndex].getState(), true);
-      }*/
-    }
-    else
-    {
-      DEBUG_PRINT("myBleArr[%d].pChr_tx == null\n", bleIndex);
+      }
     }
   }
   if (voltMater.available && voltMater.timeout(millis()))
@@ -656,8 +577,4 @@ void loop()
     myLcd.updateLipoInfo();
     publishJson("stat/" + lipoMater.topic + "STATE", lipoMater.getState(), true);
   }
-  //}
-  // else
-  // myScanCallbacks.doConnect = true;
-  mqttClient.loop();
 }

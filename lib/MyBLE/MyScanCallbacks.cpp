@@ -4,13 +4,14 @@
 #include <NimBLEDevice.h>
 #include "MyLog.cpp"
 #include "MyBLE.cpp"
+#include "MyLcd2.hpp"
 
 /** Define a class to handle the callbacks when scan events are received */
 class MyScanCallbacks : public NimBLEScanCallbacks
 {
 private:
   const char *TAG = "MyScanCallbacks";
-  //MyBLE myBle;
+  // MyBLE myBle;
 
 public:
   const NimBLEUUID serviceUUID = BLEUUID("0000ff00-0000-1000-8000-00805f9b34fb"); // xiaoxiang bms original module
@@ -23,9 +24,10 @@ public:
   bool doConnect = false;
   MyBLE *myBleArr;
   std::vector<MyBLE> *bleDevices;
+  MyLcd2 *myLcd;
 
-  MyScanCallbacks(MyBLE *myBleArr_, std::vector<MyBLE> *bleDevices_)
-      : myBleArr(myBleArr_), bleDevices(bleDevices_)
+  MyScanCallbacks(MyBLE *myBleArr_, std::vector<MyBLE> *bleDevices_, MyLcd2 *myLcd_)
+      : myBleArr(myBleArr_), bleDevices(bleDevices_), myLcd(myLcd_)
   {
   }
 
@@ -72,15 +74,20 @@ public:
   {
     DEBUG_PRINT("Scan Ended, reason: %d, device count: %d, numberOfAdvDevices: %d\n", reason, results.getCount(), advDevices.size());
     numberOfAdvDevices = advDevices.size();
+    char buff[256];
+    sprintf(buff, "BLE scan done, rc: %d, device found: %d/%d", reason, numberOfAdvDevices, results.getCount());
+    myLcd->println(String(buff));
     for (int bleIndex = 0; bleIndex < numberOfAdvDevices; bleIndex++)
     {
       std::string address = advDevices[bleIndex]->getAddress().toString();
       myBleArr[bleIndex].mac = String(address.c_str());
+      myLcd->bmsInfoArr[bleIndex].mac = myBleArr[bleIndex].mac;
       DEBUG_PRINT("myBleArr[%d].mac set by %s\n", bleIndex, address.c_str());
       std::string deviceName = advDevices[bleIndex]->getName();
       myBleArr[bleIndex].deviceName = String(deviceName.c_str());
+      myLcd->bmsInfoArr[bleIndex].deviceName = myBleArr[bleIndex].deviceName;
       DEBUG_PRINT("myBleArr[%d].deviceName set by %s\n", bleIndex, myBleArr[bleIndex].deviceName.c_str());
-      //bleDevices->push_back(MyBLE(advDevices[bleIndex]->getAddress())); //crash
+      // bleDevices->push_back(MyBLE(advDevices[bleIndex]->getAddress())); //crash
     }
     // NimBLEDevice::getScan()->start(scanTimeMs, false, true);
     if (advDevices.size() != 0 && !doConnect)
