@@ -19,6 +19,9 @@
 #include "PowerSaving2.hpp"
 #include "MyLcd2.hpp"
 #include "MyBLE.cpp"
+
+//#include "MyBLE2.hpp"
+
 #include "MyScanCallBacks.cpp"
 #include "MyNotification.hpp"
 

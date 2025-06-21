@@ -1,6 +1,8 @@
 #include <NimBLEDevice.h>
 #include "MyLog.cpp"
 #include "MyBLE.cpp"
+#include "MyBLE.cpp"
+
 
 class MyClientCallbacks : public NimBLEClientCallbacks
 {

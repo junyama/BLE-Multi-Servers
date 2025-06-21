@@ -4,6 +4,7 @@
 #include <ArduinoJson.h>
 #include <NimBLEDevice.h>
 #include "MyLog.cpp"
+//#include "MyBLE.hpp"
 // #include <MyNotifyCB.cpp>
 
 typedef struct
