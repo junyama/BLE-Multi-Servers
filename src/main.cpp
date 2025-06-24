@@ -18,17 +18,13 @@
 
 #include "PowerSaving2.hpp"
 #include "MyLcd2.hpp"
-#include "MyBLE.cpp"
-
-//#include "MyBLE2.hpp"
-
-#include "MyScanCallBacks.cpp"
+// #include "MyBLE.cpp"
+#include "MyBLE2.hpp"
+// #include "MyScanCallbacks.hpp"
 #include "MyNotification.hpp"
-
-#include "MyClientCallBacks.cpp"
-
+#include "MyClientCallBacks.hpp"
 #include "MyLog.cpp"
-#include "MyTimer.cpp"
+// #include "MyTimer.cpp"
 #include "MySdCard.hpp"
 #include "MyWiFi.cpp"
 #include "MyMqtt.hpp"
@@ -37,6 +33,7 @@
 
 const char *TAG = "main";
 JsonDocument configJson;
+//JsonArray deviceList;
 WiFiMulti wifiMulti;
 WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);
@@ -48,11 +45,14 @@ MyTimer myTimerArr2[3];
 int timeoutCount = 0;
 VoltMater voltMater;
 LipoMater lipoMater;
-MyBLE myBleArr[3];
-std::vector<MyBLE> *bleDevices;
+MyBLE2 myBleArr[3];
+int numberOfBleDevices;
+// std::vector<MyBLE2> *bleDevices;
 
-MyScanCallbacks myScanCallbacks(myBleArr, bleDevices, &myLcd);
-MyClientCallbacks myClientCallbacks(myBleArr, bleDevices);
+MyScanCallbacks myScanCallbacks(myBleArr, &myLcd, &numberOfBleDevices);
+MyClientCallbacks myClientCallbacks(myBleArr);
+MyNotification myNotification(myBleArr, &myClientCallbacks);
+MyMqtt myMqtt(&mqttClient, myBleArr, &numberOfBleDevices);
 
 void loadConfig();
 void saveConfig();
@@ -62,7 +62,7 @@ int wifiConnect();
 void setupDateTime();
 
 void detectButton(int numberOfPages);
-void printBatteryInfo(int bleIndex, int numberOfAdvDevices, MyBLE myBle);
+void printBatteryInfo(int bleIndex, int numberOfAdvDevices, MyBLE2 myBle);
 
 void setup()
 {
@@ -71,6 +71,7 @@ void setup()
   // MySdCard::deleteFile(SD, "/log.txt");
   MySdCard::setup();
   loadConfig();
+  myMqtt.mqttServerSetup(configJson);
   DEBUG_PRINT("loadConfig() done\n");
 
   // setup WiFi //
@@ -100,8 +101,6 @@ void setup()
   myLcd.println("Going to setup date");
   setupDateTime();
   myLcd.println("setup date done");
-
-  mqttServerSetup();
 
   powerSaving.disable();
 
@@ -162,15 +161,15 @@ void loop()
     myScanCallbacks.doConnect = false;
     DEBUG_PRINT("Found a device we want to connect to, do it now.\n");
     myClientCallbacks.numberOfAdvDevices = myScanCallbacks.numberOfAdvDevices;
-    if (connectToServer())
+    if (myNotification.connectToServer())
     {
-      DEBUG_PRINT("Success! we should now be getting notifications.\n");
-      mqttDeviceSetup();
+      DEBUG_PRINT("Success! we should now be getting notifications from devices(%d).\n", numberOfBleDevices);
+      myMqtt.mqttDeviceSetup();
       if (!mqttClient.connected())
       {
-        reConnectMqttServer();
+        myMqtt.reConnectMqttServer();
       }
-      publishHaDiscovery();
+      myMqtt.publishHaDiscovery();
     }
     else
     {
@@ -203,18 +202,18 @@ void loop()
                             myBleArr[bleIndex].packCellInfo.CellDiff,
                             myBleArr[bleIndex].packBasicInfo.Temp1, myBleArr[bleIndex].packBasicInfo.Temp2,
                             myBleArr[bleIndex].packBasicInfo.CapacityRemainPercent);
-        publishJson("stat/" + myBleArr[bleIndex].topic + "STATE", myBleArr[bleIndex].getState(), true);
+        myMqtt.publishJson("stat/" + myBleArr[bleIndex].topic + "STATE", myBleArr[bleIndex].getState(), true);
       }
     }
   }
   if (voltMater.available && voltMater.timeout(millis()))
   {
     myLcd.updateVoltMaterInfo(voltMater.calVoltage);
-    publishJson("stat/" + voltMater.topic + "STATE", voltMater.getState(), true);
+    myMqtt.publishJson("stat/" + voltMater.topic + "STATE", voltMater.getState(), true);
   }
   if (lipoMater.available && lipoMater.timeout(millis()))
   {
     myLcd.updateLipoInfo();
-    publishJson("stat/" + lipoMater.topic + "STATE", lipoMater.getState(), true);
+    myMqtt.publishJson("stat/" + lipoMater.topic + "STATE", lipoMater.getState(), true);
   }
 }

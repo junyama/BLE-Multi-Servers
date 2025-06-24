@@ -4,7 +4,7 @@
 #include <ArduinoJson.h>
 #include <NimBLEDevice.h>
 #include "MyLog.cpp"
-#include "MyMqtt.hpp"
+//#include "MyMqtt.hpp"
 //#include "MyClientCallbacks.cpp"
 
 typedef struct
@@ -13,7 +13,7 @@ typedef struct
     byte type;
     byte status;
     byte dataLen;
-} bmsPacketHeaderStruct2;
+} bmsPacketHeaderStruct;
 
 typedef struct
 {
@@ -28,7 +28,7 @@ typedef struct
     uint16_t BalanceCodeLow;
     uint16_t BalanceCodeHigh;
     uint8_t MosfetStatus;
-} packBasicInfoStruct2;
+} packBasicInfoStruct;
 
 typedef struct
 {
@@ -41,7 +41,7 @@ typedef struct
     uint16_t CellMedian;
     uint32_t CellColor[15];
     uint32_t CellColorDisbalance[15]; // green cell == median, red/violet cell => median + c_cellMaxDisbalanceAdd commentMore actions
-} packCellInfoStruct2;
+} packCellInfoStruct;
 
 //void publish(String topic, String message);
 //void publishJson(String topic, JsonDocument doc, bool retained);
@@ -49,7 +49,7 @@ typedef struct
 class MyBLE2
 {
 private:
-    const char *TAG = "MyBLE2";
+    const char *TAG = "MyBLE";
 
 public:
     NimBLERemoteCharacteristic *pChr_rx = nullptr;
@@ -58,8 +58,8 @@ public:
     bool toggle = false;
     byte ctrlCommand = 0;
     bool newPacketReceived = false;
-    packBasicInfoStruct2 packBasicInfo = {}; // here shall be the latest data got from BMS
-    packCellInfoStruct2 packCellInfo = {};   // here shall be the latest data got from BMS
+    packBasicInfoStruct packBasicInfo = {}; // here shall be the latest data got from BMS
+    packCellInfoStruct packCellInfo = {};   // here shall be the latest data got from BMS
     int numberOfTemperature = 2;
     String deviceName = "UNKNOWN";
     String mac = "UNKNOWN";
@@ -101,12 +101,12 @@ public:
 
     int16_t two_ints_into16(int highbyte, int lowbyte); // turns two bytes into a single long integerAdd commentMore actions
 
-    bool processBasicInfo(packBasicInfoStruct2 *output, byte *data, unsigned int dataLen);
+    bool processBasicInfo(packBasicInfoStruct *output, byte *data, unsigned int dataLen);
 
-    bool processCellInfo(packCellInfoStruct2 *output, byte *data, unsigned int dataLen);
+    bool processCellInfo(packCellInfoStruct *output, byte *data, unsigned int dataLen);
     
     bool bmsProcessPacket(byte *packet);
    
 };
 
-#endif /* MY_BLE2_HPP_ */
+#endif /* MY_BLE2_HPP */

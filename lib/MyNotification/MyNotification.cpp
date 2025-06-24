@@ -1,19 +1,11 @@
-#include "MyScanCallbacks.cpp"
-#include "MyClientCallbacks.cpp"
-#include "MyLog.cpp"
-#include "MyTimer.cpp"
+#include "MyNotification.hpp"
 
-//#include "MyNotification.hpp"
-
-extern char *TAG;
-extern MyScanCallbacks myScanCallbacks;
-extern MyBLE myBleArr[3];
-extern MyClientCallbacks myClientCallbacks;
-extern MyTimer myTimerArr[3];
-extern MyTimer myTimerArr2[3];
-
+MyNotification::MyNotification(MyBLE2 * myBleArr_, MyClientCallbacks *myClientCallbacks_) 
+: myBleArr(myBleArr_), myClientCallbacks(myClientCallbacks_)
+{
+}
 // int getIndexOfMyBleArr(NimBLERemoteCharacteristic *pRemoteCharacteristic)
-int getIndexOfMyBleArr(NimBLEClient *client)
+int MyNotification::getIndexOfMyBleArr(NimBLEClient *client)
 {
   auto peerAddress = client->getPeerAddress();
   for (int i = 0; i < myScanCallbacks.numberOfAdvDevices; i++)
@@ -27,7 +19,7 @@ int getIndexOfMyBleArr(NimBLEClient *client)
 }
 
 /** Notification / Indication receiving handler callback */
-void notifyCB(NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify)
+void MyNotification::notifyCB(NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify)
 {
   std::string str = (isNotify == true) ? "Notification" : "Indication";
   str += " from ";
@@ -39,7 +31,7 @@ void notifyCB(NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData,
   myBleArr[getIndexOfMyBleArr(pRemoteCharacteristic->getClient())].bleCollectPacket((char *)pData, length);
 }
 
-bool connectToServer()
+bool MyNotification::connectToServer()
 {
   NimBLEClient *pClient = nullptr;
 
@@ -48,7 +40,7 @@ bool connectToServer()
   // Serial.printf("numberOfAdvDevices = %d\n", numberOfAdvDevices);
 
   unsigned long initalMesurementTime = 0;
-  unsigned long initalMesurementTime2 = 0;
+  // unsigned long initalMesurementTime2 = 0;
   for (int i = 0; i < myScanCallbacks.numberOfAdvDevices; i++)
   {
     /** Check if we have a client we should reuse first **/
@@ -91,7 +83,7 @@ bool connectToServer()
       pClient = NimBLEDevice::createClient();
       DEBUG_PRINT("New client created\n");
 
-      pClient->setClientCallbacks(&myClientCallbacks, false);
+      pClient->setClientCallbacks(myClientCallbacks, false);
       /**
        *  Set initial connection parameters:
        *  These settings are safe for 3 clients to connect reliably, can go faster if you have less
@@ -148,7 +140,8 @@ bool connectToServer()
       }
       if (myBleArr[i].pChr_rx->canNotify())
       {
-        if (!myBleArr[i].pChr_rx->subscribe(true, notifyCB))
+        if (!myBleArr[i].pChr_rx->subscribe(true, [this](NimBLERemoteCharacteristic * pRemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify) 
+        { notifyCB(pRemoteCharacteristic,  pData, length, isNotify); }))
         {
           pClient->disconnect();
           return false;
@@ -181,17 +174,19 @@ bool connectToServer()
     DEBUG_PRINT("myTimerArr[%d].lastMeasurment = %d, measurmentIntervalMs = %d\n", i, myTimerArr[i].lastMeasurment,
                 myTimerArr[i].measurmentIntervalMs);
     initalMesurementTime += 200;
+    /*
     new (myTimerArr2 + i) MyTimer(initalMesurementTime2, 10000);
     DEBUG_PRINT("myTimerArr2[%d].lastMeasurment = %d, measurmentIntervalMs = %d\n", i, myTimerArr2[i].lastMeasurment,
                 myTimerArr[i].measurmentIntervalMs);
     initalMesurementTime2 += 1000;
+    */
   }
   myScanCallbacks.advDevices.clear();
   DEBUG_PRINT("Done with this device!\n");
   return true;
 }
 
-void printBatteryInfo(int bleIndex, int numberOfAdvDevices, MyBLE myBle)
+void MyNotification::printBatteryInfo(int bleIndex, int numberOfAdvDevices, MyBLE2 myBle)
 {
   DEBUG_PRINT("== %d/%d =============================\n", bleIndex, numberOfAdvDevices);
   DEBUG_PRINT("deviceName = %s\n", myBle.deviceName.c_str());

@@ -1,26 +1,19 @@
 #include "MyMqtt.hpp"
 
-extern PubSubClient mqttClient;
-extern JsonDocument configJson;
-extern MyScanCallbacks myScanCallbacks;
-extern MyBLE myBleArr[3];
-extern VoltMater voltMater;
-extern LipoMater lipoMater;
-extern const char *TAG;
+MyMqtt::MyMqtt(PubSubClient *mqttClient_,MyBLE2 *myBleArr_, int *numberOfBleDevices_)
+: mqttClient(mqttClient_), myBleArr(myBleArr_), numberOfBleDevices(numberOfBleDevices_)
+{
+}
 
-bool mqttDisabled;
-JsonArray deviceList;
-String mqttServer;
-JsonArray mqttServerArr;
-int mqttPort;      
-String mqttUser;  
-String mqttPass;   
-String systemTopic; 
-const int mqttMessageSizeLimit = 256; // const
+/*MyMqtt::MyMqtt()
+    : configJson(configJson_)
+{
+}*/
 
-void mqttServerSetup()
+void MyMqtt::mqttServerSetup(JsonDocument configJson)
 {
   DEBUG_PRINT("mqttServerSetup() called\n");
+  deviceList = configJson["devices"].as<JsonArray>();
   String server = configJson["mqtt"]["server"];
   mqttServer = server;
   mqttServerArr = configJson["mqtt"]["servers"].as<JsonArray>();
@@ -32,17 +25,18 @@ void mqttServerSetup()
   String topic = configJson["mqtt"]["topic"];
   systemTopic = topic;
 
-  mqttClient.setServer(mqttServer.c_str(), mqttPort);
-  mqttClient.setCallback(mqttCallback);
+  mqttClient->setServer(mqttServer.c_str(), mqttPort);
+  mqttClient->setCallback([this](char *topic_, byte *payload, unsigned int length)
+                         { mqttCallback(topic_, payload, length); });
 }
 
-void mqttDeviceSetup()
+void MyMqtt::mqttDeviceSetup()
 {
   DEBUG_PRINT("mqttDeviceSetup() called\n");
-  deviceList = configJson["devices"].as<JsonArray>();
+  // deviceList = configJson["devices"].as<JsonArray>();
   DEBUG_PRINT("mqttDeviceSetup: deviceList.size() = %d\n", deviceList.size());
   // myBleArr = myBleArr_;
-  int numberOfBleDevices = myScanCallbacks.numberOfAdvDevices;
+  // int numberOfBleDevices = myScanCallbacks.numberOfBleDevices;
   DEBUG_PRINT("mqttDeviceSetup: numberOfBleDevices = %d\n", numberOfBleDevices);
   for (int deviceIndex = 0; deviceIndex < deviceList.size(); deviceIndex++)
   {
@@ -50,7 +44,7 @@ void mqttDeviceSetup()
     String type = deviceObj["type"];
     if (type.equals("BMS"))
     {
-      for (int bleIndex = 0; bleIndex < numberOfBleDevices; bleIndex++)
+      for (int bleIndex = 0; bleIndex < *numberOfBleDevices; bleIndex++)
       {
         // DEBUG_PRINT("bleIndex = %d deviceIndex = %d\n", bleIndex, deviceIndex);
         String mac = deviceObj["mac"];
@@ -69,22 +63,22 @@ void mqttDeviceSetup()
     else if (type.equals("VAMater"))
     {
       DEBUG_PRINT("setting up volt mater\n");
-      voltMater.setup(deviceObj);
+      voltMater->setup(deviceObj);
     }
     else if (type.equals("Lipo"))
     {
       DEBUG_PRINT("setting up lipo mater\n");
-      lipoMater.setup(deviceObj);
+      lipoMater->setup(deviceObj);
     }
   }
 }
 
-void reConnectMqttServer()
+void MyMqtt::reConnectMqttServer()
 {
   DEBUG_PRINT("reConnectMqttServer() called\n");
   int i = 1;
   int j = 0;
-  while (!mqttClient.connected())
+  while (!mqttClient->connected())
   {
     DEBUG_PRINT("Attempting MQTT connection...\n");
     // Create a random client ID.
@@ -94,8 +88,8 @@ void reConnectMqttServer()
     String str = mqttServerArr[j];
     mqttServer = str;
     DEBUG_PRINT("mqttServer: %s, mqttUser: %s, mqttPass: %s\n", mqttServer.c_str(), mqttUser.c_str(), mqttPass.c_str());
-    mqttClient.setServer(mqttServer.c_str(), mqttPort);
-    bool isConnected = mqttClient.connect(clientId.c_str(), mqttUser.c_str(), mqttPass.c_str());
+    mqttClient->setServer(mqttServer.c_str(), mqttPort);
+    bool isConnected = mqttClient->connect(clientId.c_str(), mqttUser.c_str(), mqttPass.c_str());
     // if (client->connect(clientId.c_str()))
     if (isConnected)
     {
@@ -105,14 +99,14 @@ void reConnectMqttServer()
       publish(topicStr.c_str(), "MQTT reconnected\n");
       // ... and resubscribe.
       topicStr = "cmnd/" + systemTopic + "#";
-      mqttClient.subscribe(topicStr.c_str());
+      mqttClient->subscribe(topicStr.c_str());
       DEBUG_PRINT("topic(%s) subscribed\n", topicStr.c_str());
       for (int deviceIndex = 0; deviceIndex < deviceList.size(); deviceIndex++)
       {
         JsonDocument deviceObj = deviceList[deviceIndex];
         String deviceTopic = deviceObj["mqtt"]["topic"];
         topicStr = "cmnd/" + deviceTopic + "#";
-        mqttClient.subscribe(topicStr.c_str());
+        mqttClient->subscribe(topicStr.c_str());
         DEBUG_PRINT("topic(%s) subscribed\n", topicStr.c_str());
       }
       // Home aAssistant discoverry
@@ -123,7 +117,7 @@ void reConnectMqttServer()
     {
       String logStr = String(i) + ": ";
       logStr += "failed reconnecting, rc = ";
-      logStr += mqttClient.state();
+      logStr += mqttClient->state();
       logStr += "\n";
       DEBUG_PRINT(logStr.c_str());
       if (i == 5)
@@ -141,7 +135,7 @@ void reConnectMqttServer()
           mqttServer = mqttServerConf2;
           DEBUG_PRINT("MQTT changed mqttServer: %s\n", mqttServer.c_str());
         }
-        mqttClient.setServer(mqttServer.c_str(), mqttPort);
+        mqttClient->setServer(mqttServer.c_str(), mqttPort);
       }
       i++;
       DEBUG_PRINT("try to reconnect again in 1 seconds\n");
@@ -151,40 +145,40 @@ void reConnectMqttServer()
   return;
 }
 
-void publish(String topic, String message)
+void MyMqtt::publish(String topic, String message)
 {
   if (mqttDisabled)
     return;
   DEBUG_PRINT("publishing >>>>> topic: %s, message: %s\n", topic.c_str(), message.c_str());
-  if (!mqttClient.connected())
+  if (!mqttClient->connected())
   {
     reConnectMqttServer();
   }
   for (int i = 0; i < message.length(); i = i + mqttMessageSizeLimit)
   {
-    mqttClient.publish(topic.c_str(), message.substring(i, i + mqttMessageSizeLimit).c_str());
+    mqttClient->publish(topic.c_str(), message.substring(i, i + mqttMessageSizeLimit).c_str());
   }
 }
 
-void publishJson(String topic, JsonDocument doc, bool retained)
+void MyMqtt::publishJson(String topic, JsonDocument doc, bool retained)
 {
   if (mqttDisabled)
     return;
   String jsonStr;
   serializeJson(doc, jsonStr);
   DEBUG_PRINT("publishing Json >>>>> topic: %s, payload: %s\n", topic.c_str(), jsonStr.c_str());
-  if (!mqttClient.connected())
+  if (!mqttClient->connected())
   {
     reConnectMqttServer();
   }
-  mqttClient.beginPublish(topic.c_str(), measureJson(doc), retained);
-  BufferingPrint bufferedClient(mqttClient, 32);
+  mqttClient->beginPublish(topic.c_str(), measureJson(doc), retained);
+  BufferingPrint bufferedClient(*mqttClient, 32);
   serializeJson(doc, bufferedClient);
   bufferedClient.flush();
-  mqttClient.endPublish();
+  mqttClient->endPublish();
 }
 
-void publishHaDiscovery()
+void MyMqtt::publishHaDiscovery()
 {
   String discoveryTopic;
   JsonDocument discoveryPayload;
@@ -201,7 +195,7 @@ void publishHaDiscovery()
   }
 }
 
-void mqttCallback(char *topic_, byte *payload, unsigned int length)
+void MyMqtt::mqttCallback(char *topic_, byte *payload, unsigned int length)
 {
   DEBUG_PRINT("mqttCallback invoked.\n");
 
@@ -218,24 +212,24 @@ void mqttCallback(char *topic_, byte *payload, unsigned int length)
   DEBUG_PRINT(logStr.c_str());
   // LOGLCD(TAG, logStr);
 
-  if (String(topic_).equals("cmnd/" + voltMater.topic + "getState"))
+  if (String(topic_).equals("cmnd/" + voltMater->topic + "getState"))
   {
-    DEBUG_PRINT("responding to geState of %s\n", voltMater.topic.c_str());
-    publishJson(("stat/" + voltMater.topic + "RESULT").c_str(), voltMater.getState(), false);
+    DEBUG_PRINT("responding to geState of %s\n", voltMater->topic.c_str());
+    publishJson(("stat/" + voltMater->topic + "RESULT").c_str(), voltMater->getState(), false);
     return;
   }
 
-  if (String(topic_).equals("cmnd/" + lipoMater.topic + "getState"))
+  if (String(topic_).equals("cmnd/" + lipoMater->topic + "getState"))
   {
-    DEBUG_PRINT("responding to geState of %s\n", lipoMater.topic.c_str());
-    publishJson(("stat/" + lipoMater.topic + "RESULT").c_str(), lipoMater.getState(), false);
+    DEBUG_PRINT("responding to geState of %s\n", lipoMater->topic.c_str());
+    publishJson(("stat/" + lipoMater->topic + "RESULT").c_str(), lipoMater->getState(), false);
     return;
   }
 
   int chargeStatus;
   int dischargeStatus;
   bool connectionStatus;
-  for (int bleIndex = 0; bleIndex < myScanCallbacks.numberOfAdvDevices; bleIndex++)
+  for (int bleIndex = 0; bleIndex < *numberOfBleDevices; bleIndex++)
   {
     DEBUG_PRINT("myBleArr[%d].topic = %s\n", bleIndex, myBleArr[bleIndex].topic.c_str());
     // DEBUG_PRINT("myBleArr[%d].available = %d", bleIndex, myBleArr[bleIndex].available);
@@ -342,4 +336,3 @@ void mqttCallback(char *topic_, byte *payload, unsigned int length)
     }
   }
 }
-

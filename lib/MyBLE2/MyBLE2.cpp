@@ -1,6 +1,3 @@
-#ifndef MY_BLE_CPP
-#define MY_BLE_CPP
-
 #include "MyBLE2.hpp"
 
 MyBLE2::MyBLE2()
@@ -78,7 +75,7 @@ byte MyBLE2::calcChecksum(byte *packet)
     }
     */
 
-    bmsPacketHeaderStruct2 *pHeader = (bmsPacketHeaderStruct2 *)packet;
+    bmsPacketHeaderStruct *pHeader = (bmsPacketHeaderStruct *)packet;
     int checksumLen = pHeader->dataLen + 2; // status + data len + data
 
     /*
@@ -229,7 +226,7 @@ int16_t MyBLE2::two_ints_into16(int highbyte, int lowbyte) // turns two bytes in
     return result;
 }
 
-bool MyBLE2::processBasicInfo(packBasicInfoStruct2 *output, byte *data, unsigned int dataLen)
+bool MyBLE2::processBasicInfo(packBasicInfoStruct *output, byte *data, unsigned int dataLen)
 {
     // TRACE;
     //  Expected data len
@@ -356,8 +353,8 @@ bool MyBLE2::bmsProcessPacket(byte *packet)
     }
     */
 
-    bmsPacketHeaderStruct2 *pHeader = (bmsPacketHeaderStruct2 *)packet;
-    byte *data = packet + sizeof(bmsPacketHeaderStruct2); // TODO Fix this ugly hack
+    bmsPacketHeaderStruct *pHeader = (bmsPacketHeaderStruct *)packet;
+    byte *data = packet + sizeof(bmsPacketHeaderStruct); // TODO Fix this ugly hack
     unsigned int dataLen = pHeader->dataLen;
 
     bool result = false;
@@ -406,4 +403,3 @@ bool MyBLE2::bmsProcessPacket(byte *packet)
     return result;
 }
 
-#endif /* MY_BLE_CPP_ */
