@@ -41,18 +41,18 @@ PowerSaving2 powerSaving;
 MyLcd2 myLcd;
 // MyTimer myTimer(0, 10000);
 MyTimer myTimerArr[3];
-MyTimer myTimerArr2[3];
+//MyTimer myTimerArr2[3];
 int timeoutCount = 0;
 VoltMater voltMater;
 LipoMater lipoMater;
 MyBLE2 myBleArr[3];
-int numberOfBleDevices;
+int numberOfBleDevices = 1;
 // std::vector<MyBLE2> *bleDevices;
 
 MyScanCallbacks myScanCallbacks(myBleArr, &myLcd, &numberOfBleDevices);
-MyClientCallbacks myClientCallbacks(myBleArr);
-MyNotification myNotification(myBleArr, &myClientCallbacks);
-MyMqtt myMqtt(&mqttClient, myBleArr, &numberOfBleDevices);
+MyClientCallbacks myClientCallbacks(myBleArr, &numberOfBleDevices);
+MyNotification myNotification(myBleArr, myTimerArr, &myScanCallbacks, &myClientCallbacks);
+MyMqtt myMqtt(&mqttClient, myBleArr, &numberOfBleDevices, &voltMater, &lipoMater);
 
 void loadConfig();
 void saveConfig();
@@ -71,8 +71,8 @@ void setup()
   // MySdCard::deleteFile(SD, "/log.txt");
   MySdCard::setup();
   loadConfig();
-  myMqtt.mqttServerSetup(configJson);
   DEBUG_PRINT("loadConfig() done\n");
+  myMqtt.mqttServerSetup(configJson);
 
   // setup WiFi //
   WiFi.mode(WIFI_STA);
@@ -160,7 +160,8 @@ void loop()
   {
     myScanCallbacks.doConnect = false;
     DEBUG_PRINT("Found a device we want to connect to, do it now.\n");
-    myClientCallbacks.numberOfAdvDevices = myScanCallbacks.numberOfAdvDevices;
+    //myClientCallbacks.numberOfAdvDevices = myScanCallbacks.numberOfAdvDevices;
+    DEBUG_PRINT("*myClientCallbacks.numberOfBleDevices: %d\n", *myClientCallbacks.numberOfBleDevices);
     if (myNotification.connectToServer())
     {
       DEBUG_PRINT("Success! we should now be getting notifications from devices(%d).\n", numberOfBleDevices);
@@ -184,7 +185,7 @@ void loop()
   {
     if (!myBleArr[bleIndex].connected)
     {
-      DEBUG_PRINT("myBleArr[%d].connected == false\n", bleIndex);
+      DEBUG_PRINT("check myBleArr[%d].connected == false, going to skip the next bleIndex\n", bleIndex);
       continue;
     }
     if (myBleArr[bleIndex].pChr_tx)

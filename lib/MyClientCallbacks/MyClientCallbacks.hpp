@@ -3,19 +3,18 @@
 
 #include <NimBLEDevice.h>
 #include "MyLog.cpp"
-// #include "MyBLE.cpp"
 #include "MyBLE2.hpp"
 
 class MyClientCallbacks : public NimBLEClientCallbacks
 {
 private:
     const char *TAG = "MyClientCallbacks";
+    MyBLE2 *myBleArr;
 
 public:
-    MyBLE2 *myBleArr;
-    int numberOfAdvDevices;
+    int *numberOfBleDevices;
 
-    MyClientCallbacks(MyBLE2 *myBleArr_);
+    MyClientCallbacks(MyBLE2 *myBleArr_, int *numberOfBleDevice_);
 
     int getIndexOfMyBleArr(NimBLEClient *pClient);
 

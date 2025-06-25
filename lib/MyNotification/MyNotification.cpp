@@ -1,14 +1,15 @@
 #include "MyNotification.hpp"
 
-MyNotification::MyNotification(MyBLE2 * myBleArr_, MyClientCallbacks *myClientCallbacks_) 
-: myBleArr(myBleArr_), myClientCallbacks(myClientCallbacks_)
+MyNotification::MyNotification(MyBLE2 * myBleArr_, MyTimer *myTimerArr_, MyScanCallbacks *myScanCallbacks_, MyClientCallbacks *myClientCallbacks_) 
+: myBleArr(myBleArr_), myTimerArr(myTimerArr_), myScanCallbacks(myScanCallbacks_), myClientCallbacks(myClientCallbacks_)
 {
+  DEBUG_PRINT("an instance created\n");
 }
 // int getIndexOfMyBleArr(NimBLERemoteCharacteristic *pRemoteCharacteristic)
 int MyNotification::getIndexOfMyBleArr(NimBLEClient *client)
 {
   auto peerAddress = client->getPeerAddress();
-  for (int i = 0; i < myScanCallbacks.numberOfAdvDevices; i++)
+  for (int i = 0; i <myScanCallbacks->numberOfAdvDevices; i++)
   {
     if (peerAddress == myBleArr[i].pChr_rx->getClient()->getPeerAddress())
     {
@@ -33,6 +34,7 @@ void MyNotification::notifyCB(NimBLERemoteCharacteristic *pRemoteCharacteristic,
 
 bool MyNotification::connectToServer()
 {
+  DEBUG_PRINT("connectToServer() called\n");
   NimBLEClient *pClient = nullptr;
 
   // Serial.printf("advDevices.size() = %d\n", advDevices.size());
@@ -41,7 +43,7 @@ bool MyNotification::connectToServer()
 
   unsigned long initalMesurementTime = 0;
   // unsigned long initalMesurementTime2 = 0;
-  for (int i = 0; i < myScanCallbacks.numberOfAdvDevices; i++)
+  for (int i = 0; i <myScanCallbacks->numberOfAdvDevices; i++)
   {
     /** Check if we have a client we should reuse first **/
     if (NimBLEDevice::getCreatedClientCount())
@@ -51,10 +53,10 @@ bool MyNotification::connectToServer()
        *  second argument in connect() to prevent refreshing the service database.
        *  This saves considerable time and power.
        */
-      pClient = NimBLEDevice::getClientByPeerAddress(myScanCallbacks.advDevices.at(i)->getAddress());
+      pClient = NimBLEDevice::getClientByPeerAddress(myScanCallbacks->advDevices.at(i)->getAddress());
       if (pClient)
       {
-        if (!pClient->connect(myScanCallbacks.advDevices.at(i), false))
+        if (!pClient->connect(myScanCallbacks->advDevices.at(i), false))
         {
           DEBUG_PRINT("Reconnect failed\n");
           return false;
@@ -95,19 +97,19 @@ bool MyNotification::connectToServer()
       /** Set how long we are willing to wait for the connection to complete (milliseconds), default is 30000. */
       pClient->setConnectTimeout(5 * 1000);
 
-      if (!pClient->connect(myScanCallbacks.advDevices.at(i)))
+      if (!pClient->connect(myScanCallbacks->advDevices.at(i)))
       {
         /** Created a client but failed to connect, don't need to keep it as it has no data */
         NimBLEDevice::deleteClient(pClient);
         DEBUG_PRINT("Failed to connect, deleted client\n");
-        myScanCallbacks.advDevices.clear();
+        myScanCallbacks->advDevices.clear();
         return false;
       }
     }
 
     if (!pClient->isConnected())
     {
-      if (!pClient->connect(myScanCallbacks.advDevices.at(i)))
+      if (!pClient->connect(myScanCallbacks->advDevices.at(i)))
       {
         DEBUG_PRINT("Failed to connect\n");
         return false;
@@ -122,7 +124,7 @@ bool MyNotification::connectToServer()
     // const std::vector<NimBLERemoteCharacteristic *> *pChrs = nullptr;
     // NimBLERemoteDescriptor *pDsc = nullptr;
 
-    pSvc = pClient->getService(myScanCallbacks.serviceUUID);
+    pSvc = pClient->getService(myScanCallbacks->serviceUUID);
     if (pSvc)
     {
       //
@@ -131,7 +133,7 @@ bool MyNotification::connectToServer()
 
       // pChr_rx = pSvc->getCharacteristic(charUUID_rx);
       // pChrSt.pChr_rx = pSvc->getCharacteristic(charUUID_rx);
-      myBleArr[i].pChr_rx = pSvc->getCharacteristic(myScanCallbacks.charUUID_rx);
+      myBleArr[i].pChr_rx = pSvc->getCharacteristic(myScanCallbacks->charUUID_rx);
 
       if (!myBleArr[i].pChr_rx)
       {
@@ -151,7 +153,7 @@ bool MyNotification::connectToServer()
       // pChrSt.pChr_tx = nullptr;
       // pChr_tx = pSvc->getCharacteristic(myScanCallbacks.charUUID_tx);
       // pChrSt.pChr_tx = pSvc->getCharacteristic(myScanCallbacks.charUUID_tx);
-      myBleArr[i].pChr_tx = pSvc->getCharacteristic(myScanCallbacks.charUUID_tx);
+      myBleArr[i].pChr_tx = pSvc->getCharacteristic(myScanCallbacks->charUUID_tx);
 
       if (!myBleArr[i].pChr_tx)
       {
@@ -181,7 +183,7 @@ bool MyNotification::connectToServer()
     initalMesurementTime2 += 1000;
     */
   }
-  myScanCallbacks.advDevices.clear();
+  myScanCallbacks->advDevices.clear();
   DEBUG_PRINT("Done with this device!\n");
   return true;
 }

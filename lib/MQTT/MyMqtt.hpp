@@ -21,10 +21,10 @@ private:
     String mqttUser;
     String mqttPass;
     String systemTopic;
-    const int mqttMessageSizeLimit = 256; // const
+    const int mqttMessageSizeLimit = 256;
 
     PubSubClient *mqttClient;
-    // JsonDocument configJson;
+    JsonDocument configJson;
     // MyScanCallbacks myScanCallbacks;
     MyBLE2 *myBleArr;
     int *numberOfBleDevices;
@@ -34,8 +34,7 @@ private:
     bool mqttDisabled;
 
 public:
-    MyMqtt(PubSubClient *mqttClient_, MyBLE2 *myBleArr_, int *numberOfBleDevices_);
-    // MyMqtt(JsonDocument configJson_);
+    MyMqtt(PubSubClient *mqttClient_, MyBLE2 *myBleArr_, int *numberOfBleDevices_, VoltMater *voltMater_, LipoMater *lipoMater_);
     void mqttServerSetup(JsonDocument configJson);
     void mqttDeviceSetup();
     void reConnectMqttServer();

@@ -1,19 +1,16 @@
 #include "MyMqtt.hpp"
 
-MyMqtt::MyMqtt(PubSubClient *mqttClient_,MyBLE2 *myBleArr_, int *numberOfBleDevices_)
-: mqttClient(mqttClient_), myBleArr(myBleArr_), numberOfBleDevices(numberOfBleDevices_)
+MyMqtt::MyMqtt(PubSubClient *mqttClient_, MyBLE2 *myBleArr_, int *numberOfBleDevices_, VoltMater *voltMater_, LipoMater *lipoMater_)
+    : mqttClient(mqttClient_), myBleArr(myBleArr_), numberOfBleDevices(numberOfBleDevices_), voltMater(voltMater_), lipoMater(lipoMater_)
 {
 }
 
-/*MyMqtt::MyMqtt()
-    : configJson(configJson_)
-{
-}*/
-
-void MyMqtt::mqttServerSetup(JsonDocument configJson)
+void MyMqtt::mqttServerSetup(JsonDocument configJson_)
 {
   DEBUG_PRINT("mqttServerSetup() called\n");
+  configJson = configJson_;
   deviceList = configJson["devices"].as<JsonArray>();
+  DEBUG_PRINT("mqttServerSetup: deviceList.size(): %d\n", deviceList.size());
   String server = configJson["mqtt"]["server"];
   mqttServer = server;
   mqttServerArr = configJson["mqtt"]["servers"].as<JsonArray>();
@@ -27,7 +24,7 @@ void MyMqtt::mqttServerSetup(JsonDocument configJson)
 
   mqttClient->setServer(mqttServer.c_str(), mqttPort);
   mqttClient->setCallback([this](char *topic_, byte *payload, unsigned int length)
-                         { mqttCallback(topic_, payload, length); });
+                          { mqttCallback(topic_, payload, length); });
 }
 
 void MyMqtt::mqttDeviceSetup()
@@ -37,7 +34,7 @@ void MyMqtt::mqttDeviceSetup()
   DEBUG_PRINT("mqttDeviceSetup: deviceList.size() = %d\n", deviceList.size());
   // myBleArr = myBleArr_;
   // int numberOfBleDevices = myScanCallbacks.numberOfBleDevices;
-  DEBUG_PRINT("mqttDeviceSetup: numberOfBleDevices = %d\n", numberOfBleDevices);
+  DEBUG_PRINT("mqttDeviceSetup: *numberOfBleDevices = %d\n", *numberOfBleDevices);
   for (int deviceIndex = 0; deviceIndex < deviceList.size(); deviceIndex++)
   {
     JsonDocument deviceObj = deviceList[deviceIndex];

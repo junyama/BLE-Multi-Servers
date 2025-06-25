@@ -4,8 +4,8 @@
 #include <ArduinoJson.h>
 #include <NimBLEDevice.h>
 #include "MyLog.cpp"
-//#include "MyMqtt.hpp"
-//#include "MyClientCallbacks.cpp"
+// #include "MyMqtt.hpp"
+// #include "MyClientCallbacks.cpp"
 
 typedef struct
 {
@@ -43,34 +43,34 @@ typedef struct
     uint32_t CellColorDisbalance[15]; // green cell == median, red/violet cell => median + c_cellMaxDisbalanceAdd commentMore actions
 } packCellInfoStruct;
 
-//void publish(String topic, String message);
-//void publishJson(String topic, JsonDocument doc, bool retained);
+// void publish(String topic, String message);
+// void publishJson(String topic, JsonDocument doc, bool retained);
 
 class MyBLE2
 {
 private:
     const char *TAG = "MyBLE";
-
-public:
-    NimBLERemoteCharacteristic *pChr_rx = nullptr;
-    NimBLERemoteCharacteristic *pChr_tx = nullptr;
     NimBLEAddress peerAddress;
+    byte commandParam = 0;
     bool toggle = false;
     byte ctrlCommand = 0;
+
+public:
     bool newPacketReceived = false;
+    NimBLERemoteCharacteristic *pChr_rx = nullptr;
+    NimBLERemoteCharacteristic *pChr_tx = nullptr;
     packBasicInfoStruct packBasicInfo = {}; // here shall be the latest data got from BMS
     packCellInfoStruct packCellInfo = {};   // here shall be the latest data got from BMS
-    int numberOfTemperature = 2;
     String deviceName = "UNKNOWN";
     String mac = "UNKNOWN";
+    int numberOfTemperature = 2;
     String topic = "NOT_DEFINED";
-    byte commandParam = 0;
     bool connected = false;
 
-    //NimBLEClientCallbacks clientCallbacks;
+    // NimBLEClientCallbacks clientCallbacks;
 
     MyBLE2();
-    
+
     MyBLE2(NimBLEAddress peerAddress_);
 
     MyBLE2(const MyBLE2 &obj);
@@ -86,15 +86,15 @@ public:
     void bmsMosfetCtrl();
 
     void mosfetCtrl(int chargeStatus, int dischargeStatus);
-    
+
     void bmsGetInfo3();
 
     void bmsGetInfo4();
 
     void bmsGetInfo5();
-   
+
     void sendCommand(NimBLERemoteCharacteristic *pChr, uint8_t *data, uint32_t dataLen);
-   
+
     bool processDeviceInfo(byte *data, unsigned int dataLen);
 
     bool bleCollectPacket(char *data, uint32_t dataSize); // reconstruct packet from BLE incomming data, called by notifyCallback function
@@ -104,9 +104,8 @@ public:
     bool processBasicInfo(packBasicInfoStruct *output, byte *data, unsigned int dataLen);
 
     bool processCellInfo(packCellInfoStruct *output, byte *data, unsigned int dataLen);
-    
+
     bool bmsProcessPacket(byte *packet);
-   
 };
 
 #endif /* MY_BLE2_HPP */

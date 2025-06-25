@@ -1,7 +1,8 @@
 #include "MyScanCallbacks.hpp"
 
-MyScanCallbacks::MyScanCallbacks() 
-{}
+MyScanCallbacks::MyScanCallbacks()
+{
+}
 
 MyScanCallbacks::MyScanCallbacks(MyBLE2 *myBleArr_, MyLcd2 *myLcd_, int *numberOfDevicesFound_)
     : myBleArr(myBleArr_), myLcd(myLcd_), numberOfDevicesFound(numberOfDevicesFound_)
@@ -51,7 +52,9 @@ void MyScanCallbacks::onScanEnd(const NimBLEScanResults &results, int reason)
 {
   DEBUG_PRINT("Scan Ended, reason: %d, device count: %d, numberOfAdvDevices: %d\n", reason, results.getCount(), advDevices.size());
   numberOfAdvDevices = advDevices.size();
-  *numberOfDevicesFound = numberOfAdvDevices;
+  DEBUG_PRINT("numberOfAdvDevices: %d\n", numberOfAdvDevices);
+  *numberOfDevicesFound *= numberOfAdvDevices;
+  DEBUG_PRINT("numberOfDevicesFound: %d\n", *numberOfDevicesFound);
   char buff[256];
   sprintf(buff, "BLE scan done, rc: %d, device found: %d/%d", reason, numberOfAdvDevices, results.getCount());
   myLcd->println(String(buff));

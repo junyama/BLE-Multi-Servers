@@ -10,14 +10,15 @@
 
 class MyNotification
 {
-public:
-    const char *TAG;
-    MyScanCallbacks myScanCallbacks;
+private:
+    const char *TAG = "MyNotification";
     MyBLE2 *myBleArr;
-    MyClientCallbacks *myClientCallbacks;
     MyTimer *myTimerArr;
+    MyClientCallbacks *myClientCallbacks;
+    MyScanCallbacks *myScanCallbacks;
 
-    MyNotification(MyBLE2 *myBleArr_, MyClientCallbacks *myClientCallbacks);
+public:
+    MyNotification(MyBLE2 *myBleArr_, MyTimer *myTimerArr_, MyScanCallbacks *myScanCallbacks_, MyClientCallbacks *myClientCallbacks);
     /** Notification / Indication receiving handler callback */
     void notifyCB(NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify);
     int getIndexOfMyBleArr(NimBLEClient *client);
