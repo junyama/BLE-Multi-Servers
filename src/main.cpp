@@ -31,17 +31,20 @@
 #include "VoltMater.hpp"
 #include "LipoMater.hpp"
 
+#define CONFIG_FILE "/config.json"
+
 const char *TAG = "main";
+MyLcd2 myLcd;
+MySdCard mySdCard(&myLcd);
 JsonDocument configJson;
-//JsonArray deviceList;
+// JsonArray deviceList;
 WiFiMulti wifiMulti;
 WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);
 PowerSaving2 powerSaving;
-MyLcd2 myLcd;
 // MyTimer myTimer(0, 10000);
 MyTimer myTimerArr[3];
-//MyTimer myTimerArr2[3];
+// MyTimer myTimerArr2[3];
 int timeoutCount = 0;
 VoltMater voltMater;
 LipoMater lipoMater;
@@ -54,8 +57,8 @@ MyClientCallbacks myClientCallbacks(myBleArr, &numberOfBleDevices);
 MyNotification myNotification(myBleArr, myTimerArr, &myScanCallbacks, &myClientCallbacks);
 MyMqtt myMqtt(&mqttClient, myBleArr, &numberOfBleDevices, &voltMater, &lipoMater);
 
-void loadConfig();
-void saveConfig();
+// void loadConfig();
+// void saveConfig();
 
 void wifiScann();
 int wifiConnect();
@@ -69,8 +72,9 @@ void setup()
   M5.begin(); // Init M5Core2.
   Serial.begin(9600);
   // MySdCard::deleteFile(SD, "/log.txt");
-  MySdCard::setup();
-  loadConfig();
+  mySdCard.setup();
+  // loadConfig();
+  configJson = mySdCard.loadConfig(CONFIG_FILE);
   DEBUG_PRINT("loadConfig() done\n");
   myMqtt.mqttServerSetup(configJson);
 
@@ -160,7 +164,7 @@ void loop()
   {
     myScanCallbacks.doConnect = false;
     DEBUG_PRINT("Found a device we want to connect to, do it now.\n");
-    //myClientCallbacks.numberOfAdvDevices = myScanCallbacks.numberOfAdvDevices;
+    // myClientCallbacks.numberOfAdvDevices = myScanCallbacks.numberOfAdvDevices;
     DEBUG_PRINT("*myClientCallbacks.numberOfBleDevices: %d\n", *myClientCallbacks.numberOfBleDevices);
     if (myNotification.connectToServer())
     {
@@ -170,6 +174,7 @@ void loop()
       {
         myMqtt.reConnectMqttServer();
       }
+      myLcd.println("publishing Home assistant discovery\n");
       myMqtt.publishHaDiscovery();
     }
     else

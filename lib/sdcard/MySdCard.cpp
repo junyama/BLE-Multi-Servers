@@ -1,20 +1,17 @@
-#ifndef MY_SDCARD_CPP
-#define MY_SDCARD_CPP
-
 #include "MySdCard.hpp"
 
-//using namespace MyLOG;
-
-const String MySdCard::TAG = "MySdCard";
+MySdCard::MySdCard(MyLcd2 *myLcd_) : myLcd(myLcd_)
+{
+}
 
 void MySdCard::setup()
 {
-    while (false == SD.begin(GPIO_NUM_4, SPI, 15000000)) {
-    M5.Lcd.println("Insert SD card...");
-    delay(2000);
-  }
-  M5.Lcd.println("SD card recognized!");
-
+    while (false == SD.begin(GPIO_NUM_4, SPI, 15000000))
+    {
+        M5.Lcd.println("Insert SD card...");
+        delay(2000);
+    }
+    M5.Lcd.println("SD card recognized!");
 }
 
 void MySdCard::listDir(fs::FS &fs, const char *dirname, uint8_t levels)
@@ -116,7 +113,7 @@ void MySdCard::removeDirR(fs::FS &fs, const char *path)
     // DEBUG_PRINT("Removed directory: " + String(path));
 }
 
-void MySdCard::readFile(fs::FS &fs, const char *path, String& output)
+void MySdCard::readFile(fs::FS &fs, const char *path, String &output)
 {
     DEBUG_PRINT("Reading file: %s", path);
 
@@ -257,4 +254,25 @@ void MySdCard::testFileIO(fs::FS &fs, const char *path)
     file.close();
 }
 
-#endif /* MY_SDCARD_CPP */
+JsonDocument MySdCard::loadConfig(String fileName)
+{
+    String textStr = "";
+    readFile(SD, fileName.c_str(), textStr);
+    myLcd->println("loading config file...");
+    DEBUG_PRINT("configJsonText: %s", textStr.c_str());
+    JsonDocument configJson;
+    DeserializationError error = deserializeJson(configJson, textStr.c_str());
+    if (error)
+    {
+        DEBUG_PRINT("Deserialization error.");
+    }
+    return configJson;
+}
+
+void MySdCard::saveConfig(JsonDocument configJson, String fileName)
+{
+    String jsonStr;
+    serializeJsonPretty(configJson, jsonStr);
+    DEBUG_PRINT("writing configuration file: %s", fileName.c_str());
+    writeFile(SD, fileName.c_str(), jsonStr.c_str());
+}
