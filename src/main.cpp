@@ -73,9 +73,9 @@ void setup()
   Serial.begin(9600);
   // MySdCard::deleteFile(SD, "/log.txt");
   mySdCard.setup();
-  // loadConfig();
   configJson = mySdCard.loadConfig(CONFIG_FILE);
   DEBUG_PRINT("loadConfig() done\n");
+
   myMqtt.mqttServerSetup(configJson);
 
   // setup WiFi //
@@ -92,6 +92,7 @@ void setup()
   wifiScann();
 
   DEBUG_PRINT("going to connect WiFi\n");
+  myLcd.println("Going to connect WiFi");
   if (wifiConnect() != 0)
   {
     DEBUG_PRINT("failed to connect WiFi and exiting\n");
@@ -200,9 +201,10 @@ void loop()
       {
         myBleArr[bleIndex].sendInfoCommand();
       }
-      DEBUG_PRINT("timeout: %d, myBleArr[%d].newPacketReceived: %d\n", timeout, bleIndex, myBleArr[bleIndex].newPacketReceived);
+      //DEBUG_PRINT("timeout: %d, myBleArr[%d].newPacketReceived: %d\n", timeout, bleIndex, myBleArr[bleIndex].newPacketReceived);
       if (myBleArr[bleIndex].newPacketReceived)
       {
+        DEBUG_PRINT("myBleArr[%d].newPacketReceived: %d\n", bleIndex, myBleArr[bleIndex].newPacketReceived);
         myBleArr[bleIndex].newPacketReceived = false;
         myLcd.updateBmsInfo(bleIndex, myBleArr[bleIndex].packBasicInfo.Volts, myBleArr[bleIndex].packBasicInfo.Amps,
                             myBleArr[bleIndex].packCellInfo.CellDiff,
