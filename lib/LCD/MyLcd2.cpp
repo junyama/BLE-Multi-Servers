@@ -7,26 +7,28 @@
 
 MyLcd2::MyLcd2()
 {
-    M5.Lcd.setTextFont(1);
-    M5.Lcd.setTextSize(2);
-    height = M5.Lcd.height();
-    width = M5.Lcd.width();
+    M5.Display.setTextFont(1);
+    M5.Display.setTextSize(2);
+    height = M5.Display.height(); //return 0
+    height = 300;
+    width = M5.Display.width();
 }
 
 void MyLcd2::println(String text)
 {
-    if (M5.Lcd.getCursorY() > height - 10)
+    DEBUG_PRINT("M5.Display.getCursorY(): %d, height: %d\n", M5.Display.getCursorY(), height);
+    if (M5.Display.getCursorY() > height - 10)
     {
-        M5.Lcd.clear();
-        M5.Lcd.setCursor(1, 1);
+        M5.Display.clear();
+        M5.Display.setCursor(1, 1);
     }
     if (isBatteryInfoShown)
     {
-        M5.Lcd.clear();
-        M5.Lcd.setTextSize(1);
+        M5.Display.clear();
+        M5.Display.setTextSize(1);
         isBatteryInfoShown = false;
     }
-    M5.Lcd.println(text);
+    M5.Display.println(text);
 }
 
 void MyLcd2::updateBmsInfo(int bmsIndex, float volt, float current, float cellDiff, float temparature1, float temparature2, int capacityRemain)
@@ -106,8 +108,8 @@ void MyLcd2::updateVoltMaterInfo(float volt)
 
 void MyLcd2::updateLipoInfo()
 {
-    vMaterLipoInfo.lipoVolt = M5.Axp.GetBatVoltage();
-    vMaterLipoInfo.lipoCurrent = M5.Axp.GetBatCurrent();
+    vMaterLipoInfo.lipoVolt = M5.Power.getBatteryVoltage() / 1000;
+    vMaterLipoInfo.lipoCurrent = M5.Power.getBatteryCurrent() / 1000;
 }
 
 /*

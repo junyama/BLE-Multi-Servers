@@ -9,7 +9,8 @@ extern MyLcd2 myLcd;
 void detectButton(int numberOfPages)
 {
   M5.update(); // Read the press state of the key.
-  if (M5.BtnA.wasReleased() || M5.BtnA.pressedFor(1000, 200))
+  // if (M5.BtnA.wasReleased() || M5.BtnA.pressedFor(1000, 200))
+  if (M5.BtnA.wasClicked())
   {
     if (powerSaving.lcdState)
     {
@@ -20,15 +21,17 @@ void detectButton(int numberOfPages)
       powerSaving.disable();
     }
   }
-  else if (M5.BtnB.wasReleased() || M5.BtnB.pressedFor(1000, 200))
+  //else if (M5.BtnB.wasReleased() || M5.BtnB.pressedFor(1000, 200))
+  else if (M5.BtnB.wasClicked())
   {
     if (++myLcd.bmsIndexShown > numberOfPages - 1)
       myLcd.bmsIndexShown = 0;
     DEBUG_PRINT("Button B pushed with bmsIndex: %d", +myLcd.bmsIndexShown);
     myLcd.showBatteryInfo();
   }
-  else if (M5.BtnC.wasReleased() || M5.BtnC.pressedFor(1000, 200))
+  //else if (M5.BtnC.wasReleased() || M5.BtnC.pressedFor(1000, 200))
+  else if (M5.BtnC.wasClicked())
   {
-    M5.shutdown();
+    M5.Power.powerOff(); // for M5unified
   }
 }

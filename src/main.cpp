@@ -14,7 +14,8 @@
 #include <PubSubClient.h>
 #include <StreamUtils.h>
 #include <NimBLEDevice.h>
-#include <M5Core2.h>
+// #include <M5Core2.h>
+#include <M5Unified.h>
 
 #include "PowerSaving2.hpp"
 #include "MyLcd2.hpp"
@@ -69,7 +70,9 @@ void printBatteryInfo(int bleIndex, int numberOfAdvDevices, MyBLE2 myBle);
 
 void setup()
 {
-  M5.begin(); // Init M5Core2.
+  auto cfg = M5.config();
+  cfg.serial_baudrate = 9600; 
+  M5.begin(cfg); // Init M5Core2.
   Serial.begin(9600);
   // MySdCard::deleteFile(SD, "/log.txt");
   mySdCard.setup();
@@ -183,7 +186,8 @@ void loop()
       DEBUG_PRINT("Failed to connect, goint to reset\n");
       myLcd.println("Failed to connect, goint to reset");
       delay(5000);
-      M5.shutdown(1);
+      //M5.shutdown(1);
+      M5.Power.Axp192.powerOff(); //for M5unified
     }
   }
 
@@ -201,7 +205,7 @@ void loop()
       {
         myBleArr[bleIndex].sendInfoCommand();
       }
-      //DEBUG_PRINT("timeout: %d, myBleArr[%d].newPacketReceived: %d\n", timeout, bleIndex, myBleArr[bleIndex].newPacketReceived);
+      // DEBUG_PRINT("timeout: %d, myBleArr[%d].newPacketReceived: %d\n", timeout, bleIndex, myBleArr[bleIndex].newPacketReceived);
       if (myBleArr[bleIndex].newPacketReceived)
       {
         DEBUG_PRINT("myBleArr[%d].newPacketReceived: %d\n", bleIndex, myBleArr[bleIndex].newPacketReceived);

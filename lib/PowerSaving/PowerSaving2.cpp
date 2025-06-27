@@ -4,7 +4,7 @@
 #include "MyLog.cpp"
 #include "PowerSaving2.hpp"
 
-//using namespace MyLOG;
+// using namespace MyLOG;
 
 PowerSaving2::PowerSaving2()
 {
@@ -23,24 +23,26 @@ PowerSaving2::PowerSaving2()
 
 void PowerSaving2::enable()
 {
-    //LOGD(TAG, "enabling power save......");
-    // LOGLCD(TAG, "enabling power save......");
+    // LOGD(TAG, "enabling power save......");
+    //  LOGLCD(TAG, "enabling power save......");
     delay(2000);
     M5.Lcd.sleep();
-    M5.Axp.SetLcdVoltage(0);
+    // M5.Axp.SetLcdVoltage(0);
+    M5.Lcd.powerSaveOn(); // M5Unified
     lcdState = 0;
-    M5.Axp.SetLed(0);
-    // M5.Axp.LightSleep(0); //linkerror
-    // MyLOG::DISABLE_LOGLCD = true;
+    // M5.Axp.SetLed(0);
+    //  M5.Axp.LightSleep(0); //linkerror
+    //  MyLOG::DISABLE_LOGLCD = true;
 }
 
 void PowerSaving2::disable()
 {
     M5.Lcd.wakeup();
-    M5.Axp.SetLcdVoltage(3000);
+    // M5.Axp.SetLcdVoltage(3000);
+    M5.Lcd.powerSaveOff(); // M5Unified
     lcdState = 1;
-    M5.Axp.SetLed(1);
-    // MyLOG::DISABLE_LOGLCD = false;
+    // M5.Axp.SetLed(1);
+    //  MyLOG::DISABLE_LOGLCD = false;
 }
 
 /*

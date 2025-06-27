@@ -1,7 +1,8 @@
 #ifndef VOLT_MATER_HPP
 #define VOLT_MATER_HPP
 
-#include "M5Core2.h"
+//#include "M5Core2.h"
+#include <M5Unified.h>
 #include "MyLog.cpp"
 #include <Arduino.h>
 #include <ArduinoJson.h>

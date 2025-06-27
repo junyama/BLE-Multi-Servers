@@ -33,9 +33,10 @@ JsonDocument LipoMater::getState()
     JsonDocument doc;
     if (available)
     {
-        voltage = M5.Axp.GetBatVoltage();
+        voltage = M5.Power.getBatteryVoltage() / 1000;
+
         doc["voltage"] = voltage;
-        current = M5.Axp.GetBatCurrent();
+        current = M5.Power.getBatteryCurrent() / 1000;
         doc["current"] = current;
     }
     else

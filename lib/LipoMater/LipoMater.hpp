@@ -1,11 +1,12 @@
 #ifndef LIPO_MATER_HPP
 #define LIPO_MATER_HPP
 
-#include "M5Core2.h"
-#include "MyLog.cpp"
+//#include "M5Core2.h"
+#include <M5Unified.h>
 #include <Arduino.h>
 #include <ArduinoJson.h>
 
+#include "MyLog.cpp"
 #include "M5_ADS1115.h"
 
 #define M5_UNIT_VMETER_I2C_ADDR 0x49

@@ -121,7 +121,8 @@ void MyMqtt::reConnectMqttServer()
       {
         DEBUG_PRINT("failed to reConnectMqttServer many times.\n");
         mqttDisabled = true;
-        M5.shutdown(1);
+        // M5.shutdown(1);
+        M5.Power.Axp192.powerOff(); // for M5unified
       }
       if (i == 3)
       {

@@ -1,7 +1,8 @@
 #ifndef MY_LCD2_HPP
 #define MY_LCD2_HPP
 
-#include "M5Core2.h"
+//#include "M5Core2.h"
+#include <M5Unified.h>
 #include <Arduino.h>
 #include "MyLog.cpp"
 

@@ -1,9 +1,11 @@
 #ifndef POWER_SAVING2_HPP
 #define POWER_SAVING2_HPP
 
-#include "M5Core2.h"
-//#include "MyDebug.hpp"
+//#include "M5Core2.h"
+#include <M5Unified.h>
 #include <Arduino.h>
+
+//#include "MyDebug.hpp"
 
 #define MSG_BUFFER_SIZE (50)
 
