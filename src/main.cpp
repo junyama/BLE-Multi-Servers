@@ -26,7 +26,7 @@
 #include "MyLog.cpp"
 // #include "MyTimer.cpp"
 #include "MySdCard.hpp"
-#include "MyWiFi.cpp"
+#include "MyWiFi.hpp"
 #include "MyMqtt.hpp"
 #include "VoltMater.hpp"
 #include "LipoMater.hpp"
@@ -38,7 +38,8 @@ MyLcd2 myLcd;
 MySdCard mySdCard(&myLcd);
 JsonDocument configJson;
 // JsonArray deviceList;
-WiFiMulti wifiMulti;
+//WiFiMulti wifiMulti;
+MyWiFi myWiFi;
 WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);
 PowerSaving2 powerSaving;
@@ -78,6 +79,8 @@ void setup()
 
   myMqtt.mqttServerSetup(configJson);
 
+  myWiFi.setup(configJson);
+  /*
   // setup WiFi //
   WiFi.mode(WIFI_STA);
   WiFi.hostname("JunBMS");
@@ -100,11 +103,12 @@ void setup()
   }
   DEBUG_PRINT("WiFi setup done\n");
   myLcd.println("WiFi connected");
+  */
 
   // setup DateTime
   DEBUG_PRINT("Going to setup date\n");
   myLcd.println("Going to setup date");
-  setupDateTime();
+  myWiFi.setupDateTime();
   myLcd.println("setup date done");
 
   powerSaving.disable();

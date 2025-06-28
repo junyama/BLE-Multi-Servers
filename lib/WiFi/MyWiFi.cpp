@@ -1,14 +1,31 @@
-#include <WiFiMulti.h>
-#include "MyLog.cpp"
-#include "MyLcd2.hpp"
+#include <MyWiFi.hpp>
 
-extern const char *TAG;
-extern MyLcd2 myLcd;
-extern WiFiMulti wifiMulti;
+void MyWiFi::setup(JsonDocument configJson)
+{
+  WiFi.mode(WIFI_STA);
+  WiFi.hostname("JunBMS");
 
-const uint32_t connectTimeoutMs = 20000;
+  // Add list of wifi networks
+  for (int i = 0; i < configJson["wifi"].size(); i++)
+  {
+    wifiMulti.addAP(configJson["wifi"][i]["ssid"], configJson["wifi"][i]["pass"]);
+  }
 
-void wifiScann()
+  DEBUG_PRINT("going to scann WiFi\n");
+  wifiScann();
+
+  DEBUG_PRINT("going to connect WiFi\n");
+  myLcd.println("Going to connect WiFi");
+  if (wifiConnect() != 0)
+  {
+    DEBUG_PRINT("failed to connect WiFi and exiting\n");
+    exit(-1);
+  }
+  DEBUG_PRINT("WiFi setup done\n");
+  myLcd.println("WiFi connected");
+}
+
+void MyWiFi::wifiScann()
 {
   int n = WiFi.scanNetworks();
   DEBUG_PRINT("scan done, %d networks found\n", n);
@@ -30,7 +47,7 @@ void wifiScann()
   }
 }
 
-int wifiConnect()
+int MyWiFi::wifiConnect()
 {
   DEBUG_PRINT("Connecting Wifi...\n");
   myLcd.println("Connecting Wifi..."); // Serial port format output string.
@@ -39,7 +56,7 @@ int wifiConnect()
   {
     DEBUG_PRINT("WiFi connected to %s(%d)\n", WiFi.SSID().c_str(), WiFi.RSSI());
     DEBUG_PRINT("IP address: %s\n", WiFi.localIP().toString().c_str());
-    //Serial.println(WiFi.localIP());
+    // Serial.println(WiFi.localIP());
     return 0;
   }
   else
@@ -49,7 +66,7 @@ int wifiConnect()
   }
 }
 
-void setupDateTime()
+void MyWiFi::setupDateTime()
 {
   // setup this after wifi connected
   // you can use custom timeZone,server and timeout
