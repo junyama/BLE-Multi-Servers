@@ -27,7 +27,7 @@
 #include "MyLog.cpp"
 // #include "MyTimer.cpp"
 #include "MySdCard.hpp"
-#include "MyWiFi.cpp"
+#include "MyWiFi.hpp"
 #include "MyMqtt.hpp"
 #include "VoltMater.hpp"
 #include "LipoMater.hpp"
@@ -39,7 +39,9 @@ MyLcd2 myLcd;
 MySdCard mySdCard(&myLcd);
 JsonDocument configJson;
 // JsonArray deviceList;
-WiFiMulti wifiMulti;
+//WiFiMulti wifiMulti;
+MyWiFi myWiFi;
+
 WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);
 PowerSaving2 powerSaving;
@@ -73,15 +75,16 @@ void setup()
   auto cfg = M5.config();
   cfg.serial_baudrate = 9600; 
   M5.begin(cfg); // Init M5Core2.
-  Serial.begin(9600);
+  //Serial.begin(9600);
   // MySdCard::deleteFile(SD, "/log.txt");
   mySdCard.setup();
   configJson = mySdCard.loadConfig(CONFIG_FILE);
   DEBUG_PRINT("loadConfig() done\n");
 
+  myWiFi.setup(configJson);
   myMqtt.mqttServerSetup(configJson);
 
-  // setup WiFi //
+  /* setup WiFi //
   WiFi.mode(WIFI_STA);
   WiFi.hostname("JunBMS");
 
@@ -103,6 +106,7 @@ void setup()
   }
   DEBUG_PRINT("WiFi setup done\n");
   myLcd.println("WiFi connected");
+  */
 
   // setup DateTime
   DEBUG_PRINT("Going to setup date\n");
@@ -187,7 +191,7 @@ void loop()
       myLcd.println("Failed to connect, goint to reset");
       delay(5000);
       //M5.shutdown(1);
-      M5.Power.Axp192.powerOff(); //for M5unified
+      M5.Power.deepSleep(1000, true); //for M5unified
     }
   }
 
