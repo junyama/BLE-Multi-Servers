@@ -3,8 +3,6 @@
 
 #include "LipoMater.hpp"
 
-// using namespace MyLOG;
-
 void LipoMater::setup(JsonDocument deviceObj)
 {
     available = true;

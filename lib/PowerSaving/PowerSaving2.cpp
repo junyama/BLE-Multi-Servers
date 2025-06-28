@@ -1,12 +1,11 @@
 #ifndef POWER_SAVING2_CPP
 #define POWER_SAVING2_CPP
 
-#include "MyLog.cpp"
 #include "PowerSaving2.hpp"
 
-//using namespace MyLOG;
+// using namespace MyLOG;
 
-PowerSaving2::PowerSaving2()
+PowerSaving2::PowerSaving2(MyLcd2 *myLcd_) : myLcd(myLcd_)
 {
     /*
     //M5.begin();  // Init M5Core.
@@ -23,8 +22,8 @@ PowerSaving2::PowerSaving2()
 
 void PowerSaving2::enable()
 {
-    //LOGD(TAG, "enabling power save......");
-    // LOGLCD(TAG, "enabling power save......");
+    // LOGD(TAG, "enabling power save......");
+    //  LOGLCD(TAG, "enabling power save......");
     delay(2000);
     M5.Lcd.sleep();
     M5.Axp.SetLcdVoltage(0);
@@ -43,6 +42,32 @@ void PowerSaving2::disable()
     // MyLOG::DISABLE_LOGLCD = false;
 }
 
+void PowerSaving2::detectButton(int numberOfPages)
+{
+    M5.update(); // Read the press state of the key.
+    if (M5.BtnA.wasReleased() || M5.BtnA.pressedFor(1000, 200))
+    {
+        if (lcdState)
+        {
+            enable();
+        }
+        else
+        {
+            disable();
+        }
+    }
+    else if (M5.BtnB.wasReleased() || M5.BtnB.pressedFor(1000, 200))
+    {
+        if (++myLcd->bmsIndexShown > numberOfPages - 1)
+            myLcd->bmsIndexShown = 0;
+        DEBUG_PRINT("Button B pushed with bmsIndex: %d", +myLcd->bmsIndexShown);
+        myLcd->showBatteryInfo();
+    }
+    else if (M5.BtnC.wasReleased() || M5.BtnC.pressedFor(1000, 200))
+    {
+        M5.shutdown();
+    }
+}
 /*
 void PowerSaving2::loop()
 {

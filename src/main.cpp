@@ -42,7 +42,7 @@ JsonDocument configJson;
 MyWiFi myWiFi;
 WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);
-PowerSaving2 powerSaving;
+PowerSaving2 powerSaving(&myLcd);
 // MyTimer myTimer(0, 10000);
 MyTimer myTimerArr[3];
 // MyTimer myTimerArr2[3];
@@ -60,13 +60,14 @@ MyMqtt myMqtt(&mqttClient, myBleArr, &numberOfBleDevices, &voltMater, &lipoMater
 
 // void loadConfig();
 // void saveConfig();
-
+/*
 void wifiScann();
 int wifiConnect();
 void setupDateTime();
 
 void detectButton(int numberOfPages);
 void printBatteryInfo(int bleIndex, int numberOfAdvDevices, MyBLE2 myBle);
+*/
 
 void setup()
 {
@@ -78,32 +79,7 @@ void setup()
   DEBUG_PRINT("loadConfig() done\n");
 
   myMqtt.mqttServerSetup(configJson);
-
   myWiFi.setup(configJson);
-  /*
-  // setup WiFi //
-  WiFi.mode(WIFI_STA);
-  WiFi.hostname("JunBMS");
-
-  // Add list of wifi networks
-  for (int i = 0; i < configJson["wifi"].size(); i++)
-  {
-    wifiMulti.addAP(configJson["wifi"][i]["ssid"], configJson["wifi"][i]["pass"]);
-  }
-
-  DEBUG_PRINT("going to scann WiFi\n");
-  wifiScann();
-
-  DEBUG_PRINT("going to connect WiFi\n");
-  myLcd.println("Going to connect WiFi");
-  if (wifiConnect() != 0)
-  {
-    DEBUG_PRINT("failed to connect WiFi and exiting\n");
-    exit(-1);
-  }
-  DEBUG_PRINT("WiFi setup done\n");
-  myLcd.println("WiFi connected");
-  */
 
   // setup DateTime
   DEBUG_PRINT("Going to setup date\n");
@@ -162,7 +138,7 @@ void setup()
 
 void loop()
 {
-  detectButton(myScanCallbacks.numberOfAdvDevices);
+  powerSaving.detectButton(numberOfBleDevices);
   mqttClient.loop();
   /** Loop here until we find a device we want to connect to */
   if (myScanCallbacks.doConnect)
@@ -191,7 +167,7 @@ void loop()
     }
   }
 
-  for (int bleIndex = 0; bleIndex < myScanCallbacks.numberOfAdvDevices; bleIndex++)
+  for (int bleIndex = 0; bleIndex < numberOfBleDevices; bleIndex++)
   {
     if (!myBleArr[bleIndex].connected)
     {
