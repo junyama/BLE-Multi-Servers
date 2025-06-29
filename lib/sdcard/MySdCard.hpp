@@ -6,6 +6,7 @@
 #include <SD.h>
 #include <SPI.h>
 #include <ArduinoJson.h>
+#include <HTTPClient.h>
 
 #include "MyLog.cpp"
 #include "MyLcd2.hpp"
@@ -31,6 +32,7 @@ public:
 	void testFileIO(fs::FS &fs, const char *path);
 	JsonDocument loadConfig(String fileName);
 	void saveConfig(JsonDocument configJson, String fileName);
+	void updatePOI(JsonDocument configJson);
 };
 
 #endif /* MY_SDCARD_HPP */

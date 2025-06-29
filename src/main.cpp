@@ -38,7 +38,7 @@ MyLcd2 myLcd;
 MySdCard mySdCard(&myLcd);
 JsonDocument configJson;
 // JsonArray deviceList;
-//WiFiMulti wifiMulti;
+// WiFiMulti wifiMulti;
 MyWiFi myWiFi;
 WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);
@@ -78,7 +78,6 @@ void setup()
   configJson = mySdCard.loadConfig(CONFIG_FILE);
   DEBUG_PRINT("loadConfig() done\n");
 
-  myMqtt.mqttServerSetup(configJson);
   myWiFi.setup(configJson);
 
   // setup DateTime
@@ -86,6 +85,11 @@ void setup()
   myLcd.println("Going to setup date");
   myWiFi.setupDateTime();
   myLcd.println("setup date done");
+
+  myMqtt.mqttServerSetup(configJson);
+
+  DEBUG_PRINT("Going to download POI\n");
+  mySdCard.updatePOI(configJson);
 
   powerSaving.disable();
 
@@ -181,7 +185,7 @@ void loop()
       {
         myBleArr[bleIndex].sendInfoCommand();
       }
-      //DEBUG_PRINT("timeout: %d, myBleArr[%d].newPacketReceived: %d\n", timeout, bleIndex, myBleArr[bleIndex].newPacketReceived);
+      // DEBUG_PRINT("timeout: %d, myBleArr[%d].newPacketReceived: %d\n", timeout, bleIndex, myBleArr[bleIndex].newPacketReceived);
       if (myBleArr[bleIndex].newPacketReceived)
       {
         DEBUG_PRINT("myBleArr[%d].newPacketReceived: %d\n", bleIndex, myBleArr[bleIndex].newPacketReceived);

@@ -276,3 +276,66 @@ void MySdCard::saveConfig(JsonDocument configJson, String fileName)
     DEBUG_PRINT("writing configuration file: %s", fileName.c_str());
     writeFile(SD, fileName.c_str(), jsonStr.c_str());
 }
+
+void MySdCard::updatePOI(JsonDocument configJson)
+{
+    JsonDocument poiIndexJson;
+    HTTPClient http;
+    const char *poiURL_ = configJson["poiURL"];
+    DEBUG_PRINT("poiURL_: %s\n", poiURL_);
+    String poiURL = poiURL_;
+    http.begin(poiURL + "poi/index.json");
+    int httpResponseCode = http.GET();
+    DEBUG_PRINT("HTTP Response code: %d\n", httpResponseCode);
+    if (httpResponseCode == 200)
+    {
+        String indexJsonStr = http.getString();
+        Serial.println(indexJsonStr);
+        DeserializationError error = deserializeJson(poiIndexJson, indexJsonStr);
+        if (error)
+        {
+            DEBUG_PRINT("deserializeJson() failed\n");
+            DEBUG_PRINT("error description: %s\n", error.f_str());
+            return;
+        }
+        else
+        {
+            myLcd->println("Updating POI...");
+
+            listDir(SD, "/PersonalPOI", 0);
+            removeDirR(SD, "/PersonalPOI");
+            createDir(SD, "/PersonalPOI");
+            writeFile(SD, "/PersonalPOI/index.json", indexJsonStr.c_str());
+            JsonArray poiIndexArray = poiIndexJson.as<JsonArray>();
+            for (JsonVariant v : poiIndexArray)
+            {
+                String POIFileName = v.as<String>();
+                DEBUG_PRINT("POI file name: %s\n", POIFileName.c_str());
+                http.begin(poiURL + "poi/" + POIFileName);
+                httpResponseCode = http.GET();
+                if (httpResponseCode == 200)
+                {
+                    String gpxStr = http.getString();
+                    Serial.println(gpxStr);
+                    // writeFile("/poi/" + POIFileName, gpxStr);
+                    String path = "/PersonalPOI/" + POIFileName;
+                    writeFile(SD, path.c_str(), gpxStr.c_str());
+                }
+                else
+                {
+                    DEBUG_PRINT("GET %s failed, HTTP Response code: %d\n", POIFileName.c_str(), httpResponseCode);
+                }
+            }
+            myLcd->println("POI update done!");
+            delay(5000);
+        }
+    }
+    else
+    {
+        DEBUG_PRINT("GET index.json failed, HTTP Response code: %d\n" + httpResponseCode);
+    }
+    // Free resources
+    http.end();
+    // SD.end();
+    return;
+}
