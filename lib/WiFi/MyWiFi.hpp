@@ -5,17 +5,18 @@
 #include <ArduinoJson.h>
 
 #include "MyLog.cpp"
-#include "MyLcd2.hpp"
+#include "MyM5.hpp"
 
 class MyWiFi
 {
 private:
   const char *TAG = "MyWiFi";
-  MyLcd2 myLcd;
+  MyM5 *myM5;
   WiFiMulti wifiMulti;
   const uint32_t connectTimeoutMs = 20000;
 
 public:
+  MyWiFi(MyM5 *myM5_);
   void setup(JsonDocument configJson);
   void wifiScann();
   int wifiConnect();

@@ -7,8 +7,10 @@
 // #include "MyScanCallbacks.hpp"
 #include "MyBLE2.hpp"
 #include "VoltMater.hpp"
-#include "LipoMater.hpp"
+//#include "LipoMater.hpp"
+//#include "PowerSaving2.hpp"
 #include "MyLog.cpp"
+#include "MyM5.hpp"
 
 class MyMqtt
 {
@@ -26,15 +28,17 @@ private:
     PubSubClient *mqttClient;
     JsonDocument configJson;
     // MyScanCallbacks myScanCallbacks;
+    //PowerSaving2 *powerSaving;
     MyBLE2 *myBleArr;
     int *numberOfBleDevices;
     VoltMater *voltMater;
-    LipoMater *lipoMater;
+    //LipoMater *lipoMater;
+    MyM5 *myM5;
 
     bool mqttDisabled;
 
 public:
-    MyMqtt(PubSubClient *mqttClient_, MyBLE2 *myBleArr_, int *numberOfBleDevices_, VoltMater *voltMater_, LipoMater *lipoMater_);
+    MyMqtt(PubSubClient *mqttClient_, MyBLE2 *myBleArr_, int *numberOfBleDevices_, VoltMater *voltMater_, MyM5 *myM5_);
     void mqttServerSetup(JsonDocument configJson);
     void mqttDeviceSetup();
     void reConnectMqttServer();

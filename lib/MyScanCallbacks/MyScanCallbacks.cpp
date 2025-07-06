@@ -4,8 +4,8 @@ MyScanCallbacks::MyScanCallbacks()
 {
 }
 
-MyScanCallbacks::MyScanCallbacks(MyBLE2 *myBleArr_, MyLcd2 *myLcd_, int *numberOfDevicesFound_)
-    : myBleArr(myBleArr_), myLcd(myLcd_), numberOfDevicesFound(numberOfDevicesFound_)
+MyScanCallbacks::MyScanCallbacks(MyBLE2 *myBleArr_, MyM5 *myM5_, int *numberOfDevicesFound_)
+    : myBleArr(myBleArr_), myM5(myM5_), numberOfDevicesFound(numberOfDevicesFound_)
 {
 }
 
@@ -57,16 +57,16 @@ void MyScanCallbacks::onScanEnd(const NimBLEScanResults &results, int reason)
   DEBUG_PRINT("numberOfDevicesFound: %d\n", *numberOfDevicesFound);
   char buff[256];
   sprintf(buff, "BLE scan done, rc: %d, device found: %d/%d", reason, numberOfAdvDevices, results.getCount());
-  myLcd->println(String(buff));
+  myM5->println(String(buff));
   for (int bleIndex = 0; bleIndex < numberOfAdvDevices; bleIndex++)
   {
     std::string address = advDevices[bleIndex]->getAddress().toString();
     myBleArr[bleIndex].mac = String(address.c_str());
-    myLcd->bmsInfoArr[bleIndex].mac = myBleArr[bleIndex].mac;
+    myM5->bmsInfoArr[bleIndex].mac = myBleArr[bleIndex].mac;
     DEBUG_PRINT("myBleArr[%d].mac set by %s\n", bleIndex, address.c_str());
     std::string deviceName = advDevices[bleIndex]->getName();
     myBleArr[bleIndex].deviceName = String(deviceName.c_str());
-    myLcd->bmsInfoArr[bleIndex].deviceName = myBleArr[bleIndex].deviceName;
+    myM5->bmsInfoArr[bleIndex].deviceName = myBleArr[bleIndex].deviceName;
     DEBUG_PRINT("myBleArr[%d].deviceName set by %s\n", bleIndex, myBleArr[bleIndex].deviceName.c_str());
     // bleDevices->push_back(MyBLE(advDevices[bleIndex]->getAddress())); //crash
   }

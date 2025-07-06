@@ -1,5 +1,9 @@
 #include <MyWiFi.hpp>
 
+MyWiFi::MyWiFi(MyM5 *myM5_) : myM5(myM5_)
+{
+}
+
 void MyWiFi::setup(JsonDocument configJson)
 {
   WiFi.mode(WIFI_STA);
@@ -15,14 +19,14 @@ void MyWiFi::setup(JsonDocument configJson)
   wifiScann();
 
   DEBUG_PRINT("going to connect WiFi\n");
-  myLcd.println("Going to connect WiFi");
+  myM5->println("Going to connect WiFi");
   if (wifiConnect() != 0)
   {
     DEBUG_PRINT("failed to connect WiFi and exiting\n");
     exit(-1);
   }
   DEBUG_PRINT("WiFi setup done\n");
-  myLcd.println("WiFi connected");
+  myM5->println("WiFi connected");
 }
 
 void MyWiFi::wifiScann()
@@ -50,7 +54,7 @@ void MyWiFi::wifiScann()
 int MyWiFi::wifiConnect()
 {
   DEBUG_PRINT("Connecting Wifi...\n");
-  myLcd.println("Connecting Wifi..."); // Serial port format output string.
+  myM5->println("Connecting Wifi..."); // Serial port format output string.
   // if the connection to the stongest hotstop is lost, it will connect to the next network on the list
   if (wifiMulti.run(connectTimeoutMs) == WL_CONNECTED)
   {

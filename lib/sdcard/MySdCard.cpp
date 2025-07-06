@@ -1,6 +1,6 @@
 #include "MySdCard.hpp"
 
-MySdCard::MySdCard(MyLcd2 *myLcd_) : myLcd(myLcd_)
+MySdCard::MySdCard(MyM5 *myM5_) : myM5(myM5_)
 {
 }
 
@@ -258,7 +258,7 @@ JsonDocument MySdCard::loadConfig(String fileName)
 {
     String textStr = "";
     readFile(SD, fileName.c_str(), textStr);
-    myLcd->println("loading config file...");
+    myM5->println("loading config file...");
     DEBUG_PRINT("configJsonText: %s", textStr.c_str());
     JsonDocument configJson;
     DeserializationError error = deserializeJson(configJson, textStr.c_str());
@@ -300,7 +300,7 @@ void MySdCard::updatePOI(JsonDocument configJson)
         }
         else
         {
-            myLcd->println("Updating POI...");
+            myM5->println("Updating POI...");
 
             listDir(SD, "/PersonalPOI", 0);
             removeDirR(SD, "/PersonalPOI");
@@ -326,7 +326,7 @@ void MySdCard::updatePOI(JsonDocument configJson)
                     DEBUG_PRINT("GET %s failed, HTTP Response code: %d\n", POIFileName.c_str(), httpResponseCode);
                 }
             }
-            myLcd->println("POI update done!");
+            myM5->println("POI update done!");
             delay(5000);
         }
     }

@@ -4,7 +4,7 @@
 #include <NimBLEDevice.h>
 #include "MyLog.cpp"
 #include "MyBLE2.hpp"
-#include "MyLcd2.hpp"
+#include "MyM5.hpp"
 
 /** Define a class to handle the callbacks when scan events are received */
 class MyScanCallbacks : public NimBLEScanCallbacks
@@ -24,11 +24,11 @@ public:
   int *numberOfDevicesFound;
   bool doConnect = false;
   MyBLE2 *myBleArr;
-  MyLcd2 *myLcd;
+  MyM5 *myM5;
 
   MyScanCallbacks(); 
 
-  MyScanCallbacks(MyBLE2 *myBleArr_, MyLcd2 *myLcd_, int *numberOfDevicesFound_);
+  MyScanCallbacks(MyBLE2 *myBleArr_, MyM5 *myM5_, int *numberOfDevicesFound_);
 
   void onResult(const NimBLEAdvertisedDevice *advertisedDevice) override;
 

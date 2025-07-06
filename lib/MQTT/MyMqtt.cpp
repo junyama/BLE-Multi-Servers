@@ -1,7 +1,7 @@
 #include "MyMqtt.hpp"
 
-MyMqtt::MyMqtt(PubSubClient *mqttClient_, MyBLE2 *myBleArr_, int *numberOfBleDevices_, VoltMater *voltMater_, LipoMater *lipoMater_)
-    : mqttClient(mqttClient_), myBleArr(myBleArr_), numberOfBleDevices(numberOfBleDevices_), voltMater(voltMater_), lipoMater(lipoMater_)
+MyMqtt::MyMqtt(PubSubClient *mqttClient_, MyBLE2 *myBleArr_, int *numberOfBleDevices_, VoltMater *voltMater_, MyM5 *myM5_)
+    : mqttClient(mqttClient_), myBleArr(myBleArr_), numberOfBleDevices(numberOfBleDevices_), voltMater(voltMater_), myM5(myM5_)
 {
 }
 
@@ -65,7 +65,12 @@ void MyMqtt::mqttDeviceSetup()
     else if (type.equals("Lipo"))
     {
       DEBUG_PRINT("setting up lipo mater\n");
-      lipoMater->setup(deviceObj);
+      myM5->setup(deviceObj);
+    }
+    else if (type.equals("Controller"))
+    {
+      DEBUG_PRINT("setting up Controller\n");
+      myM5->setup(deviceObj);
     }
   }
 }
@@ -216,10 +221,32 @@ void MyMqtt::mqttCallback(char *topic_, byte *payload, unsigned int length)
     return;
   }
 
-  if (String(topic_).equals("cmnd/" + lipoMater->topic + "getState"))
+  if (String(topic_).equals("cmnd/" + myM5->topic + "getState"))
   {
-    DEBUG_PRINT("responding to geState of %s\n", lipoMater->topic.c_str());
-    publishJson(("stat/" + lipoMater->topic + "RESULT").c_str(), lipoMater->getState(), false);
+    DEBUG_PRINT("responding to geState of %s\n", myM5->topic.c_str());
+    publishJson(("stat/" + myM5->topic + "RESULT").c_str(), myM5->getState(), false);
+    return;
+  }
+
+  if (String(topic_).equals("cmnd/" + systemTopic + "lcd"))
+  {
+    if (msgStr.equals("0"))
+    {
+      myM5->lcdSwitch(0);
+      msgStr = "OFF";
+    }
+    else if (msgStr.equals("1"))
+    {
+      myM5->lcdSwitch(1);
+      msgStr = "ON";
+    }
+    else
+    {
+      msgStr = "INVALID";
+    }
+    DEBUG_PRINT("responding to led!\n");
+    publishJson(("stat/" + systemTopic + "STATE").c_str(), myM5->getState(), true);
+    publishJson(("stat/" + systemTopic + "RESULT").c_str(), myM5->getState(), true);
     return;
   }
 
@@ -328,7 +355,6 @@ void MyMqtt::mqttCallback(char *topic_, byte *payload, unsigned int length)
       mosfetState["dischargeStatus"] = dischargeStatus;
       publishJson(("stat/" + deviceTopic + "STATE").c_str(), mosfetState, true);
       publishJson(("stat/" + deviceTopic + "RESULT").c_str(), mosfetState, true);
-
       return;
     }
   }

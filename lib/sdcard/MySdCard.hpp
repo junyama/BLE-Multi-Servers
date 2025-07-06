@@ -9,16 +9,16 @@
 #include <HTTPClient.h>
 
 #include "MyLog.cpp"
-#include "MyLcd2.hpp"
+#include "MyM5.hpp"
 
 class MySdCard
 {
 private:
 	const String TAG = "MySdCard";
-	MyLcd2 *myLcd;
+	MyM5 *myM5;
 
 public:
-	MySdCard(MyLcd2 *myLcd_);
+	MySdCard(MyM5 *myM5_);
 	void setup();
 	void listDir(fs::FS &fs, const char *dirname, uint8_t levels);
 	void createDir(fs::FS &fs, const char *path);

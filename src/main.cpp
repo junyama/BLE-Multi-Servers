@@ -16,9 +16,9 @@
 #include <NimBLEDevice.h>
 #include <M5Core2.h>
 
-#include "PowerSaving2.hpp"
-#include "MyLcd2.hpp"
-// #include "MyBLE.cpp"
+// #include "PowerSaving2.hpp"
+// #include "MyLcd2.hpp"
+//  #include "MyBLE.cpp"
 #include "MyBLE2.hpp"
 // #include "MyScanCallbacks.hpp"
 #include "MyNotification.hpp"
@@ -29,34 +29,37 @@
 #include "MyWiFi.hpp"
 #include "MyMqtt.hpp"
 #include "VoltMater.hpp"
-#include "LipoMater.hpp"
+// #include "LipoMater.hpp"
+#include "MyM5.hpp"
 
 #define CONFIG_FILE "/config.json"
 
 const char *TAG = "main";
-MyLcd2 myLcd;
-MySdCard mySdCard(&myLcd);
+// MyLcd2 myLcd;
+MyM5 myM5;
+MySdCard mySdCard(&myM5);
 JsonDocument configJson;
 // JsonArray deviceList;
 // WiFiMulti wifiMulti;
-MyWiFi myWiFi;
+MyWiFi myWiFi(&myM5);
 WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);
-PowerSaving2 powerSaving(&myLcd);
+// PowerSaving2 powerSaving(&myLcd);
+
 // MyTimer myTimer(0, 10000);
 MyTimer myTimerArr[3];
 // MyTimer myTimerArr2[3];
 int timeoutCount = 0;
 VoltMater voltMater;
-LipoMater lipoMater;
+// LipoMater lipoMater;
 MyBLE2 myBleArr[3];
 int numberOfBleDevices = 1;
 // std::vector<MyBLE2> *bleDevices;
 
-MyScanCallbacks myScanCallbacks(myBleArr, &myLcd, &numberOfBleDevices);
+MyScanCallbacks myScanCallbacks(myBleArr, &myM5, &numberOfBleDevices);
 MyClientCallbacks myClientCallbacks(myBleArr, &numberOfBleDevices);
 MyNotification myNotification(myBleArr, myTimerArr, &myScanCallbacks, &myClientCallbacks);
-MyMqtt myMqtt(&mqttClient, myBleArr, &numberOfBleDevices, &voltMater, &lipoMater);
+MyMqtt myMqtt(&mqttClient, myBleArr, &numberOfBleDevices, &voltMater, &myM5);
 
 // void loadConfig();
 // void saveConfig();
@@ -82,19 +85,17 @@ void setup()
 
   // setup DateTime
   DEBUG_PRINT("Going to setup date\n");
-  myLcd.println("Going to setup date");
+  myM5.println("Going to setup date");
   myWiFi.setupDateTime();
-  myLcd.println("setup date done");
+  myM5.println("setup date done");
 
   myMqtt.mqttServerSetup(configJson);
 
   DEBUG_PRINT("Going to download POI\n");
   mySdCard.updatePOI(configJson);
 
-  powerSaving.disable();
-
   DEBUG_PRINT("Starting NimBLE Client\n");
-  myLcd.println("Going to setup BLE");
+  myM5.println("Going to setup BLE");
 
   /** Initialize NimBLE and set the device name */
   NimBLEDevice::init("NimBLE-Client");
@@ -142,7 +143,7 @@ void setup()
 
 void loop()
 {
-  powerSaving.detectButton(numberOfBleDevices);
+  myM5.detectButton(numberOfBleDevices);
   mqttClient.loop();
   /** Loop here until we find a device we want to connect to */
   if (myScanCallbacks.doConnect)
@@ -159,13 +160,14 @@ void loop()
       {
         myMqtt.reConnectMqttServer();
       }
-      myLcd.println("publishing Home assistant discovery\n");
+      myM5.println("publishing Home assistant discovery\n");
       myMqtt.publishHaDiscovery();
+      myM5.powerSave(1);
     }
     else
     {
       DEBUG_PRINT("Failed to connect, goint to reset\n");
-      myLcd.println("Failed to connect, goint to reset");
+      myM5.println("Failed to connect, goint to reset");
       delay(5000);
       M5.shutdown(1);
     }
@@ -190,22 +192,22 @@ void loop()
       {
         DEBUG_PRINT("myBleArr[%d].newPacketReceived: %d\n", bleIndex, myBleArr[bleIndex].newPacketReceived);
         myBleArr[bleIndex].newPacketReceived = false;
-        myLcd.updateBmsInfo(bleIndex, myBleArr[bleIndex].packBasicInfo.Volts, myBleArr[bleIndex].packBasicInfo.Amps,
-                            myBleArr[bleIndex].packCellInfo.CellDiff,
-                            myBleArr[bleIndex].packBasicInfo.Temp1, myBleArr[bleIndex].packBasicInfo.Temp2,
-                            myBleArr[bleIndex].packBasicInfo.CapacityRemainPercent);
+        myM5.updateBmsInfo(bleIndex, myBleArr[bleIndex].packBasicInfo.Volts, myBleArr[bleIndex].packBasicInfo.Amps,
+                           myBleArr[bleIndex].packCellInfo.CellDiff,
+                           myBleArr[bleIndex].packBasicInfo.Temp1, myBleArr[bleIndex].packBasicInfo.Temp2,
+                           myBleArr[bleIndex].packBasicInfo.CapacityRemainPercent);
         myMqtt.publishJson("stat/" + myBleArr[bleIndex].topic + "STATE", myBleArr[bleIndex].getState(), true);
       }
     }
   }
   if (voltMater.available && voltMater.timeout(millis()))
   {
-    myLcd.updateVoltMaterInfo(voltMater.calVoltage);
+    myM5.updateVoltMaterInfo(voltMater.calVoltage);
     myMqtt.publishJson("stat/" + voltMater.topic + "STATE", voltMater.getState(), true);
   }
-  if (lipoMater.available && lipoMater.timeout(millis()))
+  if (myM5.timeout(millis()))
   {
-    myLcd.updateLipoInfo();
-    myMqtt.publishJson("stat/" + lipoMater.topic + "STATE", lipoMater.getState(), true);
+    myM5.updateLipoInfo();
+    myMqtt.publishJson("stat/" + myM5.topic + "STATE", myM5.getState(), true);
   }
 }

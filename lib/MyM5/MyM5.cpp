@@ -1,11 +1,6 @@
-#ifndef MY_LCD2_CPP
-#define MY_LCD2_CPP
+#include "MyM5.hpp"
 
-#include "MyLcd2.hpp"
-
-// using namespace MyLOG;
-
-MyLcd2::MyLcd2()
+MyM5::MyM5()
 {
     M5.Lcd.setTextFont(1);
     M5.Lcd.setTextSize(2);
@@ -13,7 +8,118 @@ MyLcd2::MyLcd2()
     width = M5.Lcd.width();
 }
 
-void MyLcd2::println(String text)
+void MyM5::setup(JsonDocument deviceObj)
+{
+    if (deviceObj["measurmentIntervalMs"])
+        measurmentIntervalMs = deviceObj["measurmentIntervalMs"];
+    String topic_ = deviceObj["mqtt"]["topic"];
+    DEBUG_PRINT("deviceObj[\"topic\"]: %s\n", topic_.c_str());
+    if (topic_ != "null")
+        topic = topic_;
+}
+
+bool MyM5::timeout(int currentTime)
+{
+    if ((currentTime - lastMeasurment) >= measurmentIntervalMs)
+    {
+        DEBUG_PRINT("millis() - lastMeasument: %d - %d >= measurmentIntervalMs: %d\n", currentTime, lastMeasurment, measurmentIntervalMs);
+        lastMeasurment = currentTime;
+        return true;
+    }
+    else
+        return false;
+}
+
+void MyM5::powerSave(int status)
+{
+    if (status)
+    {
+        println("goint to sleap in 2 seconds");
+        delay(2000);
+        M5.Lcd.sleep();
+        M5.Axp.SetLcdVoltage(0);
+        lcdState = 0;
+        M5.Axp.SetLed(0);
+        ledState = 0;
+    }
+    else
+    {
+        M5.Lcd.wakeup();
+        M5.Axp.SetLcdVoltage(3000);
+        lcdState = 1;
+        M5.Axp.SetLed(1);
+        ledState = 1;
+    }
+}
+
+void MyM5::lcdSwitch(int state)
+{
+    if (state)
+    {
+        M5.Lcd.wakeup();
+        M5.Axp.SetLcdVoltage(3000);
+        lcdState = 1;
+    }
+    else
+    {
+        M5.Lcd.sleep();
+        M5.Axp.SetLcdVoltage(0);
+        lcdState = 0;
+    }
+}
+
+void MyM5::ledSwitch(int state)
+{
+    if (state)
+    {
+        M5.Axp.SetLed(1);
+        ledState = 1;
+    }
+    else
+    {
+        M5.Axp.SetLed(0);
+        ledState = 0;
+    }
+}
+
+JsonDocument MyM5::getState()
+{
+    JsonDocument doc;
+    doc["lcdState"] = lcdState;
+    doc["ledState"] = ledState;
+    return doc;
+}
+
+void MyM5::detectButton(int numberOfPages)
+{
+    M5.update(); // Read the press state of the key.
+    if (M5.BtnA.wasReleased() || M5.BtnA.pressedFor(1000, 200))
+    {
+        if (lcdState)
+        {
+            lcdSwitch(0);
+            ledSwitch(0);
+        }
+        else
+        {
+            lcdSwitch(1);
+            ledSwitch(1);
+        }
+    }
+    else if (M5.BtnB.wasReleased() || M5.BtnB.pressedFor(1000, 200))
+    {
+        if (++bmsIndexShown > numberOfPages - 1)
+            bmsIndexShown = 0;
+        DEBUG_PRINT("Button B pushed with bmsIndex: %d", +bmsIndexShown);
+        showBatteryInfo();
+    }
+    else if (M5.BtnC.wasReleased() || M5.BtnC.pressedFor(1000, 200))
+    {
+        M5.shutdown();
+    }
+}
+
+void MyM5::println(String text)
 {
     if (M5.Lcd.getCursorY() > height - 10)
     {
@@ -29,7 +135,7 @@ void MyLcd2::println(String text)
     M5.Lcd.println(text);
 }
 
-void MyLcd2::updateBmsInfo(int bmsIndex, float volt, float current, float cellDiff, float temparature1, float temparature2, int capacityRemain)
+void MyM5::updateBmsInfo(int bmsIndex, float volt, float current, float cellDiff, float temparature1, float temparature2, int capacityRemain)
 {
     // LOGD(TAG, "showBatteryInfo called with bmsIndex: " + String(bmsIndex));
     // LOGD(TAG, "show volt: " + String(volt));
@@ -45,7 +151,7 @@ void MyLcd2::updateBmsInfo(int bmsIndex, float volt, float current, float cellDi
     showBatteryInfo();
 }
 
-void MyLcd2::showBatteryInfo()
+void MyM5::showBatteryInfo()
 {
     // LOGD(TAG, "showBatteryInfo() called with bmsIndex: " + String(bmsIndexShown));
     char str[16];
@@ -99,29 +205,13 @@ void MyLcd2::showBatteryInfo()
     isBatteryInfoShown = true;
 }
 
-void MyLcd2::updateVoltMaterInfo(float volt)
+void MyM5::updateVoltMaterInfo(float volt)
 {
     vMaterLipoInfo.vMater = volt;
 }
 
-void MyLcd2::updateLipoInfo()
+void MyM5::updateLipoInfo()
 {
     vMaterLipoInfo.lipoVolt = M5.Axp.GetBatVoltage();
     vMaterLipoInfo.lipoCurrent = M5.Axp.GetBatCurrent();
 }
-
-/*
-void MyLcd2::loop()
-{
-    M5.update(); // Read the press state of the key.
-    if (M5.BtnB.wasReleased() || M5.BtnB.pressedFor(1000, 200))
-    {
-        if (++bmsIndexShown > 2)
-            bmsIndexShown = 0;
-        LOGD(TAG, "BtnB pushed with bmsIndex: " + String(bmsIndexShown));
-        showBatteryInfo();
-    }
-}
-*/
-
-#endif /* MY_LCD2_CPP */

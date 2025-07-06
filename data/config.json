@@ -28,7 +28,10 @@
   },
   "mqtt": {
     "server": "192.168.0.20",
-    "servers": ["192.168.0.20", "junichi.ddns.net"],
+    "servers": [
+      "192.168.0.20",
+      "junichi.ddns.net"
+    ],
     "port": 1883,
     "user": "mqtt-user",
     "password": "mqttpass",
@@ -356,6 +359,68 @@
             }
           },
           "state_topic": "stat/junichiLipo_1/STATE",
+          "qos": 2
+        }
+      }
+    },
+    {
+      "type": "Controller",
+      "measurmentIntervalMs": 60000,
+      "mqtt": {
+        "topic": "M5Core2_0/",
+        "discoveryPayload": {
+          "device": {
+            "identifiers": "M5Core2_0",
+            "name": "M5Core2_0",
+            "manufacturer": "M5Stack",
+            "hw_version": "1.0rev2"
+          },
+          "origin": {
+            "name": "M5Stack",
+            "sw_version": "2.1",
+            "support_url": "https://docs.m5stack.com/en/guide/iot_tools/vameter/usage"
+          },
+          "components": {
+            "lipo_voltage": {
+              "platform": "sensor",
+              "name": "LiPo Voltage",
+              "device_class": "voltage",
+              "unit_of_measurement": "V",
+              "value_template": "{{ value_json.voltage}}",
+              "unique_id": "69d46875-dc26-45e3-8741-09a229aebb84"
+            },
+            "lipo_current": {
+              "platform": "sensor",
+              "name": "LiPo Current",
+              "device_class": "current",
+              "unit_of_measurement": "A",
+              "value_template": "{{ value_json.current}}",
+              "unique_id": "d61a22ab-45dc-42e3-b273-bdae00534feb"
+            },
+            "lcd_switch": {
+              "platform": "switch",
+              "name": "LCD Switch",
+              "command_topic": "cmnd/junichiController_1/lcd",
+              "payload_on": "1",
+              "payload_off": "0",
+              "state_on": 1,
+              "state_off": 0,
+              "value_template": "{{ value_json.lcdStatus }}",
+              "unique_id": "727aee6b-c91d-4499-bb92-d46a7c529c44"
+            },
+            "led_switch": {
+              "platform": "switch",
+              "name": "Discharge Switch",
+              "command_topic": "cmnd/junichiController_1/led",
+              "payload_on": "1",
+              "payload_off": "0",
+              "state_on": 1,
+              "state_off": 0,
+              "value_template": "{{ value_json.ledStatus }}",
+              "unique_id": "54603ec5-02f0-45d8-8ddf-7f08aa98c6ee"
+            }
+          },
+          "state_topic": "stat/M5Core2_0/STATE",
           "qos": 2
         }
       }
