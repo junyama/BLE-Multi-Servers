@@ -36,7 +36,9 @@
 
 const char *TAG = "main";
 // MyLcd2 myLcd;
-MyM5 myM5;
+int numberOfBleDevices = 1;
+
+MyM5 myM5(&numberOfBleDevices);
 MySdCard mySdCard(&myM5);
 JsonDocument configJson;
 // JsonArray deviceList;
@@ -53,7 +55,6 @@ int timeoutCount = 0;
 VoltMater voltMater;
 // LipoMater lipoMater;
 MyBLE2 myBleArr[3];
-int numberOfBleDevices = 1;
 // std::vector<MyBLE2> *bleDevices;
 
 MyScanCallbacks myScanCallbacks(myBleArr, &myM5, &numberOfBleDevices);
@@ -143,7 +144,7 @@ void setup()
 
 void loop()
 {
-  myM5.detectButton(numberOfBleDevices);
+  myM5.detectButton();
   mqttClient.loop();
   /** Loop here until we find a device we want to connect to */
   if (myScanCallbacks.doConnect)
@@ -160,7 +161,7 @@ void loop()
       {
         myMqtt.reConnectMqttServer();
       }
-      myM5.println("publishing Home assistant discovery\n");
+      myM5.println("publishing Home assistant discovery");
       myMqtt.publishHaDiscovery();
       myM5.powerSave(1);
     }
@@ -169,7 +170,7 @@ void loop()
       DEBUG_PRINT("Failed to connect, goint to reset\n");
       myM5.println("Failed to connect, goint to reset");
       delay(5000);
-      M5.shutdown(1);
+      myM5.shutdown(1);
     }
   }
 

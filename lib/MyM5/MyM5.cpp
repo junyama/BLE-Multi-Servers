@@ -1,6 +1,6 @@
 #include "MyM5.hpp"
 
-MyM5::MyM5()
+MyM5::MyM5(int *numberOfBleDevices_) : numberOfBleDevices(numberOfBleDevices_)
 {
     M5.Lcd.setTextFont(1);
     M5.Lcd.setTextSize(2);
@@ -82,6 +82,11 @@ void MyM5::ledSwitch(int state)
     }
 }
 
+void MyM5::shutdown(int sec)
+{
+    M5.shutdown(sec);
+}
+
 JsonDocument MyM5::getState()
 {
     JsonDocument doc;
@@ -90,7 +95,7 @@ JsonDocument MyM5::getState()
     return doc;
 }
 
-void MyM5::detectButton(int numberOfPages)
+void MyM5::detectButton()
 {
     M5.update(); // Read the press state of the key.
     if (M5.BtnA.wasReleased() || M5.BtnA.pressedFor(1000, 200))
@@ -108,7 +113,7 @@ void MyM5::detectButton(int numberOfPages)
     }
     else if (M5.BtnB.wasReleased() || M5.BtnB.pressedFor(1000, 200))
     {
-        if (++bmsIndexShown > numberOfPages - 1)
+        if (++bmsIndexShown > *numberOfBleDevices - 1)
             bmsIndexShown = 0;
         DEBUG_PRINT("Button B pushed with bmsIndex: %d", +bmsIndexShown);
         showBatteryInfo();

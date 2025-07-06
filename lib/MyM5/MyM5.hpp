@@ -47,19 +47,21 @@ public:
     int measurmentIntervalMs = 60000;
     unsigned long lastMeasurment = 0;
 
-    int bmsIndexShown = 1;
+    int *numberOfBleDevices;
+    int bmsIndexShown = 0;
     BmsInfoStruct bmsInfoArr[3];
 
     String topic;
 
-    MyM5();
+    MyM5(int *numberOfBleDevices_);
     void setup(JsonDocument deviceObj);
     void powerSave(int status);
     void lcdSwitch(int state);
     void ledSwitch(int state);
     JsonDocument getState();
     bool timeout(int currentTime);
-    void detectButton(int numberOfPages);
+    void detectButton();
+    void shutdown(int sec);
 
     void println(String text);
     void updateBmsInfo(int bmsIndex, float packVoltage, float current, float cellDiff, float temparature, float mainVolt, int capacityRemain);
