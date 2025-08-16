@@ -16,7 +16,7 @@ void MySdCard::setup()
 
 void MySdCard::listDir(fs::FS &fs, const char *dirname, uint8_t levels)
 {
-    DEBUG_PRINT("Listing directory: %s", dirname);
+    DEBUG_PRINT("Listing directory: %s\n", dirname);
 
     File root = fs.open(dirname);
     if (!root)
@@ -36,7 +36,7 @@ void MySdCard::listDir(fs::FS &fs, const char *dirname, uint8_t levels)
         if (file.isDirectory())
         {
             // Serial.print("  DIR : \n");
-            DEBUG_PRINT("DIR : %s", file.name());
+            DEBUG_PRINT("DIR : %s\n", file.name());
             if (levels)
             {
                 listDir(fs, file.name(), levels - 1);
@@ -47,7 +47,7 @@ void MySdCard::listDir(fs::FS &fs, const char *dirname, uint8_t levels)
             // Serial.print("  FILE: \n");
             // Serial.print(file.name());
             // Serial.print("  SIZE: \n");
-            DEBUG_PRINT("FILE: %s, SIZE: %d", file.name(), file.size());
+            DEBUG_PRINT("FILE: %s, SIZE: %d\n", file.name(), file.size());
         }
         file = root.openNextFile();
     }
@@ -55,7 +55,7 @@ void MySdCard::listDir(fs::FS &fs, const char *dirname, uint8_t levels)
 
 void MySdCard::createDir(fs::FS &fs, const char *path)
 {
-    DEBUG_PRINT("Creating Dir: %s", path);
+    DEBUG_PRINT("Creating Dir: %s\n", path);
     if (fs.mkdir(path))
     {
         DEBUG_PRINT("Directry created\n");
@@ -68,7 +68,7 @@ void MySdCard::createDir(fs::FS &fs, const char *path)
 
 void MySdCard::removeDir(fs::FS &fs, const char *path)
 {
-    DEBUG_PRINT("Removing an empty Dir: %s", path);
+    DEBUG_PRINT("Removing an empty Dir: %s\n", path);
     if (fs.rmdir(path))
     {
         DEBUG_PRINT("Directry removed\n");
@@ -94,28 +94,30 @@ void MySdCard::removeDirR(fs::FS &fs, const char *path)
         return;
     }
     File file = root.openNextFile();
+    String filePath;
     while (file)
     {
+        filePath = String(path) + "/" + String(file.name()); //added
         if (file.isDirectory())
         {
             DEBUG_PRINT("DIR : %s", file.name());
-            removeDirR(fs, file.name());
+            removeDirR(fs, filePath.c_str());
         }
         else
         {
-            DEBUG_PRINT("removing FILE: %s, SIZE: %d", file.name(), file.size());
-            fs.remove(file.name());
+            DEBUG_PRINT("Removing FILE: %s, SIZE: %d\n", filePath.c_str(), file.size());
+            DEBUG_PRINT("filePath: %s\n", filePath.c_str());
+            //fs.remove(file.name()); //this code is the issue
+            fs.remove(filePath.c_str());
         }
         file = root.openNextFile();
     }
-    // DEBUG_PRINT("Removing directory: " + String(path));
     removeDir(fs, path);
-    // DEBUG_PRINT("Removed directory: " + String(path));
 }
 
 void MySdCard::readFile(fs::FS &fs, const char *path, String &output)
 {
-    DEBUG_PRINT("Reading file: %s", path);
+    DEBUG_PRINT("Reading file: %s\n", path);
 
     File file = fs.open(path, FILE_READ);
     if (!file)
@@ -139,7 +141,7 @@ void MySdCard::readFile(fs::FS &fs, const char *path, String &output)
 
 void MySdCard::writeFile(fs::FS &fs, const char *path, const char *message)
 {
-    DEBUG_PRINT("Writing file: %s", path);
+    DEBUG_PRINT("Writing file: %s\n", path);
 
     File file = fs.open(path, FILE_WRITE);
     if (!file)
@@ -160,7 +162,7 @@ void MySdCard::writeFile(fs::FS &fs, const char *path, const char *message)
 
 void MySdCard::appendFile(fs::FS &fs, const char *path, const char *message)
 {
-    DEBUG_PRINT("Appending to file: %s", path);
+    DEBUG_PRINT("Appending to file: %s\n", path);
 
     File file = fs.open(path, FILE_APPEND);
     if (!file)
@@ -259,12 +261,12 @@ JsonDocument MySdCard::loadConfig(String fileName)
     String textStr = "";
     readFile(SD, fileName.c_str(), textStr);
     myM5->println("loading config file...");
-    DEBUG_PRINT("configJsonText: %s", textStr.c_str());
+    DEBUG_PRINT("configJsonText: %s\n", textStr.c_str());
     JsonDocument configJson;
     DeserializationError error = deserializeJson(configJson, textStr.c_str());
     if (error)
     {
-        DEBUG_PRINT("Deserialization error.");
+        DEBUG_PRINT("Deserialization error.\n");
     }
     return configJson;
 }
@@ -273,9 +275,24 @@ void MySdCard::saveConfig(JsonDocument configJson, String fileName)
 {
     String jsonStr;
     serializeJsonPretty(configJson, jsonStr);
-    DEBUG_PRINT("writing configuration file: %s", fileName.c_str());
+    DEBUG_PRINT("writing configuration file: %s\n", fileName.c_str());
     writeFile(SD, fileName.c_str(), jsonStr.c_str());
 }
+
+/*
+void MySdCard::updatePOI0(JsonDocument configJson)
+{
+    String poiURL = configJson["poiURL"];
+    DEBUG_PRINT("poiURL: %s\n", poiURL.c_str());
+    HTTPClient http;
+    http.begin(poiURL + "/PersonalPOI.zip");
+    int httpResponseCode = http.GET();
+    DEBUG_PRINT("HTTP Response code: %d\n", httpResponseCode);
+    if (httpResponseCode == 200)
+    {
+        String indexJsonStr = http.getString();
+    }
+*/
 
 void MySdCard::updatePOI(JsonDocument configJson)
 {
@@ -284,13 +301,13 @@ void MySdCard::updatePOI(JsonDocument configJson)
     const char *poiURL_ = configJson["poiURL"];
     DEBUG_PRINT("poiURL_: %s\n", poiURL_);
     String poiURL = poiURL_;
-    http.begin(poiURL + "poi/index.json");
+    http.begin(poiURL + "/gpxIndex");
     int httpResponseCode = http.GET();
     DEBUG_PRINT("HTTP Response code: %d\n", httpResponseCode);
     if (httpResponseCode == 200)
     {
         String indexJsonStr = http.getString();
-        Serial.println(indexJsonStr);
+        DEBUG_PRINT("indexJsonStr: %s\n", indexJsonStr.c_str());
         DeserializationError error = deserializeJson(poiIndexJson, indexJsonStr);
         if (error)
         {
@@ -307,16 +324,20 @@ void MySdCard::updatePOI(JsonDocument configJson)
             createDir(SD, "/PersonalPOI");
             writeFile(SD, "/PersonalPOI/index.json", indexJsonStr.c_str());
             JsonArray poiIndexArray = poiIndexJson.as<JsonArray>();
+            DEBUG_PRINT("%d of POI files being written\n", poiIndexArray.size());
+            myM5->println(String(poiIndexArray.size()) + " of POI found");
+
+            int fileIndex = 1;
             for (JsonVariant v : poiIndexArray)
             {
                 String POIFileName = v.as<String>();
-                DEBUG_PRINT("POI file name: %s\n", POIFileName.c_str());
-                http.begin(poiURL + "poi/" + POIFileName);
+                DEBUG_PRINT("(%d) POI file name: %s\n", fileIndex, POIFileName.c_str());
+                http.begin(poiURL + "/gpx/" + POIFileName);
                 httpResponseCode = http.GET();
                 if (httpResponseCode == 200)
                 {
                     String gpxStr = http.getString();
-                    Serial.println(gpxStr);
+                    //DEBUG_PRINT("gpxStr: %s\n", gpxStr.c_str());
                     // writeFile("/poi/" + POIFileName, gpxStr);
                     String path = "/PersonalPOI/" + POIFileName;
                     writeFile(SD, path.c_str(), gpxStr.c_str());
@@ -325,6 +346,7 @@ void MySdCard::updatePOI(JsonDocument configJson)
                 {
                     DEBUG_PRINT("GET %s failed, HTTP Response code: %d\n", POIFileName.c_str(), httpResponseCode);
                 }
+                fileIndex++;
             }
             myM5->println("POI update done!");
             delay(5000);

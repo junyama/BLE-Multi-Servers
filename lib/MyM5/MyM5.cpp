@@ -12,6 +12,8 @@ void MyM5::setup(JsonDocument deviceObj)
 {
     if (deviceObj["measurmentIntervalMs"])
         measurmentIntervalMs = deviceObj["measurmentIntervalMs"];
+    if (deviceObj["resetIntervalSec"])
+        resetIntervalSec = deviceObj["resetIntervalSec"];
     String topic_ = deviceObj["mqtt"]["topic"];
     DEBUG_PRINT("deviceObj[\"topic\"]: %s\n", topic_.c_str());
     if (topic_ != "null")
@@ -22,8 +24,20 @@ bool MyM5::timeout(int currentTime)
 {
     if ((currentTime - lastMeasurment) >= measurmentIntervalMs)
     {
-        DEBUG_PRINT("millis() - lastMeasument: %d - %d >= measurmentIntervalMs: %d\n", currentTime, lastMeasurment, measurmentIntervalMs);
+        DEBUG_PRINT("millis() - lastMeasument: %ld - %ld >= measurmentIntervalMs: %d\n", currentTime, lastMeasurment, measurmentIntervalMs);
         lastMeasurment = currentTime;
+        return true;
+    }
+    else
+        return false;
+}
+
+bool MyM5::resetTimeout(int currentTime)
+{
+    if ((currentTime - lastReset) >= resetIntervalSec)
+    {
+        DEBUG_PRINT("getTime() - lastReset: %ld - %ld >= resetIntervalSec: %d\n", currentTime, lastReset, resetIntervalSec);
+        lastReset = currentTime;
         return true;
     }
     else
@@ -87,11 +101,20 @@ void MyM5::shutdown(int sec)
     M5.shutdown(sec);
 }
 
+void MyM5::reset()
+{
+    // esp_sleep_enable_timer_wakeup(1);
+    // esp_deep_sleep(1);
+    ESP.restart();
+}
+
 JsonDocument MyM5::getState()
 {
     JsonDocument doc;
-    doc["lcdState"] = lcdState;
-    doc["ledState"] = ledState;
+    doc["lcdStatus"] = lcdState;
+    doc["ledStatus"] = ledState;
+    doc["voltage"] = vMaterLipoInfo.lipoVolt;
+    doc["current"] = vMaterLipoInfo.lipoCurrent;
     return doc;
 }
 
@@ -134,7 +157,10 @@ void MyM5::println(String text)
     if (isBatteryInfoShown)
     {
         M5.Lcd.clear();
-        M5.Lcd.setTextSize(1);
+        M5.Lcd.setTextFont(1);
+        M5.Lcd.setTextSize(2);
+        M5.Lcd.setCursor(1,1);
+        M5.Lcd.setTextColor(WHITE, BLACK);
         isBatteryInfoShown = false;
     }
     M5.Lcd.println(text);

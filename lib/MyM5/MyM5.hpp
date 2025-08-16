@@ -46,6 +46,8 @@ public:
     float lipoCurrent;
     int measurmentIntervalMs = 60000;
     unsigned long lastMeasurment = 0;
+    int resetIntervalSec = 3600;
+    unsigned long lastReset;
 
     int *numberOfBleDevices;
     int bmsIndexShown = 0;
@@ -59,9 +61,12 @@ public:
     void lcdSwitch(int state);
     void ledSwitch(int state);
     JsonDocument getState();
+
     bool timeout(int currentTime);
+    bool resetTimeout(int currentTime);
     void detectButton();
     void shutdown(int sec);
+    void reset();
 
     void println(String text);
     void updateBmsInfo(int bmsIndex, float packVoltage, float current, float cellDiff, float temparature, float mainVolt, int capacityRemain);

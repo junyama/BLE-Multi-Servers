@@ -88,6 +88,7 @@ void setup()
   DEBUG_PRINT("Going to setup date\n");
   myM5.println("Going to setup date");
   myWiFi.setupDateTime();
+  myM5.lastReset = DateTime.getTime(); //
   myM5.println("setup date done");
 
   myMqtt.mqttServerSetup(configJson);
@@ -211,4 +212,14 @@ void loop()
     myM5.updateLipoInfo();
     myMqtt.publishJson("stat/" + myM5.topic + "STATE", myM5.getState(), true);
   }
+  //
+  if (myM5.resetTimeout(DateTime.getTime()))
+  {
+    DEBUG_PRINT("reset once everyday\n");
+    myM5.println("reset once everyday");
+    delay(2000);
+    //myM5.shutdown(1);
+    myM5.reset();
+  }
+  //
 }

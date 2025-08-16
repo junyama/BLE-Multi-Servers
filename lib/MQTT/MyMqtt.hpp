@@ -22,7 +22,7 @@ private:
     int mqttPort;
     String mqttUser;
     String mqttPass;
-    String systemTopic;
+    //String systemTopic;
     const int mqttMessageSizeLimit = 256;
 
     PubSubClient *mqttClient;

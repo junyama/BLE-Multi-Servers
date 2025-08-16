@@ -19,8 +19,8 @@ void MyMqtt::mqttServerSetup(JsonDocument configJson_)
   mqttUser = user;
   String pass = configJson["mqtt"]["password"];
   mqttPass = pass;
-  String topic = configJson["mqtt"]["topic"];
-  systemTopic = topic;
+  // String topic = configJson["mqtt"]["topic"];
+  // systemTopic = topic;
 
   mqttClient->setServer(mqttServer.c_str(), mqttPort);
   mqttClient->setCallback([this](char *topic_, byte *payload, unsigned int length)
@@ -62,11 +62,6 @@ void MyMqtt::mqttDeviceSetup()
       DEBUG_PRINT("setting up volt mater\n");
       voltMater->setup(deviceObj);
     }
-    else if (type.equals("Lipo"))
-    {
-      DEBUG_PRINT("setting up lipo mater\n");
-      myM5->setup(deviceObj);
-    }
     else if (type.equals("Controller"))
     {
       DEBUG_PRINT("setting up Controller\n");
@@ -97,10 +92,10 @@ void MyMqtt::reConnectMqttServer()
     {
       DEBUG_PRINT("Connected.\n");
       // Once connected, publish an announcement to the topic.
-      String topicStr = "stat/" + systemTopic + "STATE";
+      String topicStr = "stat/" + myM5->topic + "STATE";
       publish(topicStr.c_str(), "MQTT reconnected\n");
       // ... and resubscribe.
-      topicStr = "cmnd/" + systemTopic + "#";
+      topicStr = "cmnd/" + myM5->topic + "#";
       mqttClient->subscribe(topicStr.c_str());
       DEBUG_PRINT("topic(%s) subscribed\n", topicStr.c_str());
       for (int deviceIndex = 0; deviceIndex < deviceList.size(); deviceIndex++)
@@ -206,13 +201,14 @@ void MyMqtt::mqttCallback(char *topic_, byte *payload, unsigned int length)
   {
     msgStr = msgStr + (char)payload[i];
   }
-  String logStr = "Message arrived[";
+  String logStr = "Message arrived, topic: ";
   logStr += topic_;
-  logStr += "] ";
+  logStr += ", message: ";
   logStr += msgStr;
   logStr += "\n";
   DEBUG_PRINT(logStr.c_str());
-  // LOGLCD(TAG, logStr);
+  // DEBUG_PRINT("voltMater->topic: %s\n", voltMater->topic.c_str());
+  // DEBUG_PRINT("myM5->topic: %s\n", myM5->topic.c_str());
 
   if (String(topic_).equals("cmnd/" + voltMater->topic + "getState"))
   {
@@ -228,7 +224,7 @@ void MyMqtt::mqttCallback(char *topic_, byte *payload, unsigned int length)
     return;
   }
 
-  if (String(topic_).equals("cmnd/" + systemTopic + "lcd"))
+  if (String(topic_).equals("cmnd/" + myM5->topic + "lcd"))
   {
     if (msgStr.equals("0"))
     {
@@ -245,8 +241,39 @@ void MyMqtt::mqttCallback(char *topic_, byte *payload, unsigned int length)
       msgStr = "INVALID";
     }
     DEBUG_PRINT("responding to led!\n");
-    publishJson(("stat/" + systemTopic + "STATE").c_str(), myM5->getState(), true);
-    publishJson(("stat/" + systemTopic + "RESULT").c_str(), myM5->getState(), true);
+    publishJson(("stat/" + myM5->topic + "STATE").c_str(), myM5->getState(), true);
+    publishJson(("stat/" + myM5->topic + "RESULT").c_str(), myM5->getState(), true);
+    return;
+  }
+
+  if (String(topic_).equals("cmnd/" + myM5->topic + "led"))
+  {
+    if (msgStr.equals("0"))
+    {
+      myM5->ledSwitch(0);
+      msgStr = "OFF";
+    }
+    else if (msgStr.equals("1"))
+    {
+      myM5->ledSwitch(1);
+      msgStr = "ON";
+    }
+    else
+    {
+      msgStr = "INVALID";
+    }
+    DEBUG_PRINT("responding to led!\n");
+    publishJson(("stat/" + myM5->topic + "STATE").c_str(), myM5->getState(), true);
+    publishJson(("stat/" + myM5->topic + "RESULT").c_str(), myM5->getState(), true);
+    return;
+  }
+
+  if (String(topic_).equals("cmnd/" + myM5->topic + "reset"))
+  {
+    DEBUG_PRINT("goint to reset\n");
+    myM5->println("goint to reset");
+    delay(2000);
+    myM5->reset();
     return;
   }
 

@@ -58,6 +58,13 @@ void MyScanCallbacks::onScanEnd(const NimBLEScanResults &results, int reason)
   char buff[256];
   sprintf(buff, "BLE scan done, rc: %d, device found: %d/%d", reason, numberOfAdvDevices, results.getCount());
   myM5->println(String(buff));
+
+  if (*numberOfDevicesFound == 0) {
+    DEBUG_PRINT("no device found, going to reset\n");
+    delay(2000);
+    myM5->reset();
+  }
+
   for (int bleIndex = 0; bleIndex < numberOfAdvDevices; bleIndex++)
   {
     std::string address = advDevices[bleIndex]->getAddress().toString();

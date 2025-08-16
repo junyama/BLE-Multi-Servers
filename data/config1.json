@@ -328,11 +328,11 @@
       "measurmentIntervalMs": 60000,
       "resetIntervalSec": 86400,
       "mqtt": {
-        "topic": "M5Core2_0/",
+        "topic": "M5Core2_1/",
         "discoveryPayload": {
           "device": {
-            "identifiers": "M5Core2_0",
-            "name": "M5Core2_0",
+            "identifiers": "M5Core2_1",
+            "name": "M5Core2_1",
             "manufacturer": "M5Stack",
             "hw_version": "1.0rev2"
           },
@@ -348,7 +348,7 @@
               "device_class": "voltage",
               "unit_of_measurement": "V",
               "value_template": "{{ value_json.voltage}}",
-              "unique_id": "69d46875-dc26-45e3-8741-09a229aebb84"
+              "unique_id": "56054740-47df-44ae-9bb9-985ecf7fd273"
             },
             "lipo_current": {
               "platform": "sensor",
@@ -356,38 +356,38 @@
               "device_class": "current",
               "unit_of_measurement": "A",
               "value_template": "{{ value_json.current}}",
-              "unique_id": "d61a22ab-45dc-42e3-b273-bdae00534feb"
+              "unique_id": "7f148628-91fe-44fc-9c52-8e65dc71c4c4"
             },
             "lcd_switch": {
               "platform": "switch",
               "name": "LCD Switch",
-              "command_topic": "cmnd/M5Core2_0/lcd",
+              "command_topic": "cmnd/M5Core2_1/lcd",
               "payload_on": "1",
               "payload_off": "0",
               "state_on": 1,
               "state_off": 0,
               "value_template": "{{ value_json.lcdStatus }}",
-              "unique_id": "727aee6b-c91d-4499-bb92-d46a7c529c44"
+              "unique_id": "ce0690c1-502d-4714-b2ee-7aee67d3d15e"
             },
             "led_switch": {
               "platform": "switch",
               "name": "LED Switch",
-              "command_topic": "cmnd/M5Core2_0/led",
+              "command_topic": "cmnd/M5Core2_1/led",
               "payload_on": "1",
               "payload_off": "0",
               "state_on": 1,
               "state_off": 0,
               "value_template": "{{ value_json.ledStatus }}",
-              "unique_id": "54603ec5-02f0-45d8-8ddf-7f08aa98c6ee"
+              "unique_id": "bd833f01-771b-429d-bfc6-b240ff5ee6a9"
             },
             "reset_button": {
               "platform": "button",
               "name": "Reset Button",
-              "command_topic": "cmnd/M5Core2_0/reset",
-              "unique_id": "35359cac-9f9a-487d-8966-88cc91aabf08"
+              "command_topic": "cmnd/M5Core2_1/reset",
+              "unique_id": "176fbff6-6229-46e1-92d0-56ca80126bc4"
             }
           },
-          "state_topic": "stat/M5Core2_0/STATE",
+          "state_topic": "stat/M5Core2_1/STATE",
           "qos": 2
         }
       }
