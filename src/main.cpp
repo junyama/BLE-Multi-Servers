@@ -20,6 +20,7 @@
 // #include "MyLcd2.hpp"
 //  #include "MyBLE.cpp"
 #include "MyBLE2.hpp"
+#include "MyThermo.hpp"
 // #include "MyScanCallbacks.hpp"
 #include "MyNotification.hpp"
 #include "MyClientCallBacks.hpp"
@@ -37,6 +38,7 @@
 const char *TAG = "main";
 // MyLcd2 myLcd;
 int numberOfBleDevices = 1;
+int numberOfThermoDevices = 1;
 
 MyM5 myM5(&numberOfBleDevices);
 MySdCard mySdCard(&myM5);
@@ -55,9 +57,11 @@ int timeoutCount = 0;
 VoltMater voltMater;
 // LipoMater lipoMater;
 MyBLE2 myBleArr[3];
+
+MyThermo myThermoArr[2];
 // std::vector<MyBLE2> *bleDevices;
 
-MyScanCallbacks myScanCallbacks(myBleArr, &myM5, &numberOfBleDevices);
+MyScanCallbacks myScanCallbacks(myBleArr, &myM5, &numberOfBleDevices, myThermoArr, &numberOfThermoDevices);
 MyClientCallbacks myClientCallbacks(myBleArr, &numberOfBleDevices);
 MyNotification myNotification(myBleArr, myTimerArr, &myScanCallbacks, &myClientCallbacks);
 MyMqtt myMqtt(&mqttClient, myBleArr, &numberOfBleDevices, &voltMater, &myM5);

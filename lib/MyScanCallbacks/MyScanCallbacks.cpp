@@ -4,8 +4,8 @@ MyScanCallbacks::MyScanCallbacks()
 {
 }
 
-MyScanCallbacks::MyScanCallbacks(MyBLE2 *myBleArr_, MyM5 *myM5_, int *numberOfDevicesFound_)
-    : myBleArr(myBleArr_), myM5(myM5_), numberOfDevicesFound(numberOfDevicesFound_)
+MyScanCallbacks::MyScanCallbacks(MyBLE2 *myBleArr_, MyM5 *myM5_, int *numberOfDevicesFound_, MyThermo *myThermoArr_, int *numberOfThermoDevicesFound_)
+    : myBleArr(myBleArr_), myM5(myM5_), numberOfDevicesFound(numberOfDevicesFound_), myThermoArr(myThermoArr_), numberOfThermoDevicesFound(numberOfThermoDevicesFound_)
 {
 }
 
@@ -14,7 +14,7 @@ void MyScanCallbacks::onResult(const NimBLEAdvertisedDevice *advertisedDevice)
   DEBUG_PRINT("Advertised Device found: %s\n", advertisedDevice->toString().c_str());
   if (advertisedDevice->isAdvertisingService(serviceUUID))
   {
-    DEBUG_PRINT("Found Our Service\n");
+    DEBUG_PRINT("Found BMS Service\n");
     /** stop scan before connecting */
     // NimBLEDevice::getScan()->stop(); //Jun: comment out
     /** Save the device reference in a global for the client to use*/
@@ -45,6 +45,12 @@ void MyScanCallbacks::onResult(const NimBLEAdvertisedDevice *advertisedDevice)
     }
     // END
   }
+  else if (advertisedDevice->isAdvertisingService(serviceUUID_thermo))
+  {
+    DEBUG_PRINT("Found Thermomater Service\n");
+    advThermoDevices.push_back(advertisedDevice);
+    DEBUG_PRINT("onResult:advThermoDevices.size(): %d\n", advThermoDevices.size());
+  }
 }
 
 /** Callback to process the results of the completed scan or restart it */
@@ -59,7 +65,8 @@ void MyScanCallbacks::onScanEnd(const NimBLEScanResults &results, int reason)
   sprintf(buff, "BLE scan done, rc: %d, device found: %d/%d", reason, numberOfAdvDevices, results.getCount());
   myM5->println(String(buff));
 
-  if (*numberOfDevicesFound == 0) {
+  if (*numberOfDevicesFound == 0)
+  {
     DEBUG_PRINT("no device found, going to reset\n");
     delay(2000);
     myM5->reset();
@@ -82,5 +89,26 @@ void MyScanCallbacks::onScanEnd(const NimBLEScanResults &results, int reason)
   {
     // NimBLEDevice::getScan()->stop();
     doConnect = true;
+  }
+
+  // added for Thermomater
+  DEBUG_PRINT("Scan Ended, reason: %d, device count: %d, numberOfAdvThermoDevices: %d\n", reason, results.getCount(), advThermoDevices.size());
+  numberOfAdvThermoDevices = advThermoDevices.size();
+  DEBUG_PRINT("numberOfAdvThermoDevices: %d\n", numberOfAdvThermoDevices);
+  *numberOfThermoDevicesFound *= numberOfAdvThermoDevices;
+  DEBUG_PRINT("numberOfThermoDevicesFound: %d\n", *numberOfThermoDevicesFound);
+  sprintf(buff, "Thermomater scan done, rc: %d, thermomater found: %d/%d", reason, numberOfAdvThermoDevices, results.getCount());
+  myM5->println(String(buff));
+  
+  for (int thermoIndex = 0; thermoIndex < numberOfAdvThermoDevices; thermoIndex++)
+  {
+    std::string address = advThermoDevices[thermoIndex]->getAddress().toString();
+    myThermoArr[thermoIndex].mac = String(address.c_str());
+    //myM5->bmsInfoArr[bleIndex].mac = myBleArr[thermoIndex].mac;
+    DEBUG_PRINT("myThermoArr[%d].mac set by %s\n", thermoIndex, address.c_str());
+    std::string deviceName = advThermoDevices[thermoIndex]->getName();
+    myThermoArr[thermoIndex].deviceName = String(deviceName.c_str());
+    //myM5->bmsInfoArr[thermoIndex].deviceName = myBleArr[thermoIndex].deviceName;
+    DEBUG_PRINT("myThermoArr[%d].deviceName set by %s\n", thermoIndex, myThermoArr[thermoIndex].deviceName.c_str());
   }
 }

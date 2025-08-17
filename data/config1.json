@@ -292,6 +292,46 @@
       }
     },
     {
+      "type": "Thermomater",
+      "mac": "a4:c1:38:fb:64:94",
+      "mqtt": {
+        "topic": "junichiThermo_0/",
+        "discoveryPayload": {
+          "device": {
+            "identifiers": "junichiThermo_0",
+            "name": "Thermo_0",
+            "manufacturer": "Xiaomi",
+            "hw_version": "1.0rev2"
+          },
+          "origin": {
+            "name": " bla2mqtt",
+            "sw_version": " 2.1",
+            "support_url": "https://bla2mqtt.example.com/support"
+          },
+          "components": {
+            "temparature": {
+              "platform": "sensor",
+              "name": "Temperature",
+              "device_class": "temperature",
+              "unit_of_measurement": "°C",
+              "value_template": "{{ value_json.temperature}}",
+              "unique_id": "a88bcdde-d9c9-423e-9894-ed8d4de3da02"
+            },
+            "humidity": {
+              "platform": "sensor",
+              "name": "Humidity",
+              "device_class": "humidity",
+              "unit_of_measurement": "%",
+              "value_template": "{{ value_json.humidity}}",
+              "unique_id": "a6af324e-6c43-429f-b240-8fbe49b020e9"
+            },
+            "state_topic": "stat/junichiThermo_0/STATE",
+            "qos": 2
+          }
+        }
+      }
+    },
+    {
       "type": "VAMater",
       "measurmentIntervalMs": 60000,
       "mqtt": {

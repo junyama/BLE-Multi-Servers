@@ -4,13 +4,17 @@ MyBLE2::MyBLE2()
 {
 }
 
+/*
 MyBLE2::MyBLE2(NimBLEAddress peerAddress_) : peerAddress(peerAddress_)
 {
 }
+*/
 
+/*
 MyBLE2::MyBLE2(const MyBLE2 &obj) : peerAddress(obj.peerAddress)
 {
 }
+*/
 
 void MyBLE2::sendInfoCommand()
 {

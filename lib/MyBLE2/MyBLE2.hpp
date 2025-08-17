@@ -71,9 +71,9 @@ public:
 
     MyBLE2();
 
-    MyBLE2(NimBLEAddress peerAddress_);
+    //MyBLE2(NimBLEAddress peerAddress_);
 
-    MyBLE2(const MyBLE2 &obj);
+    //MyBLE2(const MyBLE2 &obj);
 
     void sendInfoCommand();
 
