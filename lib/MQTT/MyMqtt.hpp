@@ -11,6 +11,7 @@
 //#include "PowerSaving2.hpp"
 #include "MyLog.cpp"
 #include "MyM5.hpp"
+#include "MyThermo.hpp"
 
 class MyMqtt
 {
@@ -31,6 +32,9 @@ private:
     //PowerSaving2 *powerSaving;
     MyBLE2 *myBleArr;
     int *numberOfBleDevices;
+    MyThermo *myThermoArr;
+    int *numberOfThermoDevices;
+
     VoltMater *voltMater;
     //LipoMater *lipoMater;
     MyM5 *myM5;
@@ -38,9 +42,10 @@ private:
     bool mqttDisabled;
 
 public:
-    MyMqtt(PubSubClient *mqttClient_, MyBLE2 *myBleArr_, int *numberOfBleDevices_, VoltMater *voltMater_, MyM5 *myM5_);
+    MyMqtt(PubSubClient *mqttClient_, MyBLE2 *myBleArr_, int *numberOfBleDevices_, VoltMater *voltMater_, MyM5 *myM5_, MyThermo *myThermoArr_, int *numberOfThermoDevices_);
     void mqttServerSetup(JsonDocument configJson);
     void mqttDeviceSetup();
+    void mqttThermoSetup();
     void reConnectMqttServer();
     void publish(String topic, String message);
     void publishJson(String topic, JsonDocument doc, bool retained);

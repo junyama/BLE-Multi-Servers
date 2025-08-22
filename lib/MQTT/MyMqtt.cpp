@@ -1,7 +1,7 @@
 #include "MyMqtt.hpp"
 
-MyMqtt::MyMqtt(PubSubClient *mqttClient_, MyBLE2 *myBleArr_, int *numberOfBleDevices_, VoltMater *voltMater_, MyM5 *myM5_)
-    : mqttClient(mqttClient_), myBleArr(myBleArr_), numberOfBleDevices(numberOfBleDevices_), voltMater(voltMater_), myM5(myM5_)
+MyMqtt::MyMqtt(PubSubClient *mqttClient_, MyBLE2 *myBleArr_, int *numberOfBleDevices_, VoltMater *voltMater_, MyM5 *myM5_, MyThermo *myThermoArr_, int *numberOfThermoDevices_)
+    : mqttClient(mqttClient_), myBleArr(myBleArr_), numberOfBleDevices(numberOfBleDevices_), voltMater(voltMater_), myM5(myM5_), myThermoArr(myThermoArr_), numberOfThermoDevices(numberOfThermoDevices_)
 {
 }
 
@@ -66,6 +66,32 @@ void MyMqtt::mqttDeviceSetup()
     {
       DEBUG_PRINT("setting up Controller\n");
       myM5->setup(deviceObj);
+    }
+  }
+}
+
+void MyMqtt::mqttThermoSetup()
+{
+  for (int deviceIndex = 0; deviceIndex < deviceList.size(); deviceIndex++)
+  {
+    JsonDocument deviceObj = deviceList[deviceIndex];
+    String type = deviceObj["type"];
+    if (type.equals("Thermomater"))
+    {
+      for (int thermoIndex = 0; thermoIndex < *numberOfThermoDevices; thermoIndex++)
+      {
+        // DEBUG_PRINT("thermoIndex = %d deviceIndex = %d\n", thermoIndex, deviceIndex);
+        String mac = deviceObj["mac"];
+        DEBUG_PRINT("mqttThermoSetup: myThermoArr[%d].mac = %s, deviceList[%d][\"mac\"] = %s\n", thermoIndex, myThermoArr[thermoIndex].mac.c_str(), deviceIndex, mac.c_str());
+        if (myThermoArr[thermoIndex].mac.equals(mac))
+        {
+          String topic = deviceObj["mqtt"]["topic"];
+          myThermoArr[thermoIndex].topic = topic;
+          DEBUG_PRINT("mqttDeviceSetup: myThermoArr[%d].topic = %s\n", thermoIndex,
+                      myThermoArr[thermoIndex].topic.c_str());
+          break;
+        }
+      }
     }
   }
 }

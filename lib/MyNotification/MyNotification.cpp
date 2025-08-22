@@ -1,7 +1,7 @@
 #include "MyNotification.hpp"
 
-MyNotification::MyNotification(MyBLE2 * myBleArr_, MyTimer *myTimerArr_, MyScanCallbacks *myScanCallbacks_, MyClientCallbacks *myClientCallbacks_) 
-: myBleArr(myBleArr_), myTimerArr(myTimerArr_), myScanCallbacks(myScanCallbacks_), myClientCallbacks(myClientCallbacks_)
+MyNotification::MyNotification(MyBLE2 *myBleArr_, MyTimer *myTimerArr_, MyScanCallbacks *myScanCallbacks_, MyClientCallbacks *myClientCallbacks_, MyThermo *myThermoArr_)
+    : myBleArr(myBleArr_), myTimerArr(myTimerArr_), myScanCallbacks(myScanCallbacks_), myClientCallbacks(myClientCallbacks_), myThermoArr(myThermoArr_)
 {
   DEBUG_PRINT("an instance created\n");
 }
@@ -9,14 +9,27 @@ MyNotification::MyNotification(MyBLE2 * myBleArr_, MyTimer *myTimerArr_, MyScanC
 int MyNotification::getIndexOfMyBleArr(NimBLEClient *client)
 {
   auto peerAddress = client->getPeerAddress();
-  for (int i = 0; i <myScanCallbacks->numberOfAdvDevices; i++)
+  for (int i = 0; i < myScanCallbacks->numberOfAdvDevices; i++)
   {
     if (peerAddress == myBleArr[i].pChr_rx->getClient()->getPeerAddress())
     {
       return i;
     }
   }
-  return 0;
+  return -1;
+}
+
+int MyNotification::getIndexOfMyThermoArr(NimBLEClient *client)
+{
+  auto peerAddress = client->getPeerAddress();
+  for (int i = 0; i < myScanCallbacks->numberOfAdvThermoDevices; i++)
+  {
+    if (peerAddress == myThermoArr[i].pChr_rx->getClient()->getPeerAddress())
+    {
+      return i;
+    }
+  }
+  return -1;
 }
 
 /** Notification / Indication receiving handler callback */
@@ -29,7 +42,22 @@ void MyNotification::notifyCB(NimBLERemoteCharacteristic *pRemoteCharacteristic,
   str += ", Characteristic = " + pRemoteCharacteristic->getUUID().toString();
   str += ", Value = " + std::string((char *)pData, length);
   DEBUG_PRINT("%s\n", str.c_str());
-  myBleArr[getIndexOfMyBleArr(pRemoteCharacteristic->getClient())].bleCollectPacket((char *)pData, length);
+  int bleIndex = getIndexOfMyBleArr(pRemoteCharacteristic->getClient());
+  if (bleIndex > -1)
+  {
+    DEBUG_PRINT("notification from myBleArr[%d]\n", bleIndex);
+    myBleArr[bleIndex].bleCollectPacket((char *)pData, length);
+  }
+  else
+  {
+    DEBUG_PRINT("bleIndex: %d, notification from a device other than BMS\n", bleIndex);
+    int thermoIndex = getIndexOfMyThermoArr(pRemoteCharacteristic->getClient());
+    if (thermoIndex > -1)
+    {
+      DEBUG_PRINT("notification from myThermoArr[%d]\n", thermoIndex);
+      myThermoArr[thermoIndex].processPacket((char *)pData, length);
+    }
+  }
 }
 
 bool MyNotification::connectToServer()
@@ -43,12 +71,12 @@ bool MyNotification::connectToServer()
 
   unsigned long initalMesurementTime = 0;
   // unsigned long initalMesurementTime2 = 0;
-  for (int i = 0; i <myScanCallbacks->numberOfAdvDevices; i++)
+  for (int i = 0; i < myScanCallbacks->numberOfAdvDevices; i++)
   {
     /** Check if we have a client we should reuse first **/
     if (NimBLEDevice::getCreatedClientCount())
     {
-      /**
+      /*
        *  Special case when we already know this device, we send false as the
        *  second argument in connect() to prevent refreshing the service database.
        *  This saves considerable time and power.
@@ -83,7 +111,7 @@ bool MyNotification::connectToServer()
       }
 
       pClient = NimBLEDevice::createClient();
-      DEBUG_PRINT("New client created\n");
+      DEBUG_PRINT("New client created for BMS\n");
 
       pClient->setClientCallbacks(myClientCallbacks, false);
       /**
@@ -111,12 +139,12 @@ bool MyNotification::connectToServer()
     {
       if (!pClient->connect(myScanCallbacks->advDevices.at(i)))
       {
-        DEBUG_PRINT("Failed to connect\n");
+        DEBUG_PRINT("Failed to connect BMS\n");
         return false;
       }
     }
 
-    DEBUG_PRINT("Connected to: %s RSSI: %d\n", pClient->getPeerAddress().toString().c_str(), pClient->getRssi());
+    DEBUG_PRINT("Connected to BMS at: %s RSSI: %d\n", pClient->getPeerAddress().toString().c_str(), pClient->getRssi());
 
     /** Now we can read/write/subscribe the characteristics of the services we are interested in */
     NimBLERemoteService *pSvc = nullptr;
@@ -142,8 +170,8 @@ bool MyNotification::connectToServer()
       }
       if (myBleArr[i].pChr_rx->canNotify())
       {
-        if (!myBleArr[i].pChr_rx->subscribe(true, [this](NimBLERemoteCharacteristic * pRemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify) 
-        { notifyCB(pRemoteCharacteristic,  pData, length, isNotify); }))
+        if (!myBleArr[i].pChr_rx->subscribe(true, [this](NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify)
+                                            { notifyCB(pRemoteCharacteristic, pData, length, isNotify); }))
         {
           pClient->disconnect();
           return false;
@@ -163,7 +191,7 @@ bool MyNotification::connectToServer()
     }
     else
     {
-      DEBUG_PRINT("serviceUUID not found.\n");
+      DEBUG_PRINT("serviceUUID of BMS not found.\n");
       return false;
     }
     /*
@@ -184,7 +212,94 @@ bool MyNotification::connectToServer()
     */
   }
   myScanCallbacks->advDevices.clear();
-  DEBUG_PRINT("Done with this device!\n");
+  DEBUG_PRINT("Done with this BMS!\n");
+  return true;
+}
+
+bool MyNotification::connectToThermo()
+{
+  DEBUG_PRINT("connectToThermo() called\n");
+  NimBLEClient *pClient = nullptr;
+  for (int i = 0; i < myScanCallbacks->numberOfAdvThermoDevices; i++)
+  {
+    if (NimBLEDevice::getCreatedClientCount())
+    {
+      DEBUG_PRINT("NimBLEDevice::getCreatedClientCount(): %d\n", NimBLEDevice::getCreatedClientCount());
+      // Special case when we already know this device
+    }
+
+    //
+    if (!pClient)
+    {
+      if (NimBLEDevice::getCreatedClientCount() >= NIMBLE_MAX_CONNECTIONS)
+      {
+        DEBUG_PRINT("Max clients reached - no more connections available\n");
+        return false;
+      }
+
+      pClient = NimBLEDevice::createClient();
+      DEBUG_PRINT("New client created for a thermomater\n");
+
+      pClient->setClientCallbacks(myClientCallbacks, false);
+
+      pClient->setConnectionParams(12, 12, 0, 150);
+
+      pClient->setConnectTimeout(5 * 1000);
+
+      bool result = pClient->connect(myScanCallbacks->advThermoDevices.at(i));
+      //
+      if (!result)
+      {
+        NimBLEDevice::deleteClient(pClient);
+        DEBUG_PRINT("Failed to connect a thermomater, deleted client\n");
+        myScanCallbacks->advThermoDevices.clear();
+        return false;
+      }
+      //
+      DEBUG_PRINT("Connected to a thermomater at: %s RSSI: %d\n", pClient->getPeerAddress().toString().c_str(), pClient->getRssi());
+      //
+      NimBLERemoteService *pSvc = nullptr;
+      pSvc = pClient->getService(myScanCallbacks->serviceUUID_thermo);
+      if (pSvc)
+      {
+        DEBUG_PRINT("serviceUUID of Thermomater found.\n");
+        myThermoArr[i].pChr_rx = pSvc->getCharacteristic(myScanCallbacks->charUUID_thermo_rx);
+
+        if (!myThermoArr[i].pChr_rx)
+        {
+          DEBUG_PRINT("charUUID_thermo_rx not found.\n");
+          return false;
+        }
+        DEBUG_PRINT("charUUID_thermo_rx found.\n");
+
+        if (myThermoArr[i].pChr_rx->canNotify())
+        {
+          if (!myThermoArr[i].pChr_rx->subscribe(true, [this](NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify)
+                                                 { notifyCB(pRemoteCharacteristic, pData, length, isNotify); }))
+          {
+            DEBUG_PRINT("Failed subscribeing charUUID_thermo_rx.\n");
+            pClient->disconnect();
+            return false;
+          }
+        }
+        /*
+        myThermoArr[i].pChr_tx = pSvc->getCharacteristic(myScanCallbacks->charUUID_tx);
+
+        if (!myThermoArr[i].pChr_tx)
+        {
+          DEBUG_PRINT("charUUID_tx not found.\n");
+          return false;
+        }
+        */
+      }
+      else
+      {
+        DEBUG_PRINT("serviceUUID of Thermomater not found.\n");
+        return false;
+      }
+    }
+  }
+  DEBUG_PRINT("Done with this thermomater!\n");
   return true;
 }
 

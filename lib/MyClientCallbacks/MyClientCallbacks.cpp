@@ -1,7 +1,7 @@
 #include "MyClientCallbacks.hpp"
 
-MyClientCallbacks::MyClientCallbacks(MyBLE2 *myBleArr_, int *numberOfBleDevices_) 
-: myBleArr(myBleArr_), numberOfBleDevices(numberOfBleDevices_)
+MyClientCallbacks::MyClientCallbacks(MyBLE2 *myBleArr_, int *numberOfBleDevices_, MyThermo *myThermoArr_, int *numberOfThermoDevices_) 
+: myBleArr(myBleArr_), numberOfBleDevices(numberOfBleDevices_), myThermoArr(myThermoArr_), numberOfThermoDevices(numberOfThermoDevices_)
 {
 }
 

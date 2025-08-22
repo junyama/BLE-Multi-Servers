@@ -4,17 +4,20 @@
 #include <NimBLEDevice.h>
 #include "MyLog.cpp"
 #include "MyBLE2.hpp"
+#include "MyThermo.hpp"
 
 class MyClientCallbacks : public NimBLEClientCallbacks
 {
 private:
     const char *TAG = "MyClientCallbacks";
     MyBLE2 *myBleArr;
+    MyThermo *myThermoArr;
 
 public:
     int *numberOfBleDevices;
+    int *numberOfThermoDevices;
 
-    MyClientCallbacks(MyBLE2 *myBleArr_, int *numberOfBleDevice_);
+    MyClientCallbacks(MyBLE2 *myBleArr_, int *numberOfBleDevice_, MyThermo *myThermoArr_, int *numberOfThermoDevices_);
 
     int getIndexOfMyBleArr(NimBLEClient *pClient);
 

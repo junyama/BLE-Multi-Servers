@@ -11,6 +11,7 @@ MyScanCallbacks::MyScanCallbacks(MyBLE2 *myBleArr_, MyM5 *myM5_, int *numberOfDe
 
 void MyScanCallbacks::onResult(const NimBLEAdvertisedDevice *advertisedDevice)
 {
+  //NimBLEAddress targeThermoAddress("a4:c1:38:f8:21:63", BLE_ADDR_PUBLIC); // tentative code1 to match mac address
   DEBUG_PRINT("Advertised Device found: %s\n", advertisedDevice->toString().c_str());
   if (advertisedDevice->isAdvertisingService(serviceUUID))
   {
@@ -46,6 +47,7 @@ void MyScanCallbacks::onResult(const NimBLEAdvertisedDevice *advertisedDevice)
     // END
   }
   else if (advertisedDevice->isAdvertisingService(serviceUUID_thermo))
+  //else if (advertisedDevice->getAddress().equals(targeThermoAddress)) // tentative code2 to mach mac address
   {
     DEBUG_PRINT("Found Thermomater Service\n");
     advThermoDevices.push_back(advertisedDevice);
@@ -110,5 +112,9 @@ void MyScanCallbacks::onScanEnd(const NimBLEScanResults &results, int reason)
     myThermoArr[thermoIndex].deviceName = String(deviceName.c_str());
     //myM5->bmsInfoArr[thermoIndex].deviceName = myBleArr[thermoIndex].deviceName;
     DEBUG_PRINT("myThermoArr[%d].deviceName set by %s\n", thermoIndex, myThermoArr[thermoIndex].deviceName.c_str());
+  }
+  if (advThermoDevices.size() != 0 && !doConnectThermo)
+  {
+    doConnectThermo = true;
   }
 }

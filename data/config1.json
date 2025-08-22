@@ -293,7 +293,7 @@
     },
     {
       "type": "Thermomater",
-      "mac": "a4:c1:38:fb:64:94",
+      "mac": "a4:c1:38:f8:21:63",
       "mqtt": {
         "topic": "junichiThermo_0/",
         "discoveryPayload": {
