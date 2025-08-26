@@ -21,14 +21,17 @@ public:
   const NimBLEUUID charUUID_rx = BLEUUID("0000ff01-0000-1000-8000-00805f9b34fb"); // xiaoxiang bms original module
   
   //const NimBLEUUID serviceUUID_thermo = BLEUUID("00010203-0405-0607-0809-0a0b0c0d1912"); // Xiaomi thermomater
-  //const NimBLEUUID serviceUUID_thermo = BLEUUID("181A"); // Xiaomi thermomater
-  const NimBLEUUID serviceUUID_thermo = BLEUUID("EBE0CCB0-7A0A-4B0C-8A1A-6FF2997DA3A6"); // Xiaomi thermomater
-  const NimBLEUUID charUUID_thermo_rx = BLEUUID("EBE0CCB0-7A0A-4B0C-8A1A-6FF2997DA3A6"); // Xiaomi thermomater
+  const NimBLEUUID serviceDataUUID_thermo = BLEUUID("181A"); // Xiaomi thermomater
+  //const NimBLEUUID serviceUUID_thermo = BLEUUID("EBE0CCB0-7A0A-4B0C-8A1A-6FF2997DA3A6"); // Xiaomi thermomater
+  //const NimBLEUUID charUUID_thermo_rx = BLEUUID("EBE0CCB0-7A0A-4B0C-8A1A-6FF2997DA3A6"); // Xiaomi thermomater
+  const NimBLEUUID charUUID_thermo_temp = BLEUUID("2A1F"); // Xiaomi thermomater
+  const NimBLEUUID charUUID_thermo_temp2 = BLEUUID("2A1E"); // Xiaomi thermomater
+  const NimBLEUUID charUUID_thermo_humid = BLEUUID("2A6F"); // Xiaomi thermomater
   //const NimBLEUUID serviceUUID_thermo = BLEUUID("31300c0e-ac7a-4de5-8ebe-779decafc200"); // FlicHub
   //const NimBLEUUID charUUID_thermo_tx = BLEUUID("31300C0E-AC7A-4DE5-8EBE-779DECAFC201"); // FlicHub
   //const NimBLEUUID charUUID_thermo_rx = BLEUUID("31300C0E-AC7A-4DE5-8EBE-779DECAFC202"); // FlicHub
 
-  uint32_t scanTimeMs = 5000; /** scan time in milliseconds, 0 = scan forever */
+  uint32_t scanTimeMs = 10000; /** scan time in milliseconds, 0 = scan forever */
   std::vector<const NimBLEAdvertisedDevice *> advDevices;
   std::vector<const NimBLEAdvertisedDevice *> advThermoDevices;
 

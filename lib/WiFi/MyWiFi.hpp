@@ -18,8 +18,10 @@ private:
 public:
   MyWiFi(MyM5 *myM5_);
   void setup(JsonDocument configJson);
-  void wifiScann();
-  int wifiConnect();
+  void scan();
+  int connect();
+  void disconnect();
+  bool isConnected();
   void setupDateTime();
 };
 

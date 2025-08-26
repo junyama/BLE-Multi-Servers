@@ -54,12 +54,12 @@ JsonDocument MyBLE2::getState()
 {
     JsonDocument doc;
     doc["deviceName"] = deviceName;
-    doc["batteryVoltage"] = String(packBasicInfo.Volts / 1000.0);
-    doc["batteryCurrent"] = String(packBasicInfo.Amps / 1000.0);
-    doc["batteryTemp1"] = String(packBasicInfo.Temp1 / 10.0);
+    doc["batteryVoltage"] = packBasicInfo.Volts / 1000.0;
+    doc["batteryCurrent"] = packBasicInfo.Amps / 1000.0;
+    doc["batteryTemp1"] = packBasicInfo.Temp1 / 10.0;
     if (numberOfTemperature == 2)
-        doc["batteryTemp2"] = String(packBasicInfo.Temp2 / 10.0);
-    doc["batteryChargePercentage"] = String(packBasicInfo.CapacityRemainPercent);
+        doc["batteryTemp2"] = packBasicInfo.Temp2 / 10.0;
+    doc["batteryChargePercentage"] = packBasicInfo.CapacityRemainPercent;
     // doc["chargeStatus"] = String(packBasicInfo.MosfetStatus & 1);
     // doc["dischargeStatus"] = String((packBasicInfo.MosfetStatus & 2) >> 1);
     //  doc["connectionStatus"] = String(isConnected());

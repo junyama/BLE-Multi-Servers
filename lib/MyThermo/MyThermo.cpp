@@ -22,16 +22,22 @@ bool MyThermo::timeout(int currentTime)
         return false;
 }
 
-void MyThermo::processPacket(char *data, uint32_t dataSize)
+void MyThermo::processTempPacket(char *data, uint32_t dataSize)
 {
-    freeL = 0;
-    temp = (data[0] | (data[1] << 8)) * 0.01; // little endian
-    humi = data[2];
-    voltage = (data[3] | (data[4] << 8)) * 0.001; // little endian
-    DEBUG_PRINT("temp = %.1f C ; humidity = %.1f %% ; voltage = %.3f V\n", temp, humi, voltage);
-    freeL = 1;
+    temp = (data[0] | (data[1] << 8)) * 0.1; // little endian
+    DEBUG_PRINT("temperature: %.1f C\n", temp);
+}
+
+void MyThermo::processHumidPacket(char *data, uint32_t dataSize)
+{
+    humi = (data[0] | (data[1] << 8)) * 0.01; // little endian
+    DEBUG_PRINT("humidity: %.1f %%\n", humi);
 }
 
 JsonDocument MyThermo::getState()
 {
+    JsonDocument doc;
+    doc["temperature"] = temp;
+    doc["humidity"] = humi;
+    return doc;
 }

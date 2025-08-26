@@ -15,18 +15,18 @@ private:
     byte commandParam = 0;
     bool toggle = false;
     byte ctrlCommand = 0;
-    bool available = false;
 
     float temp = 0.0;
     float humi = 0.0;
     float voltage = 0.0;
-    bool freeL = true;
+    //bool freeL = true;
 
 public:
     bool newPacketReceived = false;
-    NimBLERemoteCharacteristic *pChr_rx = nullptr;
-    NimBLERemoteCharacteristic *pChr_tx = nullptr;
+    NimBLERemoteCharacteristic *pChr_rx_temp = nullptr;
+    NimBLERemoteCharacteristic *pChr_rx_humid = nullptr;
 
+    bool available = false;
     String deviceName = "UNKNOWN";
     String mac = "UNKNOWN";
     String topic = "NOT_DEFINED";
@@ -40,7 +40,8 @@ public:
     MyThermo();
     void setup(JsonDocument deviceObj);
     bool timeout(int currentTime);
-    void processPacket(char *data, uint32_t dataSize);
+    void processTempPacket(char *data, uint32_t dataSize);
+    void processHumidPacket(char *data, uint32_t dataSize);
     JsonDocument getState();
 };
 

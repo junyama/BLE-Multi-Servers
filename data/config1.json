@@ -293,13 +293,13 @@
     },
     {
       "type": "Thermomater",
-      "mac": "a4:c1:38:f8:21:63",
+      "mac": "a4:c1:38:30:7c:86",
       "mqtt": {
         "topic": "junichiThermo_0/",
         "discoveryPayload": {
           "device": {
             "identifiers": "junichiThermo_0",
-            "name": "Thermo_0",
+            "name": "ATC_307C86",
             "manufacturer": "Xiaomi",
             "hw_version": "1.0rev2"
           },
@@ -311,11 +311,11 @@
           "components": {
             "temparature": {
               "platform": "sensor",
-              "name": "Temperature",
+              "name": "ATC_307C86",
               "device_class": "temperature",
               "unit_of_measurement": "°C",
               "value_template": "{{ value_json.temperature}}",
-              "unique_id": "a88bcdde-d9c9-423e-9894-ed8d4de3da02"
+              "unique_id": "8a38641d-7b7d-4ed3-a149-b8b51603566d"
             },
             "humidity": {
               "platform": "sensor",
@@ -323,11 +323,51 @@
               "device_class": "humidity",
               "unit_of_measurement": "%",
               "value_template": "{{ value_json.humidity}}",
-              "unique_id": "a6af324e-6c43-429f-b240-8fbe49b020e9"
+              "unique_id": "06e620b7-2add-453a-bcb2-37fe35d81b99"
+            }
+          },
+          "state_topic": "stat/junichiThermo_0/STATE",
+          "qos": 2
+        }
+      }
+    },
+    {
+      "type": "Thermomater",
+      "mac": "a4:c1:38:28:4c:df",
+      "mqtt": {
+        "topic": "junichiThermo_1/",
+        "discoveryPayload": {
+          "device": {
+            "identifiers": "junichiThermo_1",
+            "name": "ATC_284CDF",
+            "manufacturer": "Xiaomi",
+            "hw_version": "1.0rev2"
+          },
+          "origin": {
+            "name": " bla2mqtt",
+            "sw_version": " 2.1",
+            "support_url": "https://bla2mqtt.example.com/support"
+          },
+          "components": {
+            "temparature": {
+              "platform": "sensor",
+              "name": "ATC_284CDF",
+              "device_class": "temperature",
+              "unit_of_measurement": "°C",
+              "value_template": "{{ value_json.temperature}}",
+              "unique_id": "0a6baa2e-03e0-43d0-bbbf-c610752cbca7"
             },
-            "state_topic": "stat/junichiThermo_0/STATE",
-            "qos": 2
-          }
+            "humidity": {
+              "platform": "sensor",
+              "name": "Humidity",
+              "device_class": "humidity",
+              "unit_of_measurement": "%",
+              "value_template": "{{ value_json.humidity}}",
+              "unique_id": "524ee9dd-4e34-4ecd-9cc5-21697aba2e55"
+            }
+          },
+          "state_topic": "stat/junichiThermo_1/STATE",
+          "qos": 2
         }
       }
     },
@@ -425,6 +465,22 @@
               "name": "Reset Button",
               "command_topic": "cmnd/M5Core2_1/reset",
               "unique_id": "176fbff6-6229-46e1-92d0-56ca80126bc4"
+            },
+            "number_of_bms": {
+              "platform": "sensor",
+              "name": "Number of BMS",
+              "device_class": "current",
+              "unit_of_measurement": "A",
+              "value_template": "{{ value_json.numberOfBleDevices}}",
+              "unique_id": "c6458b3b-bfc4-4c29-b03d-420d3299e3c7"
+            },
+            "number_of_thermo": {
+              "platform": "sensor",
+              "name": "Number of Thermometers",
+              "device_class": "current",
+              "unit_of_measurement": "A",
+              "value_template": "{{ value_json.numberOfThermoDevices}}",
+              "unique_id": "7d0b836a-b602-4b62-96db-b219625532b5"
             }
           },
           "state_topic": "stat/M5Core2_1/STATE",

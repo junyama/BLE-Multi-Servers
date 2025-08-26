@@ -16,11 +16,11 @@ void MyWiFi::setup(JsonDocument configJson)
   }
 
   DEBUG_PRINT("going to scann WiFi\n");
-  wifiScann();
+  scan();
 
   DEBUG_PRINT("going to connect WiFi\n");
   myM5->println("Going to connect WiFi");
-  if (wifiConnect() != 0)
+  if (connect() != 0)
   {
     DEBUG_PRINT("failed to connect WiFi and exiting\n");
     exit(-1);
@@ -29,7 +29,7 @@ void MyWiFi::setup(JsonDocument configJson)
   myM5->println("WiFi connected");
 }
 
-void MyWiFi::wifiScann()
+void MyWiFi::scan()
 {
   int n = WiFi.scanNetworks();
   DEBUG_PRINT("scan done, %d networks found\n", n);
@@ -51,7 +51,7 @@ void MyWiFi::wifiScann()
   }
 }
 
-int MyWiFi::wifiConnect()
+int MyWiFi::connect()
 {
   DEBUG_PRINT("Connecting Wifi...\n");
   myM5->println("Connecting Wifi..."); // Serial port format output string.
@@ -68,6 +68,17 @@ int MyWiFi::wifiConnect()
     DEBUG_PRINT("WiFi not connected!\n");
     return -1;
   }
+}
+
+void MyWiFi::disconnect()
+{
+  DEBUG_PRINT("disconnecting WiFi\n");
+  WiFi.disconnect();
+}
+
+bool MyWiFi::isConnected()
+{
+  return WiFi.isConnected();
 }
 
 void MyWiFi::setupDateTime()

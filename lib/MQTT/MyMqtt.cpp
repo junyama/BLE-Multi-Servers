@@ -1,7 +1,9 @@
 #include "MyMqtt.hpp"
 
-MyMqtt::MyMqtt(PubSubClient *mqttClient_, MyBLE2 *myBleArr_, int *numberOfBleDevices_, VoltMater *voltMater_, MyM5 *myM5_, MyThermo *myThermoArr_, int *numberOfThermoDevices_)
-    : mqttClient(mqttClient_), myBleArr(myBleArr_), numberOfBleDevices(numberOfBleDevices_), voltMater(voltMater_), myM5(myM5_), myThermoArr(myThermoArr_), numberOfThermoDevices(numberOfThermoDevices_)
+MyMqtt::MyMqtt(PubSubClient *mqttClient_, MyBLE2 *myBleArr_, int *numberOfBleDevices_, VoltMater *voltMater_,
+   MyM5 *myM5_, MyThermo *myThermoArr_, int *numberOfThermoDevices_, MyWiFi *myWiFi_)
+    : mqttClient(mqttClient_), myBleArr(myBleArr_), numberOfBleDevices(numberOfBleDevices_), voltMater(voltMater_),
+     myM5(myM5_), myThermoArr(myThermoArr_), numberOfThermoDevices(numberOfThermoDevices_), myWiFi(myWiFi_)
 {
 }
 
@@ -89,6 +91,8 @@ void MyMqtt::mqttThermoSetup()
           myThermoArr[thermoIndex].topic = topic;
           DEBUG_PRINT("mqttDeviceSetup: myThermoArr[%d].topic = %s\n", thermoIndex,
                       myThermoArr[thermoIndex].topic.c_str());
+          myThermoArr[thermoIndex].available = true;
+          DEBUG_PRINT("mqttDeviceSetup: myThermoArr[%d].available = true\n", thermoIndex);
           break;
         }
       }
@@ -98,6 +102,11 @@ void MyMqtt::mqttThermoSetup()
 
 void MyMqtt::reConnectMqttServer()
 {
+  if (!myWiFi->isConnected())
+  {
+    DEBUG_PRINT("reconnecting WiFi\n");
+    myWiFi->connect();
+  }
   DEBUG_PRINT("reConnectMqttServer() called\n");
   int i = 1;
   int j = 0;
@@ -294,6 +303,20 @@ void MyMqtt::mqttCallback(char *topic_, byte *payload, unsigned int length)
     return;
   }
 
+  if (String(topic_).equals("cmnd/" + myM5->topic + "numberOfBleDevices"))
+  {
+    DEBUG_PRINT("responding to numberOfBleDevices!\n");
+    publish(("stat/" + myM5->topic + "RESULT").c_str(), String(*numberOfBleDevices));
+    return;
+  }
+
+  if (String(topic_).equals("cmnd/" + myM5->topic + "numberOfThermoDevices"))
+  {
+    DEBUG_PRINT("responding to numberOfThermoDevices!\n");
+    publish(("stat/" + myM5->topic + "RESULT").c_str(), String(*numberOfThermoDevices));
+    return;
+  }
+  
   if (String(topic_).equals("cmnd/" + myM5->topic + "reset"))
   {
     DEBUG_PRINT("goint to reset\n");

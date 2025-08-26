@@ -40,7 +40,7 @@ const char *TAG = "main";
 int numberOfBleDevices = 1;
 int numberOfThermoDevices = 1;
 
-MyM5 myM5(&numberOfBleDevices);
+MyM5 myM5(&numberOfBleDevices, &numberOfThermoDevices);
 MySdCard mySdCard(&myM5);
 JsonDocument configJson;
 // JsonArray deviceList;
@@ -64,7 +64,7 @@ MyThermo myThermoArr[2];
 MyScanCallbacks myScanCallbacks(myBleArr, &myM5, &numberOfBleDevices, myThermoArr, &numberOfThermoDevices);
 MyClientCallbacks myClientCallbacks(myBleArr, &numberOfBleDevices, myThermoArr, &numberOfThermoDevices);
 MyNotification myNotification(myBleArr, myTimerArr, &myScanCallbacks, &myClientCallbacks, myThermoArr);
-MyMqtt myMqtt(&mqttClient, myBleArr, &numberOfBleDevices, &voltMater, &myM5, myThermoArr, &numberOfThermoDevices);
+MyMqtt myMqtt(&mqttClient, myBleArr, &numberOfBleDevices, &voltMater, &myM5, myThermoArr, &numberOfThermoDevices, &myWiFi);
 
 // void loadConfig();
 // void saveConfig();
@@ -78,6 +78,9 @@ void printBatteryInfo(int bleIndex, int numberOfAdvDevices, MyBLE2 myBle);
 */
 void scanBle()
 {
+  numberOfBleDevices = 1;
+  numberOfThermoDevices = 1;
+  
   /** Initialize NimBLE and set the device name */
   NimBLEDevice::init("NimBLE-Client");
 
@@ -154,6 +157,7 @@ void setup()
   mySdCard.updatePOI(configJson);
 
   // setup BLE and start scanning
+  myWiFi.disconnect();
   DEBUG_PRINT("Starting NimBLE Client\n");
   myM5.println("Going to setup BLE");
   DEBUG_PRINT("Scanning for BLE devices\n");
@@ -210,11 +214,11 @@ void loop()
     else
     {
       DEBUG_PRINT("Failed to connect Thermomater");
-      /*
+      //
       DEBUG_PRINT(", goint to reconnect\n");
       delay(2000);
       myScanCallbacks.doConnectThermo = true;
-      //
+      /*
       DEBUG_PRINT(", goint to reset\n");
       myM5.println("Failed to connect Thermomater, goint to reset");
       delay(2000);
@@ -272,8 +276,8 @@ void loop()
     DEBUG_PRINT("error happened: %s\n", e.what());
     DEBUG_PRINT("reconnect myBleArr\n");
     myScanCallbacks.doConnect = false;
-    // DEBUG_PRINT("rescan BLE\n");
-    // scanBle();
+    DEBUG_PRINT("rescan BLE\n");
+    scanBle();
   }
 
   if (voltMater.available && voltMater.timeout(millis()))
@@ -287,6 +291,14 @@ void loop()
     myM5.updateLipoInfo();
     myMqtt.publishJson("stat/" + myM5.topic + "STATE", myM5.getState(), true);
     myM5.powerSave(1);
+  }
+
+  for (int thermoIndex = 0; thermoIndex < numberOfThermoDevices; thermoIndex++)
+  {
+    if (myThermoArr[thermoIndex].available && myThermoArr[thermoIndex].timeout(millis() + thermoIndex * 3000))
+    {
+      myMqtt.publishJson("stat/" + myThermoArr[thermoIndex].topic + "STATE", myThermoArr[thermoIndex].getState(), true);
+    }
   }
   //
   if (myM5.resetTimeout(DateTime.getTime()))

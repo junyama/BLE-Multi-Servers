@@ -5,6 +5,7 @@
 #include <StreamUtils.h>
 
 // #include "MyScanCallbacks.hpp"
+#include "MyWiFi.hpp"
 #include "MyBLE2.hpp"
 #include "VoltMater.hpp"
 //#include "LipoMater.hpp"
@@ -30,6 +31,7 @@ private:
     JsonDocument configJson;
     // MyScanCallbacks myScanCallbacks;
     //PowerSaving2 *powerSaving;
+    MyWiFi *myWiFi;
     MyBLE2 *myBleArr;
     int *numberOfBleDevices;
     MyThermo *myThermoArr;
@@ -42,7 +44,8 @@ private:
     bool mqttDisabled;
 
 public:
-    MyMqtt(PubSubClient *mqttClient_, MyBLE2 *myBleArr_, int *numberOfBleDevices_, VoltMater *voltMater_, MyM5 *myM5_, MyThermo *myThermoArr_, int *numberOfThermoDevices_);
+    MyMqtt(PubSubClient *mqttClient_, MyBLE2 *myBleArr_, int *numberOfBleDevices_, VoltMater *voltMater_,
+         MyM5 *myM5_, MyThermo *myThermoArr_, int *numberOfThermoDevices_, MyWiFi *myWiFi_);
     void mqttServerSetup(JsonDocument configJson);
     void mqttDeviceSetup();
     void mqttThermoSetup();

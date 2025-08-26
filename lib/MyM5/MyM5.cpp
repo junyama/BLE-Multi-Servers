@@ -1,6 +1,7 @@
 #include "MyM5.hpp"
 
-MyM5::MyM5(int *numberOfBleDevices_) : numberOfBleDevices(numberOfBleDevices_)
+MyM5::MyM5(int *numberOfBleDevices_, int *numberOfThermoDevices_) 
+: numberOfBleDevices(numberOfBleDevices_), numberOfThermoDevices(numberOfThermoDevices_)
 {
     M5.Lcd.setTextFont(1);
     M5.Lcd.setTextSize(2);
@@ -111,6 +112,8 @@ void MyM5::reset()
 JsonDocument MyM5::getState()
 {
     JsonDocument doc;
+    doc["numberOfBleDevices"] = *numberOfBleDevices;
+    doc["numberOfThermoDevices"] = *numberOfThermoDevices;
     doc["lcdStatus"] = lcdState;
     doc["ledStatus"] = ledState;
     doc["voltage"] = vMaterLipoInfo.lipoVolt;
