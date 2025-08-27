@@ -5,7 +5,7 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 
-#include "MyLog.cpp"
+#include "MyLog.hpp"
 //#include "MyLcd2.hpp"
 
 #define MSG_BUFFER_SIZE (50)

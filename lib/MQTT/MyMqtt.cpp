@@ -1,9 +1,9 @@
 #include "MyMqtt.hpp"
 
 MyMqtt::MyMqtt(PubSubClient *mqttClient_, MyBLE2 *myBleArr_, int *numberOfBleDevices_, VoltMater *voltMater_,
-   MyM5 *myM5_, MyThermo *myThermoArr_, int *numberOfThermoDevices_, MyWiFi *myWiFi_)
+               MyM5 *myM5_, MyThermo *myThermoArr_, int *numberOfThermoDevices_, MyWiFi *myWiFi_)
     : mqttClient(mqttClient_), myBleArr(myBleArr_), numberOfBleDevices(numberOfBleDevices_), voltMater(voltMater_),
-     myM5(myM5_), myThermoArr(myThermoArr_), numberOfThermoDevices(numberOfThermoDevices_), myWiFi(myWiFi_)
+      myM5(myM5_), myThermoArr(myThermoArr_), numberOfThermoDevices(numberOfThermoDevices_), myWiFi(myWiFi_)
 {
 }
 
@@ -198,7 +198,10 @@ void MyMqtt::publishJson(String topic, JsonDocument doc, bool retained)
     return;
   String jsonStr;
   serializeJson(doc, jsonStr);
-  DEBUG_PRINT("publishing Json >>>>> topic: %s, payload: %s\n", topic.c_str(), jsonStr.c_str());
+  if (MyLog::verbose > 0)
+  {
+    DEBUG_PRINT("publishing Json >>>>> topic: %s, payload: %s\n", topic.c_str(), jsonStr.c_str());
+  }
   if (!mqttClient->connected())
   {
     reConnectMqttServer();
@@ -223,7 +226,9 @@ void MyMqtt::publishHaDiscovery()
     discoveryTopic = "homeassistant/device/" + deviceTopic + "config";
     discoveryPayload = deviceObj["mqtt"]["discoveryPayload"];
     DEBUG_PRINT("%d: publishing for HA discovery.................\n", deviceIndex);
+    MyLog::verbose = 0;
     publishJson(discoveryTopic, discoveryPayload, true);
+    MyLog::verbose = 1;
   }
 }
 
@@ -316,7 +321,7 @@ void MyMqtt::mqttCallback(char *topic_, byte *payload, unsigned int length)
     publish(("stat/" + myM5->topic + "RESULT").c_str(), String(*numberOfThermoDevices));
     return;
   }
-  
+
   if (String(topic_).equals("cmnd/" + myM5->topic + "reset"))
   {
     DEBUG_PRINT("goint to reset\n");

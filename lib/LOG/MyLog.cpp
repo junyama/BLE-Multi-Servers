@@ -1,6 +1,3 @@
-#define DEBUG_PRINT(...) Serial.printf("[%s] %s: ", DateTime.toString().c_str(), TAG); Serial.printf(__VA_ARGS__)
+#include "MyLog.hpp"
 
-#include <ESPDateTime.h>
-#include <M5Core2.h>
-
-
+//int MyLog::verbose = 1; //link error, define at main.cpp instead

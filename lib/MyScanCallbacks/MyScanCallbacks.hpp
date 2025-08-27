@@ -2,7 +2,7 @@
 #define MY_SCAN_CB_HPP
 
 #include <NimBLEDevice.h>
-#include "MyLog.cpp"
+#include "MyLog.hpp"
 #include "MyBLE2.hpp"
 #include "MyThermo.hpp"
 

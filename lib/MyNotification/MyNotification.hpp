@@ -7,7 +7,7 @@
 
 #include "MyScanCallbacks.hpp"
 #include "MyClientCallbacks.hpp"
-#include "MyLog.cpp"
+#include "MyLog.hpp"
 #include "MyTimer.hpp"
 
 class MyNotification

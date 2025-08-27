@@ -1,7 +1,7 @@
 #ifndef MY_TIMER_HPP
 #define MY_TIMER_HPP
 
-#include "MyLog.cpp"
+#include "MyLog.hpp"
 
 class MyTimer
 {

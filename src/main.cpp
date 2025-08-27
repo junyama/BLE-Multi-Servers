@@ -24,7 +24,7 @@
 // #include "MyScanCallbacks.hpp"
 #include "MyNotification.hpp"
 #include "MyClientCallBacks.hpp"
-#include "MyLog.cpp"
+#include "MyLog.hpp"
 // #include "MyTimer.cpp"
 #include "MySdCard.hpp"
 #include "MyWiFi.hpp"
@@ -36,11 +36,14 @@
 #define CONFIG_FILE "/config.json"
 
 const char *TAG = "main";
+
+int MyLog::verbose = 1;
+
 // MyLcd2 myLcd;
 int numberOfBleDevices = 1;
-int numberOfThermoDevices = 1;
+int numberOfThermoDevicesFound = 1;
 
-MyM5 myM5(&numberOfBleDevices, &numberOfThermoDevices);
+MyM5 myM5(&numberOfBleDevices, &numberOfThermoDevicesFound);
 MySdCard mySdCard(&myM5);
 JsonDocument configJson;
 // JsonArray deviceList;
@@ -61,10 +64,10 @@ MyBLE2 myBleArr[3];
 MyThermo myThermoArr[2];
 // std::vector<MyBLE2> *bleDevices;
 
-MyScanCallbacks myScanCallbacks(myBleArr, &myM5, &numberOfBleDevices, myThermoArr, &numberOfThermoDevices);
-MyClientCallbacks myClientCallbacks(myBleArr, &numberOfBleDevices, myThermoArr, &numberOfThermoDevices);
+MyScanCallbacks myScanCallbacks(myBleArr, &myM5, &numberOfBleDevices, myThermoArr, &numberOfThermoDevicesFound);
+MyClientCallbacks myClientCallbacks(myBleArr, &numberOfBleDevices, myThermoArr, &numberOfThermoDevicesFound);
 MyNotification myNotification(myBleArr, myTimerArr, &myScanCallbacks, &myClientCallbacks, myThermoArr);
-MyMqtt myMqtt(&mqttClient, myBleArr, &numberOfBleDevices, &voltMater, &myM5, myThermoArr, &numberOfThermoDevices, &myWiFi);
+MyMqtt myMqtt(&mqttClient, myBleArr, &numberOfBleDevices, &voltMater, &myM5, myThermoArr, &numberOfThermoDevicesFound, &myWiFi);
 
 // void loadConfig();
 // void saveConfig();
@@ -78,8 +81,9 @@ void printBatteryInfo(int bleIndex, int numberOfAdvDevices, MyBLE2 myBle);
 */
 void scanBle()
 {
-  numberOfBleDevices = 1;
-  numberOfThermoDevices = 1;
+  numberOfBleDevices = 1; //may have bugs for the variable
+  numberOfThermoDevicesFound = 0; //may have bugs for the variable, 0 not working
+  myScanCallbacks.advThermoDevices.clear();
   
   /** Initialize NimBLE and set the device name */
   NimBLEDevice::init("NimBLE-Client");
@@ -130,7 +134,9 @@ void setup()
   Serial.begin(9600);
   // MySdCard::deleteFile(SD, "/log.txt");
   mySdCard.setup();
+  MyLog::verbose = 0;
   configJson = mySdCard.loadConfig(CONFIG_FILE);
+  MyLog::verbose = 1;
   DEBUG_PRINT("loadConfig() done\n");
 
   myWiFi.setup(configJson);
@@ -149,7 +155,7 @@ void setup()
   {
     myMqtt.reConnectMqttServer();
   }
-  myM5.println("publishing Home assistant discovery");
+  myM5.println("publishing HA discovery");
   myMqtt.publishHaDiscovery();
 
   // download POI
@@ -205,10 +211,10 @@ void loop()
   {
     myScanCallbacks.doConnectThermo = false;
     DEBUG_PRINT("Found a thermomater we want to connect to, do it now.\n");
-    DEBUG_PRINT("*myClientCallbacks.numberOfThermoDevices: %d\n", *myClientCallbacks.numberOfThermoDevices);
+    DEBUG_PRINT("*myClientCallbacks.numberOfThermoDevicesFound: %d\n", *myClientCallbacks.numberOfThermoDevicesFound);
     if (myNotification.connectToThermo())
     {
-      DEBUG_PRINT("Success! we should now be getting notifications from Thermometers(%d).\n", numberOfThermoDevices);
+      DEBUG_PRINT("Success! we should now be getting notifications from Thermometers(%d).\n", numberOfThermoDevicesFound);
       myMqtt.mqttThermoSetup();
     }
     else
@@ -293,11 +299,12 @@ void loop()
     myM5.powerSave(1);
   }
 
-  for (int thermoIndex = 0; thermoIndex < numberOfThermoDevices; thermoIndex++)
+  for (int thermoIndex = 0; thermoIndex < numberOfThermoDevicesFound; thermoIndex++)
   {
     if (myThermoArr[thermoIndex].available && myThermoArr[thermoIndex].timeout(millis() + thermoIndex * 3000))
     {
-      myMqtt.publishJson("stat/" + myThermoArr[thermoIndex].topic + "STATE", myThermoArr[thermoIndex].getState(), true);
+      myMqtt.publishJson("stat/" + myThermoArr[thermoIndex].topic + "STATE",
+         myThermoArr[thermoIndex].getState(), true);
     }
   }
   //

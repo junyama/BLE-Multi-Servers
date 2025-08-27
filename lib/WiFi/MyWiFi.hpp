@@ -4,7 +4,7 @@
 #include <WiFiMulti.h>
 #include <ArduinoJson.h>
 
-#include "MyLog.cpp"
+#include "MyLog.hpp"
 #include "MyM5.hpp"
 
 class MyWiFi

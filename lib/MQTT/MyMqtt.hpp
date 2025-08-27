@@ -10,7 +10,7 @@
 #include "VoltMater.hpp"
 //#include "LipoMater.hpp"
 //#include "PowerSaving2.hpp"
-#include "MyLog.cpp"
+#include "MyLog.hpp"
 #include "MyM5.hpp"
 #include "MyThermo.hpp"
 

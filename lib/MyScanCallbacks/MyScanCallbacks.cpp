@@ -4,8 +4,10 @@ MyScanCallbacks::MyScanCallbacks()
 {
 }
 
-MyScanCallbacks::MyScanCallbacks(MyBLE2 *myBleArr_, MyM5 *myM5_, int *numberOfDevicesFound_, MyThermo *myThermoArr_, int *numberOfThermoDevicesFound_)
-    : myBleArr(myBleArr_), myM5(myM5_), numberOfDevicesFound(numberOfDevicesFound_), myThermoArr(myThermoArr_), numberOfThermoDevicesFound(numberOfThermoDevicesFound_)
+MyScanCallbacks::MyScanCallbacks(MyBLE2 *myBleArr_, MyM5 *myM5_, int *numberOfDevicesFound_, 
+  MyThermo *myThermoArr_, int *numberOfThermoDevicesFound_)
+    : myBleArr(myBleArr_), myM5(myM5_), numberOfDevicesFound(numberOfDevicesFound_), 
+    myThermoArr(myThermoArr_), numberOfThermoDevicesFound(numberOfThermoDevicesFound_)
 {
 }
 
@@ -60,7 +62,7 @@ void MyScanCallbacks::onResult(const NimBLEAdvertisedDevice *advertisedDevice)
 /** Callback to process the results of the completed scan or restart it */
 void MyScanCallbacks::onScanEnd(const NimBLEScanResults &results, int reason)
 {
-  DEBUG_PRINT("Scan Ended, reason: %d, device count: %d, numberOfAdvDevices: %d\n", reason, results.getCount(), advDevices.size());
+  DEBUG_PRINT("Scan Ended, reason: %d, device count: %d, advDevices.size(): %d\n", reason, results.getCount(), advDevices.size());
   numberOfAdvDevices = advDevices.size();
   DEBUG_PRINT("numberOfAdvDevices: %d\n", numberOfAdvDevices);
   *numberOfDevicesFound *= numberOfAdvDevices;
@@ -96,10 +98,10 @@ void MyScanCallbacks::onScanEnd(const NimBLEScanResults &results, int reason)
   }
 
   // added for Thermomater
-  DEBUG_PRINT("Scan Ended, reason: %d, device count: %d, numberOfAdvThermoDevices: %d\n", reason, results.getCount(), advThermoDevices.size());
+  DEBUG_PRINT("Scan Ended, reason: %d, device count: %d, advThermoDevices.size(): %d\n", reason, results.getCount(), advThermoDevices.size());
   numberOfAdvThermoDevices = advThermoDevices.size();
   DEBUG_PRINT("numberOfAdvThermoDevices: %d\n", numberOfAdvThermoDevices);
-  *numberOfThermoDevicesFound *= numberOfAdvThermoDevices;
+  numberOfThermoDevicesFound = &numberOfAdvThermoDevices;
   DEBUG_PRINT("numberOfThermoDevicesFound: %d\n", *numberOfThermoDevicesFound);
   sprintf(buff, "Thermomater scan done, rc: %d, thermomater found: %d/%d", reason, numberOfAdvThermoDevices, results.getCount());
   myM5->println(String(buff));

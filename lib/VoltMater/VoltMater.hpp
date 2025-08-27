@@ -2,7 +2,7 @@
 #define VOLT_MATER_HPP
 
 #include "M5Core2.h"
-#include "MyLog.cpp"
+#include "MyLog.hpp"
 #include <Arduino.h>
 #include <ArduinoJson.h>
 

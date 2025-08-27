@@ -2,7 +2,7 @@
 #define MY_CLIENT_HPP
 
 #include <NimBLEDevice.h>
-#include "MyLog.cpp"
+#include "MyLog.hpp"
 #include "MyBLE2.hpp"
 #include "MyThermo.hpp"
 
@@ -15,9 +15,9 @@ private:
 
 public:
     int *numberOfBleDevices;
-    int *numberOfThermoDevices;
+    int *numberOfThermoDevicesFound;
 
-    MyClientCallbacks(MyBLE2 *myBleArr_, int *numberOfBleDevice_, MyThermo *myThermoArr_, int *numberOfThermoDevices_);
+    MyClientCallbacks(MyBLE2 *myBleArr_, int *numberOfBleDevice_, MyThermo *myThermoArr_, int *numberOfThermoDevicesFound_);
 
     int getIndexOfMyBleArr(NimBLEClient *pClient);
 

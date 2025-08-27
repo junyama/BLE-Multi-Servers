@@ -97,7 +97,7 @@ void MySdCard::removeDirR(fs::FS &fs, const char *path)
     String filePath;
     while (file)
     {
-        filePath = String(path) + "/" + String(file.name()); //added
+        filePath = String(path) + "/" + String(file.name()); // added
         if (file.isDirectory())
         {
             DEBUG_PRINT("DIR : %s", file.name());
@@ -107,7 +107,7 @@ void MySdCard::removeDirR(fs::FS &fs, const char *path)
         {
             DEBUG_PRINT("Removing FILE: %s, SIZE: %d\n", filePath.c_str(), file.size());
             DEBUG_PRINT("filePath: %s\n", filePath.c_str());
-            //fs.remove(file.name()); //this code is the issue
+            // fs.remove(file.name()); //this code is the issue
             fs.remove(filePath.c_str());
         }
         file = root.openNextFile();
@@ -261,7 +261,10 @@ JsonDocument MySdCard::loadConfig(String fileName)
     String textStr = "";
     readFile(SD, fileName.c_str(), textStr);
     myM5->println("loading config file...");
-    DEBUG_PRINT("configJsonText: %s\n", textStr.c_str());
+    if (MyLog::verbose > 0)
+    {
+        DEBUG_PRINT("configJsonText: %s\n", textStr.c_str());
+    }
     JsonDocument configJson;
     DeserializationError error = deserializeJson(configJson, textStr.c_str());
     if (error)
@@ -337,8 +340,8 @@ void MySdCard::updatePOI(JsonDocument configJson)
                 if (httpResponseCode == 200)
                 {
                     String gpxStr = http.getString();
-                    //DEBUG_PRINT("gpxStr: %s\n", gpxStr.c_str());
-                    // writeFile("/poi/" + POIFileName, gpxStr);
+                    // DEBUG_PRINT("gpxStr: %s\n", gpxStr.c_str());
+                    //  writeFile("/poi/" + POIFileName, gpxStr);
                     String path = "/PersonalPOI/" + POIFileName;
                     writeFile(SD, path.c_str(), gpxStr.c_str());
                 }
