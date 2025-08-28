@@ -1,9 +1,9 @@
 #include "MyMqtt.hpp"
 
-MyMqtt::MyMqtt(PubSubClient *mqttClient_, MyBLE2 *myBleArr_, int *numberOfBleDevices_, VoltMater *voltMater_,
-               MyM5 *myM5_, MyThermo *myThermoArr_, int *numberOfThermoDevices_, MyWiFi *myWiFi_)
-    : mqttClient(mqttClient_), myBleArr(myBleArr_), numberOfBleDevices(numberOfBleDevices_), voltMater(voltMater_),
-      myM5(myM5_), myThermoArr(myThermoArr_), numberOfThermoDevices(numberOfThermoDevices_), myWiFi(myWiFi_)
+MyMqtt::MyMqtt(PubSubClient *mqttClient_, MyBLE2 *myBleArr_, VoltMater *voltMater_,
+               MyM5 *myM5_, MyThermo *myThermoArr_, MyWiFi *myWiFi_)
+    : mqttClient(mqttClient_), myBleArr(myBleArr_), voltMater(voltMater_),
+      myM5(myM5_), myThermoArr(myThermoArr_), myWiFi(myWiFi_)
 {
 }
 
@@ -29,21 +29,22 @@ void MyMqtt::mqttServerSetup(JsonDocument configJson_)
                           { mqttCallback(topic_, payload, length); });
 }
 
-void MyMqtt::mqttDeviceSetup()
+void MyMqtt::mqttDeviceSetup(int numberOfBleDevices_)
 {
   DEBUG_PRINT("mqttDeviceSetup() called\n");
+  numberOfBleDevices = numberOfBleDevices_;
   // deviceList = configJson["devices"].as<JsonArray>();
   DEBUG_PRINT("mqttDeviceSetup: deviceList.size() = %d\n", deviceList.size());
   // myBleArr = myBleArr_;
   // int numberOfBleDevices = myScanCallbacks.numberOfBleDevices;
-  DEBUG_PRINT("mqttDeviceSetup: *numberOfBleDevices = %d\n", *numberOfBleDevices);
+  DEBUG_PRINT("mqttDeviceSetup: numberOfBleDevices = %d\n", numberOfBleDevices);
   for (int deviceIndex = 0; deviceIndex < deviceList.size(); deviceIndex++)
   {
     JsonDocument deviceObj = deviceList[deviceIndex];
     String type = deviceObj["type"];
     if (type.equals("BMS"))
     {
-      for (int bleIndex = 0; bleIndex < *numberOfBleDevices; bleIndex++)
+      for (int bleIndex = 0; bleIndex < numberOfBleDevices; bleIndex++)
       {
         // DEBUG_PRINT("bleIndex = %d deviceIndex = %d\n", bleIndex, deviceIndex);
         String mac = deviceObj["mac"];
@@ -72,15 +73,16 @@ void MyMqtt::mqttDeviceSetup()
   }
 }
 
-void MyMqtt::mqttThermoSetup()
+void MyMqtt::mqttThermoSetup(int numberOfThermoDevices_)
 {
+  numberOfThermoDevices = numberOfThermoDevices_;
   for (int deviceIndex = 0; deviceIndex < deviceList.size(); deviceIndex++)
   {
     JsonDocument deviceObj = deviceList[deviceIndex];
     String type = deviceObj["type"];
     if (type.equals("Thermomater"))
     {
-      for (int thermoIndex = 0; thermoIndex < *numberOfThermoDevices; thermoIndex++)
+      for (int thermoIndex = 0; thermoIndex < numberOfThermoDevices; thermoIndex++)
       {
         // DEBUG_PRINT("thermoIndex = %d deviceIndex = %d\n", thermoIndex, deviceIndex);
         String mac = deviceObj["mac"];
@@ -311,14 +313,14 @@ void MyMqtt::mqttCallback(char *topic_, byte *payload, unsigned int length)
   if (String(topic_).equals("cmnd/" + myM5->topic + "numberOfBleDevices"))
   {
     DEBUG_PRINT("responding to numberOfBleDevices!\n");
-    publish(("stat/" + myM5->topic + "RESULT").c_str(), String(*numberOfBleDevices));
+    publish(("stat/" + myM5->topic + "RESULT").c_str(), String(numberOfBleDevices));
     return;
   }
 
   if (String(topic_).equals("cmnd/" + myM5->topic + "numberOfThermoDevices"))
   {
     DEBUG_PRINT("responding to numberOfThermoDevices!\n");
-    publish(("stat/" + myM5->topic + "RESULT").c_str(), String(*numberOfThermoDevices));
+    publish(("stat/" + myM5->topic + "RESULT").c_str(), String(numberOfThermoDevices));
     return;
   }
 
@@ -334,7 +336,7 @@ void MyMqtt::mqttCallback(char *topic_, byte *payload, unsigned int length)
   int chargeStatus;
   int dischargeStatus;
   bool connectionStatus;
-  for (int bleIndex = 0; bleIndex < *numberOfBleDevices; bleIndex++)
+  for (int bleIndex = 0; bleIndex < numberOfBleDevices; bleIndex++)
   {
     DEBUG_PRINT("myBleArr[%d].topic = %s\n", bleIndex, myBleArr[bleIndex].topic.c_str());
     // DEBUG_PRINT("myBleArr[%d].available = %d", bleIndex, myBleArr[bleIndex].available);

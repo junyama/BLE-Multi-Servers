@@ -36,14 +36,15 @@
 #define CONFIG_FILE "/config.json"
 
 const char *TAG = "main";
-
 int MyLog::verbose = 1;
 
-// MyLcd2 myLcd;
-int numberOfBleDevices = 1;
-int numberOfThermoDevicesFound = 1;
+MyBLE2 myBleArr[3];
+// int numberOfConnectedBMS = 0;
 
-MyM5 myM5(&numberOfBleDevices, &numberOfThermoDevicesFound);
+MyThermo myThermoArr[2];
+// int numberOfConnectedThermo = 0;
+
+MyM5 myM5;
 MySdCard mySdCard(&myM5);
 JsonDocument configJson;
 // JsonArray deviceList;
@@ -58,16 +59,13 @@ MyTimer myTimerArr[3];
 // MyTimer myTimerArr2[3];
 int timeoutCount = 0;
 VoltMater voltMater;
-// LipoMater lipoMater;
-MyBLE2 myBleArr[3];
 
-MyThermo myThermoArr[2];
 // std::vector<MyBLE2> *bleDevices;
 
-MyScanCallbacks myScanCallbacks(myBleArr, &myM5, &numberOfBleDevices, myThermoArr, &numberOfThermoDevicesFound);
-MyClientCallbacks myClientCallbacks(myBleArr, &numberOfBleDevices, myThermoArr, &numberOfThermoDevicesFound);
+MyScanCallbacks myScanCallbacks(myBleArr, &myM5, myThermoArr);
+MyClientCallbacks myClientCallbacks(myBleArr, myThermoArr);
 MyNotification myNotification(myBleArr, myTimerArr, &myScanCallbacks, &myClientCallbacks, myThermoArr);
-MyMqtt myMqtt(&mqttClient, myBleArr, &numberOfBleDevices, &voltMater, &myM5, myThermoArr, &numberOfThermoDevicesFound, &myWiFi);
+MyMqtt myMqtt(&mqttClient, myBleArr, &voltMater, &myM5, myThermoArr, &myWiFi);
 
 // void loadConfig();
 // void saveConfig();
@@ -81,10 +79,11 @@ void printBatteryInfo(int bleIndex, int numberOfAdvDevices, MyBLE2 myBle);
 */
 void scanBle()
 {
-  numberOfBleDevices = 1; //may have bugs for the variable
-  numberOfThermoDevicesFound = 0; //may have bugs for the variable, 0 not working
+  myNotification.clear(); // may have bugs for the variable
+  // numberOfConnectedThermo = 0; //may have bugs for the variable, 0 not working
+  myScanCallbacks.advDevices.clear();
   myScanCallbacks.advThermoDevices.clear();
-  
+
   /** Initialize NimBLE and set the device name */
   NimBLEDevice::init("NimBLE-Client");
 
@@ -182,12 +181,14 @@ void loop()
     DEBUG_PRINT("Found a BMS we want to connect to, do it now.\n");
     // myClientCallbacks.numberOfAdvDevices = myScanCallbacks.numberOfAdvDevices;
 
-    DEBUG_PRINT("*myClientCallbacks.numberOfBleDevices: %d\n", *myClientCallbacks.numberOfBleDevices);
+    // DEBUG_PRINT("*myClientCallbacks.numberOfConnectedBMS: %d\n", *myClientCallbacks.numberOfConnectedBMS);
 
     if (myNotification.connectToServer())
     {
-      DEBUG_PRINT("Success! we should now be getting notifications from BMS(%d).\n", numberOfBleDevices);
-      myMqtt.mqttDeviceSetup();
+      DEBUG_PRINT("Success! we should now be getting notifications from BMS(%d).\n", myNotification.numberOfConnectedBMS);
+      myMqtt.mqttDeviceSetup(myNotification.numberOfConnectedBMS);
+      myM5.numberOfConnectedBMS = myNotification.numberOfConnectedBMS;
+      myClientCallbacks.numberOfConnectedBMS = myNotification.numberOfConnectedBMS;
       /*
       if (!mqttClient.connected())
       {
@@ -211,11 +212,13 @@ void loop()
   {
     myScanCallbacks.doConnectThermo = false;
     DEBUG_PRINT("Found a thermomater we want to connect to, do it now.\n");
-    DEBUG_PRINT("*myClientCallbacks.numberOfThermoDevicesFound: %d\n", *myClientCallbacks.numberOfThermoDevicesFound);
+    // DEBUG_PRINT("*myClientCallbacks.numberOfConnectedThermo: %d\n", *myClientCallbacks.numberOfConnectedThermo);
     if (myNotification.connectToThermo())
     {
-      DEBUG_PRINT("Success! we should now be getting notifications from Thermometers(%d).\n", numberOfThermoDevicesFound);
-      myMqtt.mqttThermoSetup();
+      DEBUG_PRINT("Success! we should now be getting notifications from Thermometers(%d).\n", myNotification.numberOfConnectedThermo);
+      myMqtt.mqttThermoSetup(myNotification.numberOfConnectedThermo);
+      myM5.numberOfConnectedThermo = myNotification.numberOfConnectedThermo;
+      myClientCallbacks.numberOfConnectedThermo = myNotification.numberOfConnectedThermo;
     }
     else
     {
@@ -235,7 +238,7 @@ void loop()
 
   try
   {
-    for (int bleIndex = 0; bleIndex < numberOfBleDevices; bleIndex++)
+    for (int bleIndex = 0; bleIndex < myNotification.numberOfConnectedBMS; bleIndex++)
     {
       if (!myBleArr[bleIndex].connected)
       {
@@ -299,12 +302,12 @@ void loop()
     myM5.powerSave(1);
   }
 
-  for (int thermoIndex = 0; thermoIndex < numberOfThermoDevicesFound; thermoIndex++)
+  for (int thermoIndex = 0; thermoIndex < myNotification.numberOfConnectedThermo; thermoIndex++)
   {
     if (myThermoArr[thermoIndex].available && myThermoArr[thermoIndex].timeout(millis() + thermoIndex * 3000))
     {
       myMqtt.publishJson("stat/" + myThermoArr[thermoIndex].topic + "STATE",
-         myThermoArr[thermoIndex].getState(), true);
+                         myThermoArr[thermoIndex].getState(), true);
     }
   }
   //

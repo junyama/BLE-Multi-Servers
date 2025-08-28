@@ -14,10 +14,10 @@ private:
     MyThermo *myThermoArr;
 
 public:
-    int *numberOfBleDevices;
-    int *numberOfThermoDevicesFound;
+    int numberOfConnectedBMS;
+    int numberOfConnectedThermo;
 
-    MyClientCallbacks(MyBLE2 *myBleArr_, int *numberOfBleDevice_, MyThermo *myThermoArr_, int *numberOfThermoDevicesFound_);
+    MyClientCallbacks(MyBLE2 *myBleArr_, MyThermo *myThermoArr_);
 
     int getIndexOfMyBleArr(NimBLEClient *pClient);
 

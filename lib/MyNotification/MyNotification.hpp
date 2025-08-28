@@ -22,6 +22,9 @@ private:
     MyScanCallbacks *myScanCallbacks;
 
 public:
+    int numberOfConnectedBMS = 0;
+    int numberOfConnectedThermo = 0;
+
     MyNotification(MyBLE2 *myBleArr_, MyTimer *myTimerArr_, MyScanCallbacks *myScanCallbacks_, MyClientCallbacks *myClientCallbacks, MyThermo *myThermoArr_);
     /** Notification / Indication receiving handler callback */
     void notifyCB(NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify);
@@ -30,7 +33,8 @@ public:
     /** Handles the provisioning of clients and connects / interfaces with the server */
     bool connectToServer();
     bool connectToThermo();
-    void printBatteryInfo(int bleIndex, int numberOfAdvDevices, MyBLE2 myBle);
+    //void printBatteryInfo(int bleIndex, int numberOfAdvDevices, MyBLE2 myBle);
+    void clear();
 };
 
 #endif /* MY_NOTIFICATION_HPP */

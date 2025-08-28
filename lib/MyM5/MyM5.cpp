@@ -1,7 +1,6 @@
 #include "MyM5.hpp"
 
-MyM5::MyM5(int *numberOfBleDevices_, int *numberOfThermoDevices_) 
-: numberOfBleDevices(numberOfBleDevices_), numberOfThermoDevices(numberOfThermoDevices_)
+MyM5::MyM5() 
 {
     M5.Lcd.setTextFont(1);
     M5.Lcd.setTextSize(2);
@@ -112,8 +111,8 @@ void MyM5::reset()
 JsonDocument MyM5::getState()
 {
     JsonDocument doc;
-    doc["numberOfBleDevices"] = *numberOfBleDevices;
-    doc["numberOfThermoDevices"] = *numberOfThermoDevices;
+    doc["numberOfBleDevices"] = numberOfConnectedBMS;
+    doc["numberOfThermoDevices"] = numberOfConnectedThermo;
     doc["lcdStatus"] = lcdState;
     doc["ledStatus"] = ledState;
     doc["voltage"] = vMaterLipoInfo.lipoVolt;
@@ -139,7 +138,7 @@ void MyM5::detectButton()
     }
     else if (M5.BtnB.wasReleased() || M5.BtnB.pressedFor(1000, 200))
     {
-        if (++bmsIndexShown > *numberOfBleDevices - 1)
+        if (++bmsIndexShown > numberOfConnectedBMS - 1)
             bmsIndexShown = 0;
         DEBUG_PRINT("Button B pushed with bmsIndex: %d", +bmsIndexShown);
         showBatteryInfo();

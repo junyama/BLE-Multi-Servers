@@ -1,15 +1,15 @@
 #include "MyClientCallbacks.hpp"
 
-MyClientCallbacks::MyClientCallbacks(MyBLE2 *myBleArr_, int *numberOfBleDevices_, MyThermo *myThermoArr_, int *numberOfThermoDevicesFound_) 
-: myBleArr(myBleArr_), numberOfBleDevices(numberOfBleDevices_), myThermoArr(myThermoArr_), numberOfThermoDevicesFound(numberOfThermoDevicesFound_)
+MyClientCallbacks::MyClientCallbacks(MyBLE2 *myBleArr_, MyThermo *myThermoArr_) 
+: myBleArr(myBleArr_), myThermoArr(myThermoArr_)
 {
 }
 
 int MyClientCallbacks::getIndexOfMyBleArr(NimBLEClient *pClient)
 {
     String peerAddress = String(pClient->getPeerAddress().toString().c_str());
-    DEBUG_PRINT("*numberOfBleDevices:%d\n", *numberOfBleDevices);
-    for (int i = 0; i < *numberOfBleDevices; i++)
+    DEBUG_PRINT("numberOfConnectedBMS:%d\n", numberOfConnectedBMS);
+    for (int i = 0; i < numberOfConnectedBMS; i++)
     {
         String address = myBleArr[i].mac;
         DEBUG_PRINT("myBleArr[%d].mac = %s\n", i, address.c_str());

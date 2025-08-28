@@ -49,14 +49,14 @@ public:
     int resetIntervalSec = 3600;
     unsigned long lastReset;
 
-    int *numberOfBleDevices;
-    int *numberOfThermoDevices;
+    int numberOfConnectedBMS;
+    int numberOfConnectedThermo;
     int bmsIndexShown = 0;
     BmsInfoStruct bmsInfoArr[3];
 
     String topic;
 
-    MyM5(int *numberOfBleDevices_, int *numberOfThermoDevices_);
+    MyM5();
     void setup(JsonDocument deviceObj);
     void powerSave(int status);
     void lcdSwitch(int state);

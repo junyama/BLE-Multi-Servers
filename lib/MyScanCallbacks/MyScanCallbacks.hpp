@@ -35,11 +35,11 @@ public:
   std::vector<const NimBLEAdvertisedDevice *> advDevices;
   std::vector<const NimBLEAdvertisedDevice *> advThermoDevices;
 
-  int numberOfAdvDevices = 0;
-  int numberOfAdvThermoDevices = 0;
+  //int numberOfAdvDevices = 0;
+  //int numberOfAdvThermoDevices = 0;
 
-  int *numberOfDevicesFound;
-  int *numberOfThermoDevicesFound;
+  //int *numberOfDevicesFound;
+  //int *numberOfThermoDevicesFound;
 
   bool doConnect = false;
   bool doConnectThermo = false;
@@ -51,7 +51,7 @@ public:
 
   MyScanCallbacks();
 
-  MyScanCallbacks(MyBLE2 *myBleArr_, MyM5 *myM5_, int *numberOfDevicesFound_, MyThermo *myThermoArr, int *numberOfThermoDevicesFound_);
+  MyScanCallbacks(MyBLE2 *myBleArr_, MyM5 *myM5_, MyThermo *myThermoArr);
 
   void onResult(const NimBLEAdvertisedDevice *advertisedDevice) override;
 
