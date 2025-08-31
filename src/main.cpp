@@ -36,12 +36,18 @@
 #define CONFIG_FILE "/config.json"
 
 const char *TAG = "main";
-int MyLog::verbose = 1;
+
+bool MyLog::DEBUG = true;
+bool MyLog::DEBUG2 = true;
+bool MyLog::DEBUG3 = true;
+bool MyLog::INFO = false;
+bool MyLog::WARN = true;
+bool MyLog::ERROR = true;
 
 MyBLE2 myBleArr[3];
 // int numberOfConnectedBMS = 0;
 
-MyThermo myThermoArr[2];
+MyThermo myThermoArr[5];
 // int numberOfConnectedThermo = 0;
 
 MyM5 myM5;
@@ -65,7 +71,7 @@ VoltMater voltMater;
 MyScanCallbacks myScanCallbacks(myBleArr, &myM5, myThermoArr);
 MyClientCallbacks myClientCallbacks(myBleArr, myThermoArr);
 MyNotification myNotification(myBleArr, myTimerArr, &myScanCallbacks, &myClientCallbacks, myThermoArr);
-MyMqtt myMqtt(&mqttClient, myBleArr, &voltMater, &myM5, myThermoArr, &myWiFi);
+MyMqtt myMqtt(&mqttClient, myBleArr, &voltMater, &myM5, myThermoArr, &myWiFi, &myNotification);
 
 // void loadConfig();
 // void saveConfig();
@@ -133,9 +139,7 @@ void setup()
   Serial.begin(9600);
   // MySdCard::deleteFile(SD, "/log.txt");
   mySdCard.setup();
-  MyLog::verbose = 0;
   configJson = mySdCard.loadConfig(CONFIG_FILE);
-  MyLog::verbose = 1;
   DEBUG_PRINT("loadConfig() done\n");
 
   myWiFi.setup(configJson);
@@ -216,7 +220,8 @@ void loop()
     if (myNotification.connectToThermo())
     {
       DEBUG_PRINT("Success! we should now be getting notifications from Thermometers(%d).\n", myNotification.numberOfConnectedThermo);
-      myMqtt.mqttThermoSetup(myNotification.numberOfConnectedThermo);
+      //myMqtt.mqttThermoSetup(myNotification.numberOfConnectedThermo);
+      myMqtt.thermoSetup();
       myM5.numberOfConnectedThermo = myNotification.numberOfConnectedThermo;
       myClientCallbacks.numberOfConnectedThermo = myNotification.numberOfConnectedThermo;
     }
@@ -282,7 +287,7 @@ void loop()
   }
   catch (const std::runtime_error &e)
   {
-    DEBUG_PRINT("error happened: %s\n", e.what());
+    ERROR_PRINT("error happened: %s\n", e.what());
     DEBUG_PRINT("reconnect myBleArr\n");
     myScanCallbacks.doConnect = false;
     DEBUG_PRINT("rescan BLE\n");
@@ -302,12 +307,30 @@ void loop()
     myM5.powerSave(1);
   }
 
+  // DEBUG2_PRINT("if publishJson for Thermomater, numberOfConnectedThermo: %d\n", myNotification.numberOfConnectedThermo);
   for (int thermoIndex = 0; thermoIndex < myNotification.numberOfConnectedThermo; thermoIndex++)
   {
-    if (myThermoArr[thermoIndex].available && myThermoArr[thermoIndex].timeout(millis() + thermoIndex * 3000))
+    try
     {
-      myMqtt.publishJson("stat/" + myThermoArr[thermoIndex].topic + "STATE",
-                         myThermoArr[thermoIndex].getState(), true);
+      /*
+      if (!myThermoArr[thermoIndex].available)
+      {
+        char buff[256];
+        sprintf(buff, "myThermoArr[%d/%d] not available", thermoIndex, myNotification.numberOfConnectedThermo);
+        //ERROR_PRINT("%s\n", buff);
+        throw std::runtime_error(std::string(buff));
+      }
+      */
+      if (myThermoArr[thermoIndex].timeout(millis() + thermoIndex * 3000))
+      {
+        myMqtt.publishJson("stat/" + myThermoArr[thermoIndex].topic + "STATE",
+                           myThermoArr[thermoIndex].getState(), true);
+      }
+    }
+    catch (const std::runtime_error &e)
+    {
+      ERROR_PRINT("%s\n", e.what());
+      continue;
     }
   }
   //

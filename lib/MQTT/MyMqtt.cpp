@@ -1,9 +1,9 @@
 #include "MyMqtt.hpp"
 
 MyMqtt::MyMqtt(PubSubClient *mqttClient_, MyBLE2 *myBleArr_, VoltMater *voltMater_,
-               MyM5 *myM5_, MyThermo *myThermoArr_, MyWiFi *myWiFi_)
+               MyM5 *myM5_, MyThermo *myThermoArr_, MyWiFi *myWiFi_, MyNotification *myNotification_)
     : mqttClient(mqttClient_), myBleArr(myBleArr_), voltMater(voltMater_),
-      myM5(myM5_), myThermoArr(myThermoArr_), myWiFi(myWiFi_)
+      myM5(myM5_), myThermoArr(myThermoArr_), myWiFi(myWiFi_), myNotification(myNotification_)
 {
 }
 
@@ -73,6 +73,51 @@ void MyMqtt::mqttDeviceSetup(int numberOfBleDevices_)
   }
 }
 
+void MyMqtt::thermoSetup()
+{
+  for (int thermoIndex = 0; thermoIndex < myNotification->numberOfConnectedThermo; thermoIndex++)
+  {
+    try
+    {
+      bool deviceFound = false;
+      for (int deviceIndex = 0; deviceIndex < deviceList.size(); deviceIndex++)
+      {
+        JsonDocument deviceObj = deviceList[deviceIndex];
+        String type = deviceObj["type"];
+        if (type.equals("Thermomater"))
+        {
+          String mac = deviceObj["mac"];
+          //DEBUG_PRINT("thermoSetup: myThermoArr[%d].mac: %s, deviceList[%d][\"mac\"]: %s\n",
+                      //thermoIndex, myThermoArr[thermoIndex].mac.c_str(), deviceIndex, mac.c_str());
+          if (NimBLEAddress(myThermoArr[thermoIndex].mac.c_str(), 0).equals(NimBLEAddress(mac.c_str(), 0)))
+          {
+            String topic = deviceObj["mqtt"]["topic"];
+            myThermoArr[thermoIndex].topic = topic;
+            DEBUG2_PRINT("thermoSetup: myThermoArr[%d].mac found at config and set topic: %s\n", thermoIndex,
+                        myThermoArr[thermoIndex].topic.c_str());
+            // myThermoArr[thermoIndex].available = true;
+            // DEBUG_PRINT("mqttDeviceSetup: myThermoArr[%d].available = true\n", thermoIndex);
+            deviceFound = true;
+            break;
+          }
+        }
+      }
+      if (!deviceFound)
+      {
+        char buff[256];
+        sprintf(buff, "myThermoArr[%d].mac: %s not found at config",
+           myThermoArr[thermoIndex].mac.c_str(), thermoIndex);
+        throw std::runtime_error(buff);
+      }
+    }
+    catch (const std::runtime_error &e)
+    {
+      ERROR_PRINT("%s\n", e.what());
+      continue;
+    }
+  }
+}
+/*
 void MyMqtt::mqttThermoSetup(int numberOfThermoDevices_)
 {
   numberOfThermoDevices = numberOfThermoDevices_;
@@ -101,6 +146,7 @@ void MyMqtt::mqttThermoSetup(int numberOfThermoDevices_)
     }
   }
 }
+*/
 
 void MyMqtt::reConnectMqttServer()
 {
@@ -200,10 +246,7 @@ void MyMqtt::publishJson(String topic, JsonDocument doc, bool retained)
     return;
   String jsonStr;
   serializeJson(doc, jsonStr);
-  if (MyLog::verbose > 0)
-  {
-    DEBUG_PRINT("publishing Json >>>>> topic: %s, payload: %s\n", topic.c_str(), jsonStr.c_str());
-  }
+  DEBUG2_PRINT("publishJson topic: %s, payload: %s\n", topic.c_str(), jsonStr.c_str());
   if (!mqttClient->connected())
   {
     reConnectMqttServer();
@@ -227,10 +270,10 @@ void MyMqtt::publishHaDiscovery()
     String deviceTopic = deviceObj["mqtt"]["topic"];
     discoveryTopic = "homeassistant/device/" + deviceTopic + "config";
     discoveryPayload = deviceObj["mqtt"]["discoveryPayload"];
-    DEBUG_PRINT("%d: publishing for HA discovery.................\n", deviceIndex);
-    MyLog::verbose = 0;
+    DEBUG_PRINT("%d: publishing for HA discovery\n", deviceIndex);
+    MyLog::DEBUG2 = false;
     publishJson(discoveryTopic, discoveryPayload, true);
-    MyLog::verbose = 1;
+    MyLog::DEBUG2 = true;
   }
 }
 

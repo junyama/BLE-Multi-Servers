@@ -16,7 +16,7 @@ void MyScanCallbacks::onResult(const NimBLEAdvertisedDevice *advertisedDevice)
   DEBUG_PRINT("Advertised Device ServiceData UUID: %s\n", advertisedDevice->getServiceDataUUID(0).toString().c_str());
   if (advertisedDevice->isAdvertisingService(serviceUUID))
   {
-    DEBUG_PRINT("Found BMS Service\n");
+    DEBUG_PRINT("Found BMS Service: %s\n", advertisedDevice->toString().c_str());
     /** stop scan before connecting */
     // NimBLEDevice::getScan()->stop(); //Jun: comment out
     /** Save the device reference in a global for the client to use*/
@@ -51,7 +51,7 @@ void MyScanCallbacks::onResult(const NimBLEAdvertisedDevice *advertisedDevice)
   // else if (advertisedDevice->getAddress().equals(targeThermoAddress)) // tentative code2 to mach mac address
   if (advertisedDevice->getServiceDataUUID(0).equals(serviceDataUUID_thermo))
   {
-    DEBUG_PRINT("Found Thermomater Service\n");
+    DEBUG3_PRINT("Found Thermomater Service: %s\n", advertisedDevice->toString().c_str());
     if (advThermoDevices.size() == 0)
     {
       advThermoDevices.push_back(advertisedDevice);
@@ -72,7 +72,7 @@ void MyScanCallbacks::onResult(const NimBLEAdvertisedDevice *advertisedDevice)
     }
     return;
   }
-  DEBUG_PRINT("Advertized device is not BSM or Thermomater: %s", advertisedDevice->toString().c_str());
+  WARN_PRINT("Advertized device is not BSM or Thermomater: %s\n", advertisedDevice->toString().c_str());
 }
 
 /** Callback to process the results of the completed scan or restart it */
@@ -115,7 +115,7 @@ void MyScanCallbacks::onScanEnd(const NimBLEScanResults &results, int reason)
   }
 
   // added for Thermomater
-  DEBUG_PRINT("Thermomater scan done, reason: %d, device count: %d, advThermoDevices.size(): %d\n",
+  DEBUG3_PRINT("Thermomater scan done, reason: %d, device count: %d, advThermoDevices.size(): %d\n",
      reason, results.getCount(), advThermoDevices.size());
   // numberOfAdvThermoDevices = advThermoDevices.size();
   //DEBUG_PRINT("advThermoDevices.size(): %d\n", advThermoDevices.size());
@@ -127,7 +127,7 @@ void MyScanCallbacks::onScanEnd(const NimBLEScanResults &results, int reason)
 
   if (advThermoDevices.size() == 0)
   {
-    DEBUG_PRINT("no thermomater found!!!!!\n");
+    ERROR_PRINT("no thermomater found!\n");
     //delay(2000);
     //myM5->reset();
   }
@@ -137,11 +137,11 @@ void MyScanCallbacks::onScanEnd(const NimBLEScanResults &results, int reason)
     std::string address = advThermoDevices[index]->getAddress().toString();
     myThermoArr[index].mac = String(address.c_str());
     // myM5->bmsInfoArr[bleIndex].mac = myBleArr[index].mac;
-    DEBUG_PRINT("myThermoArr[%d].mac set by %s\n", index, address.c_str());
+    DEBUG2_PRINT("myThermoArr[%d].mac set by %s\n", index, address.c_str());
     std::string deviceName = advThermoDevices[index]->getName();
     myThermoArr[index].deviceName = String(deviceName.c_str());
     // myM5->bmsInfoArr[index].deviceName = myBleArr[index].deviceName;
-    DEBUG_PRINT("myThermoArr[%d].deviceName set by %s\n", index, myThermoArr[index].deviceName.c_str());
+    DEBUG2_PRINT("myThermoArr[%d].deviceName set by %s\n", index, myThermoArr[index].deviceName.c_str());
   }
   if (advThermoDevices.size() != 0 && !doConnectThermo)
   {

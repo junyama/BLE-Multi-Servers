@@ -5,11 +5,13 @@
 #include <StreamUtils.h>
 
 // #include "MyScanCallbacks.hpp"
+#include "MyNotification.hpp"
+
 #include "MyWiFi.hpp"
 #include "MyBLE2.hpp"
 #include "VoltMater.hpp"
-//#include "LipoMater.hpp"
-//#include "PowerSaving2.hpp"
+// #include "LipoMater.hpp"
+// #include "PowerSaving2.hpp"
 #include "MyLog.hpp"
 #include "MyM5.hpp"
 #include "MyThermo.hpp"
@@ -24,31 +26,33 @@ private:
     int mqttPort;
     String mqttUser;
     String mqttPass;
-    //String systemTopic;
+    // String systemTopic;
     const int mqttMessageSizeLimit = 256;
 
     PubSubClient *mqttClient;
     JsonDocument configJson;
     // MyScanCallbacks myScanCallbacks;
-    //PowerSaving2 *powerSaving;
+    // PowerSaving2 *powerSaving;
     MyWiFi *myWiFi;
     MyBLE2 *myBleArr;
+    MyNotification *myNotification;
     int numberOfBleDevices;
     MyThermo *myThermoArr;
     int numberOfThermoDevices;
 
     VoltMater *voltMater;
-    //LipoMater *lipoMater;
+    // LipoMater *lipoMater;
     MyM5 *myM5;
 
     bool mqttDisabled;
 
 public:
-    MyMqtt(PubSubClient *mqttClient_, MyBLE2 *myBleArr_,  VoltMater *voltMater_,
-         MyM5 *myM5_, MyThermo *myThermoArr_, MyWiFi *myWiFi_);
+    MyMqtt(PubSubClient *mqttClient_, MyBLE2 *myBleArr_, VoltMater *voltMater_,
+           MyM5 *myM5_, MyThermo *myThermoArr_, MyWiFi *myWiFi_, MyNotification *myNotification_);
     void mqttServerSetup(JsonDocument configJson);
     void mqttDeviceSetup(int numberOfBleDevices_);
-    void mqttThermoSetup(int numberOfThermoDevices_);
+    // void mqttThermoSetup(int numberOfThermoDevices_);
+    void thermoSetup();
     void reConnectMqttServer();
     void publish(String topic, String message);
     void publishJson(String topic, JsonDocument doc, bool retained);
