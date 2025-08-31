@@ -261,7 +261,7 @@ JsonDocument MySdCard::loadConfig(String fileName)
     String textStr = "";
     readFile(SD, fileName.c_str(), textStr);
     myM5->println("loading config file...");
-    INFO_PRINT("configJsonText: %s\n", textStr.c_str());
+    DEBUG_PRINT("configJsonText: %s\n", textStr.c_str());
     JsonDocument configJson;
     DeserializationError error = deserializeJson(configJson, textStr.c_str());
     if (error)

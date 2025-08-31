@@ -16,7 +16,7 @@ void MyScanCallbacks::onResult(const NimBLEAdvertisedDevice *advertisedDevice)
   DEBUG_PRINT("Advertised Device ServiceData UUID: %s\n", advertisedDevice->getServiceDataUUID(0).toString().c_str());
   if (advertisedDevice->isAdvertisingService(serviceUUID))
   {
-    DEBUG_PRINT("Found BMS Service: %s\n", advertisedDevice->toString().c_str());
+    DEBUG3_PRINT("Found BMS Service: %s\n", advertisedDevice->toString().c_str());
     /** stop scan before connecting */
     // NimBLEDevice::getScan()->stop(); //Jun: comment out
     /** Save the device reference in a global for the client to use*/
@@ -72,7 +72,7 @@ void MyScanCallbacks::onResult(const NimBLEAdvertisedDevice *advertisedDevice)
     }
     return;
   }
-  WARN_PRINT("Advertized device is not BSM or Thermomater: %s\n", advertisedDevice->toString().c_str());
+  DEBUG_PRINT("Advertized device is not BSM or Thermomater: %s\n", advertisedDevice->toString().c_str());
 }
 
 /** Callback to process the results of the completed scan or restart it */
@@ -90,9 +90,10 @@ void MyScanCallbacks::onScanEnd(const NimBLEScanResults &results, int reason)
 
   if (advDevices.size() == 0)
   {
-    DEBUG_PRINT("no BMS found, going to reset\n");
-    delay(2000);
-    myM5->reset();
+    WARN_PRINT("no BMS found and goint to rescan BLE\n");
+    doRescan = true;
+    //delay(2000);
+    //myM5->reset();
   }
 
   for (int bleIndex = 0; bleIndex < advDevices.size(); bleIndex++)
@@ -110,7 +111,6 @@ void MyScanCallbacks::onScanEnd(const NimBLEScanResults &results, int reason)
   // NimBLEDevice::getScan()->start(scanTimeMs, false, true);
   if (advDevices.size() != 0 && !doConnect)
   {
-    // NimBLEDevice::getScan()->stop();
     doConnect = true;
   }
 
@@ -127,9 +127,8 @@ void MyScanCallbacks::onScanEnd(const NimBLEScanResults &results, int reason)
 
   if (advThermoDevices.size() == 0)
   {
-    ERROR_PRINT("no thermomater found!\n");
-    //delay(2000);
-    //myM5->reset();
+    WARN_PRINT("no thermomater found and going to rescan BLE\n");
+    doRescan = true;
   }
 
   for (int index = 0; index < advThermoDevices.size(); index++)

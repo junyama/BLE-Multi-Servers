@@ -29,6 +29,16 @@
         Serial.print("\033[0m");                                      \
     }
 
+// Blue
+#define DEBUG4_PRINT(...)                                             \
+    if (MyLog::DEBUG4)                                                \
+    {                                                                 \
+        Serial.print("\033[34m");                                     \
+        Serial.printf("[%s] %s: ", DateTime.toString().c_str(), TAG); \
+        Serial.printf(__VA_ARGS__);                                   \
+        Serial.print("\033[0m");                                      \
+    }
+
 // Green
 #define INFO_PRINT(...)                                               \
     if (MyLog::INFO)                                                  \
@@ -68,6 +78,8 @@ public:
     static bool DEBUG;
     static bool DEBUG2;
     static bool DEBUG3;
+    static bool DEBUG4;
+
     static bool INFO;
     static bool WARN;
     static bool ERROR;

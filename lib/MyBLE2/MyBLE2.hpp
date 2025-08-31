@@ -67,45 +67,28 @@ public:
     String topic = "NOT_DEFINED";
     bool connected = false;
 
-    // NimBLEClientCallbacks clientCallbacks;
+    int measurmentIntervalMs = 10000;
+    unsigned long lastMeasurment = 0;
 
     MyBLE2();
-
-    //MyBLE2(NimBLEAddress peerAddress_);
-
-    //MyBLE2(const MyBLE2 &obj);
-
     void sendInfoCommand();
-
     JsonDocument getMosfetState();
-
     JsonDocument getState();
-
     byte calcChecksum(byte *packet);
-
     void bmsMosfetCtrl();
-
     void mosfetCtrl(int chargeStatus, int dischargeStatus);
-
     void bmsGetInfo3();
-
     void bmsGetInfo4();
-
     void bmsGetInfo5();
-
     void sendCommand(NimBLERemoteCharacteristic *pChr, uint8_t *data, uint32_t dataLen);
-
     bool processDeviceInfo(byte *data, unsigned int dataLen);
-
     bool bleCollectPacket(char *data, uint32_t dataSize); // reconstruct packet from BLE incomming data, called by notifyCallback function
-
-    int16_t two_ints_into16(int highbyte, int lowbyte); // turns two bytes into a single long integerAdd commentMore actions
-
+    int16_t two_ints_into16(int highbyte, int lowbyte);   // turns two bytes into a single long integerAdd commentMore actions
     bool processBasicInfo(packBasicInfoStruct *output, byte *data, unsigned int dataLen);
-
     bool processCellInfo(packCellInfoStruct *output, byte *data, unsigned int dataLen);
-
     bool bmsProcessPacket(byte *packet);
+
+    bool timeout(int currentTime);
 };
 
 #endif /* MY_BLE2_HPP */

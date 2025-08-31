@@ -246,7 +246,7 @@ void MyMqtt::publishJson(String topic, JsonDocument doc, bool retained)
     return;
   String jsonStr;
   serializeJson(doc, jsonStr);
-  DEBUG2_PRINT("publishJson topic: %s, payload: %s\n", topic.c_str(), jsonStr.c_str());
+  DEBUG2_PRINT("publishJson %s, %s\n", topic.c_str(), jsonStr.substring(0, 200).c_str());
   if (!mqttClient->connected())
   {
     reConnectMqttServer();
@@ -271,9 +271,9 @@ void MyMqtt::publishHaDiscovery()
     discoveryTopic = "homeassistant/device/" + deviceTopic + "config";
     discoveryPayload = deviceObj["mqtt"]["discoveryPayload"];
     DEBUG_PRINT("%d: publishing for HA discovery\n", deviceIndex);
-    MyLog::DEBUG2 = false;
+    //MyLog::DEBUG2 = false;
     publishJson(discoveryTopic, discoveryPayload, true);
-    MyLog::DEBUG2 = true;
+    //MyLog::DEBUG2 = true;
   }
 }
 
@@ -369,7 +369,7 @@ void MyMqtt::mqttCallback(char *topic_, byte *payload, unsigned int length)
 
   if (String(topic_).equals("cmnd/" + myM5->topic + "reset"))
   {
-    DEBUG_PRINT("goint to reset\n");
+    INFO_PRINT("goint to reset\n");
     myM5->println("goint to reset");
     delay(2000);
     myM5->reset();

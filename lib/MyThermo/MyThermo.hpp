@@ -26,7 +26,7 @@ public:
     NimBLERemoteCharacteristic *pChr_rx_temp = nullptr;
     NimBLERemoteCharacteristic *pChr_rx_humid = nullptr;
 
-    bool available = false;
+    //bool available = false;
     String deviceName = "UNKNOWN";
     String mac = "UNKNOWN";
     String topic = "NOT_DEFINED";

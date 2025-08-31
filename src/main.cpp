@@ -6,6 +6,8 @@
  *  Created: on March 24 2020
  *      Author: H2zero
  */
+#define BLE_ARR_SIZE 3
+#define THERMO_ARR_SIZE 5
 
 #include <Arduino.h>
 #include <ArduinoJson.h>
@@ -37,17 +39,18 @@
 
 const char *TAG = "main";
 
-bool MyLog::DEBUG = true;
+bool MyLog::DEBUG = false;
 bool MyLog::DEBUG2 = true;
 bool MyLog::DEBUG3 = true;
-bool MyLog::INFO = false;
+bool MyLog::DEBUG4 = true;
+bool MyLog::INFO = true;
 bool MyLog::WARN = true;
 bool MyLog::ERROR = true;
 
-MyBLE2 myBleArr[3];
+MyBLE2 myBleArr[BLE_ARR_SIZE];
 // int numberOfConnectedBMS = 0;
 
-MyThermo myThermoArr[5];
+MyThermo myThermoArr[THERMO_ARR_SIZE];
 // int numberOfConnectedThermo = 0;
 
 MyM5 myM5;
@@ -61,16 +64,16 @@ PubSubClient mqttClient(wifiClient);
 // PowerSaving2 powerSaving(&myLcd);
 
 // MyTimer myTimer(0, 10000);
-MyTimer myTimerArr[3];
+// MyTimer myTimerArr[3];
 // MyTimer myTimerArr2[3];
-int timeoutCount = 0;
+// int timeoutCount = 0;
 VoltMater voltMater;
 
 // std::vector<MyBLE2> *bleDevices;
 
 MyScanCallbacks myScanCallbacks(myBleArr, &myM5, myThermoArr);
 MyClientCallbacks myClientCallbacks(myBleArr, myThermoArr);
-MyNotification myNotification(myBleArr, myTimerArr, &myScanCallbacks, &myClientCallbacks, myThermoArr);
+MyNotification myNotification(myBleArr, &myScanCallbacks, &myClientCallbacks, myThermoArr);
 MyMqtt myMqtt(&mqttClient, myBleArr, &voltMater, &myM5, myThermoArr, &myWiFi, &myNotification);
 
 // void loadConfig();
@@ -138,20 +141,25 @@ void setup()
   M5.begin(); // Init M5Core2.
   Serial.begin(9600);
   // MySdCard::deleteFile(SD, "/log.txt");
+  INFO_PRINT("\n");
+  INFO_PRINT("loading config file \n");
   mySdCard.setup();
   configJson = mySdCard.loadConfig(CONFIG_FILE);
-  DEBUG_PRINT("loadConfig() done\n");
+  INFO_PRINT("loading done\n");
 
+  INFO_PRINT("Setting up WiFi\n");
   myWiFi.setup(configJson);
+  INFO_PRINT("WiFi setup done\n");
 
   // setup DateTime
-  DEBUG_PRINT("Going to setup date\n");
-  myM5.println("Going to setup date");
+  INFO_PRINT("Setting up date\n");
+  myM5.println("Setting up date");
   myWiFi.setupDateTime();
   myM5.lastReset = DateTime.getTime(); //
-  myM5.println("setup date done");
+  myM5.println("date setup done");
 
   // setup MQTT
+  INFO_PRINT("Setting up MQTT\n");
   myMqtt.mqttServerSetup(configJson);
   // publishing Homeassistant discovery
   if (!mqttClient.connected())
@@ -160,33 +168,38 @@ void setup()
   }
   myM5.println("publishing HA discovery");
   myMqtt.publishHaDiscovery();
+  INFO_PRINT("MQTT setup done\n");
 
   // download POI
-  DEBUG_PRINT("Going to download POI\n");
+  INFO_PRINT("Going to download POI\n");
   mySdCard.updatePOI(configJson);
+  INFO_PRINT("POI download done\n");
 
   // setup BLE and start scanning
+  INFO_PRINT("Disconnecting WiFi\n");
   myWiFi.disconnect();
-  DEBUG_PRINT("Starting NimBLE Client\n");
-  myM5.println("Going to setup BLE");
-  DEBUG_PRINT("Scanning for BLE devices\n");
+  INFO_PRINT("Starting NimBLE Client\n");
+  myM5.println("Setting up BLE");
+  INFO_PRINT("Scanning for BLE devices\n");
   scanBle();
 }
 
-int failCount = 0;
+// int failCount = 0;
 void loop()
 {
   myM5.detectButton();
   mqttClient.loop();
   /** Loop here until we find a device we want to connect to */
+  if (myScanCallbacks.doRescan)
+  {
+    myScanCallbacks.doRescan = false;
+    scanBle();
+  }
+
   if (myScanCallbacks.doConnect)
   {
     myScanCallbacks.doConnect = false;
     DEBUG_PRINT("Found a BMS we want to connect to, do it now.\n");
-    // myClientCallbacks.numberOfAdvDevices = myScanCallbacks.numberOfAdvDevices;
-
-    // DEBUG_PRINT("*myClientCallbacks.numberOfConnectedBMS: %d\n", *myClientCallbacks.numberOfConnectedBMS);
-
     if (myNotification.connectToServer())
     {
       DEBUG_PRINT("Success! we should now be getting notifications from BMS(%d).\n", myNotification.numberOfConnectedBMS);
@@ -205,10 +218,14 @@ void loop()
     }
     else
     {
+      WARN_PRINT("Failed to connect BMS, goint to reconnect\n");
+      myScanCallbacks.doConnect = true;
+      /*
       DEBUG_PRINT("Failed to connect BMS, goint to reset\n");
       myM5.println("Failed to connect BMS, goint to reset");
       delay(2000);
       myM5.reset();
+      */
     }
   }
 
@@ -220,17 +237,14 @@ void loop()
     if (myNotification.connectToThermo())
     {
       DEBUG_PRINT("Success! we should now be getting notifications from Thermometers(%d).\n", myNotification.numberOfConnectedThermo);
-      //myMqtt.mqttThermoSetup(myNotification.numberOfConnectedThermo);
+      // myMqtt.mqttThermoSetup(myNotification.numberOfConnectedThermo);
       myMqtt.thermoSetup();
       myM5.numberOfConnectedThermo = myNotification.numberOfConnectedThermo;
       myClientCallbacks.numberOfConnectedThermo = myNotification.numberOfConnectedThermo;
     }
     else
     {
-      DEBUG_PRINT("Failed to connect Thermomater");
-      //
-      DEBUG_PRINT(", goint to reconnect\n");
-      delay(2000);
+      WARN_PRINT("Failed to connect Thermomaters, goint to reconnect\n");
       myScanCallbacks.doConnectThermo = true;
       /*
       DEBUG_PRINT(", goint to reset\n");
@@ -247,7 +261,8 @@ void loop()
     {
       if (!myBleArr[bleIndex].connected)
       {
-        DEBUG_PRINT("[%d}check myBleArr[%d].connected == false, going to skip the next bleIndex\n", failCount, bleIndex);
+        /*
+        WARN_PRINT("[%d}check myBleArr[%d].connected == false, going to skip the next bleIndex\n", failCount, bleIndex);
         if (failCount > 100)
         {
           DEBUG_PRINT("exceeaded the limit\n");
@@ -263,11 +278,14 @@ void loop()
         }
         failCount++;
         continue;
+        */
+        throw std::runtime_error("BMS disconnected");
       }
       if (myBleArr[bleIndex].pChr_tx)
       {
-        bool timeout = false;
-        if (timeout = myTimerArr[bleIndex].timeout(millis()))
+        // bool timeout = false;
+        // if (timeout = myTimerArr[bleIndex].timeout(millis()))
+        if (myBleArr[bleIndex].timeout(millis() + bleIndex * 3000))
         {
           myBleArr[bleIndex].sendInfoCommand();
         }
@@ -287,12 +305,31 @@ void loop()
   }
   catch (const std::runtime_error &e)
   {
-    ERROR_PRINT("error happened: %s\n", e.what());
+    ERROR_PRINT("%s\n", e.what());
     DEBUG_PRINT("reconnect myBleArr\n");
     myScanCallbacks.doConnect = false;
     DEBUG_PRINT("rescan BLE\n");
     scanBle();
   }
+
+  /*
+  for (int index = 0; index < myNotification.numberOfConnectedBMS; index++)
+  {
+    try
+    {
+      if (myBleArr[index].timeout(millis() + index * 3000))
+      {
+        //WARN_PRINT("myMqtt.publishJson(\"stat/\" + myBleArr[%d].topic + \"STATE\", myBleArr[%d].getState(), true)", index, index);
+        myMqtt.publishJson("stat/" + myBleArr[index].topic + "STATE", myBleArr[index].getState(), true);
+      }
+    }
+    catch (const std::runtime_error &e)
+    {
+      ERROR_PRINT("%s\n", e.what());
+      continue;
+    }
+  }
+  */
 
   if (voltMater.available && voltMater.timeout(millis()))
   {
@@ -307,24 +344,23 @@ void loop()
     myM5.powerSave(1);
   }
 
-  // DEBUG2_PRINT("if publishJson for Thermomater, numberOfConnectedThermo: %d\n", myNotification.numberOfConnectedThermo);
-  for (int thermoIndex = 0; thermoIndex < myNotification.numberOfConnectedThermo; thermoIndex++)
+  for (int index = 0; index < myNotification.numberOfConnectedThermo; index++)
   {
     try
     {
       /*
-      if (!myThermoArr[thermoIndex].available)
+      if (!myThermoArr[index].available)
       {
         char buff[256];
-        sprintf(buff, "myThermoArr[%d/%d] not available", thermoIndex, myNotification.numberOfConnectedThermo);
+        sprintf(buff, "myThermoArr[%d/%d] not available", index, myNotification.numberOfConnectedThermo);
         //ERROR_PRINT("%s\n", buff);
         throw std::runtime_error(std::string(buff));
       }
       */
-      if (myThermoArr[thermoIndex].timeout(millis() + thermoIndex * 3000))
+      if (myThermoArr[index].timeout(millis() + index * 3000))
       {
-        myMqtt.publishJson("stat/" + myThermoArr[thermoIndex].topic + "STATE",
-                           myThermoArr[thermoIndex].getState(), true);
+        myMqtt.publishJson("stat/" + myThermoArr[index].topic + "STATE",
+                           myThermoArr[index].getState(), true);
       }
     }
     catch (const std::runtime_error &e)
@@ -333,7 +369,7 @@ void loop()
       continue;
     }
   }
-  //
+
   if (myM5.resetTimeout(DateTime.getTime()))
   {
     DEBUG_PRINT("reset once everyday\n");

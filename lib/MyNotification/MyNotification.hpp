@@ -8,7 +8,7 @@
 #include "MyScanCallbacks.hpp"
 #include "MyClientCallbacks.hpp"
 #include "MyLog.hpp"
-#include "MyTimer.hpp"
+//#include "MyTimer.hpp"
 
 class MyNotification
 {
@@ -17,7 +17,7 @@ private:
     MyBLE2 *myBleArr;
     MyThermo *myThermoArr;
 
-    MyTimer *myTimerArr;
+    //MyTimer *myTimerArr;
     MyClientCallbacks *myClientCallbacks;
     MyScanCallbacks *myScanCallbacks;
 
@@ -25,7 +25,7 @@ public:
     int numberOfConnectedBMS = 0;
     int numberOfConnectedThermo = 0;
 
-    MyNotification(MyBLE2 *myBleArr_, MyTimer *myTimerArr_, MyScanCallbacks *myScanCallbacks_, MyClientCallbacks *myClientCallbacks, MyThermo *myThermoArr_);
+    MyNotification(MyBLE2 *myBleArr_, MyScanCallbacks *myScanCallbacks_, MyClientCallbacks *myClientCallbacks, MyThermo *myThermoArr_);
     /** Notification / Indication receiving handler callback */
     void notifyCB(NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify);
     int getIndexOfMyBleArr(NimBLEClient *client);
