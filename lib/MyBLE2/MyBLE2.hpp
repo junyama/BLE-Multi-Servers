@@ -65,7 +65,7 @@ public:
     String mac = "UNKNOWN";
     int numberOfTemperature = 2;
     String topic = "NOT_DEFINED";
-    bool connected = false;
+    //bool connected = false;
 
     int measurmentIntervalMs = 10000;
     unsigned long lastMeasurment = 0;

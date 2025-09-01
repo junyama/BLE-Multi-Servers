@@ -16,7 +16,10 @@ void MyScanCallbacks::onResult(const NimBLEAdvertisedDevice *advertisedDevice)
   DEBUG_PRINT("Advertised Device ServiceData UUID: %s\n", advertisedDevice->getServiceDataUUID(0).toString().c_str());
   if (advertisedDevice->isAdvertisingService(serviceUUID))
   {
-    DEBUG3_PRINT("Found BMS Service: %s\n", advertisedDevice->toString().c_str());
+    //DEBUG4_PRINT("Found BMS Service: %s\n", advertisedDevice->toString().c_str());
+    DEBUG4_PRINT("Found BMS Service, Name: %s, Address: %s\n",
+       advertisedDevice->getName().c_str(),
+       advertisedDevice->getAddress().toString().c_str());
     /** stop scan before connecting */
     // NimBLEDevice::getScan()->stop(); //Jun: comment out
     /** Save the device reference in a global for the client to use*/
@@ -51,7 +54,9 @@ void MyScanCallbacks::onResult(const NimBLEAdvertisedDevice *advertisedDevice)
   // else if (advertisedDevice->getAddress().equals(targeThermoAddress)) // tentative code2 to mach mac address
   if (advertisedDevice->getServiceDataUUID(0).equals(serviceDataUUID_thermo))
   {
-    DEBUG3_PRINT("Found Thermomater Service: %s\n", advertisedDevice->toString().c_str());
+    DEBUG4_PRINT("Found Thermomater Service, Name: %s, Address: %s\n",
+       advertisedDevice->getName().c_str(),
+       advertisedDevice->getAddress().toString().c_str());
     if (advThermoDevices.size() == 0)
     {
       advThermoDevices.push_back(advertisedDevice);
@@ -78,7 +83,7 @@ void MyScanCallbacks::onResult(const NimBLEAdvertisedDevice *advertisedDevice)
 /** Callback to process the results of the completed scan or restart it */
 void MyScanCallbacks::onScanEnd(const NimBLEScanResults &results, int reason)
 {
-  DEBUG_PRINT("BMS scan done, reason: %d, device count: %d, advDevices.size(): %d\n",
+  INFO_PRINT("BMS scan done, reason: %d, device count: %d, advDevices.size(): %d\n",
      reason, results.getCount(), advDevices.size());
   // numberOfAdvDevices = advDevices.size();
   //DEBUG_PRINT("advDevices.size(): %d\n", advDevices.size());
@@ -115,7 +120,7 @@ void MyScanCallbacks::onScanEnd(const NimBLEScanResults &results, int reason)
   }
 
   // added for Thermomater
-  DEBUG3_PRINT("Thermomater scan done, reason: %d, device count: %d, advThermoDevices.size(): %d\n",
+  INFO_PRINT("Thermomater scan done, reason: %d, device count: %d, advThermoDevices.size(): %d\n",
      reason, results.getCount(), advThermoDevices.size());
   // numberOfAdvThermoDevices = advThermoDevices.size();
   //DEBUG_PRINT("advThermoDevices.size(): %d\n", advThermoDevices.size());

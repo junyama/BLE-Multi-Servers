@@ -23,17 +23,17 @@ int MyClientCallbacks::getIndexOfMyBleArr(NimBLEClient *pClient)
 
 void MyClientCallbacks::onConnect(NimBLEClient *pClient)
 {
-    DEBUG_PRINT("Connected to %s\n", pClient->getPeerAddress().toString().c_str());
+    DEBUG4_PRINT("Connected to %s\n", pClient->getPeerAddress().toString().c_str());
     int index = getIndexOfMyBleArr(pClient);
-    myBleArr[index].connected = true;
+    //myBleArr[index].connected = true;
 }
 
 void MyClientCallbacks::onDisconnect(NimBLEClient *pClient, int reason)
 {
     // myBleArr[getIndexOfMyBleArr(pClient)].connected = false;
-    DEBUG_PRINT("Disconnected from %s, reason = %d\n", pClient->getPeerAddress().toString().c_str(), reason);
+    WARN_PRINT("Disconnected from %s, reason = %d\n", pClient->getPeerAddress().toString().c_str(), reason);
     int index = getIndexOfMyBleArr(pClient);
-    myBleArr[index].connected = false;
+    //myBleArr[index].connected = false;
     // NimBLEDevice::getScan()->start(scanTimeMs, false, true);
 }
 

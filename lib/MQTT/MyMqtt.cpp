@@ -87,14 +87,14 @@ void MyMqtt::thermoSetup()
         if (type.equals("Thermomater"))
         {
           String mac = deviceObj["mac"];
-          //DEBUG_PRINT("thermoSetup: myThermoArr[%d].mac: %s, deviceList[%d][\"mac\"]: %s\n",
-                      //thermoIndex, myThermoArr[thermoIndex].mac.c_str(), deviceIndex, mac.c_str());
+          // DEBUG_PRINT("thermoSetup: myThermoArr[%d].mac: %s, deviceList[%d][\"mac\"]: %s\n",
+          // thermoIndex, myThermoArr[thermoIndex].mac.c_str(), deviceIndex, mac.c_str());
           if (NimBLEAddress(myThermoArr[thermoIndex].mac.c_str(), 0).equals(NimBLEAddress(mac.c_str(), 0)))
           {
             String topic = deviceObj["mqtt"]["topic"];
             myThermoArr[thermoIndex].topic = topic;
             DEBUG2_PRINT("thermoSetup: myThermoArr[%d].mac found at config and set topic: %s\n", thermoIndex,
-                        myThermoArr[thermoIndex].topic.c_str());
+                         myThermoArr[thermoIndex].topic.c_str());
             // myThermoArr[thermoIndex].available = true;
             // DEBUG_PRINT("mqttDeviceSetup: myThermoArr[%d].available = true\n", thermoIndex);
             deviceFound = true;
@@ -106,7 +106,7 @@ void MyMqtt::thermoSetup()
       {
         char buff[256];
         sprintf(buff, "myThermoArr[%d].mac: %s not found at config",
-           myThermoArr[thermoIndex].mac.c_str(), thermoIndex);
+                myThermoArr[thermoIndex].mac.c_str(), thermoIndex);
         throw std::runtime_error(buff);
       }
     }
@@ -246,7 +246,11 @@ void MyMqtt::publishJson(String topic, JsonDocument doc, bool retained)
     return;
   String jsonStr;
   serializeJson(doc, jsonStr);
-  DEBUG2_PRINT("publishJson %s, %s\n", topic.c_str(), jsonStr.substring(0, 200).c_str());
+  String str = "publish " + topic + ", " + jsonStr;
+  if (str.length() > 110)
+    str = str.substring(0, 110) + "...";
+  INFO_PRINT("%s\n", str.c_str());
+  // INFO_PRINT("publish %s, %s...\n", topic.c_str(), jsonStr.substring(0, 80).c_str());
   if (!mqttClient->connected())
   {
     reConnectMqttServer();
@@ -271,9 +275,9 @@ void MyMqtt::publishHaDiscovery()
     discoveryTopic = "homeassistant/device/" + deviceTopic + "config";
     discoveryPayload = deviceObj["mqtt"]["discoveryPayload"];
     DEBUG_PRINT("%d: publishing for HA discovery\n", deviceIndex);
-    //MyLog::DEBUG2 = false;
+    // MyLog::DEBUG2 = false;
     publishJson(discoveryTopic, discoveryPayload, true);
-    //MyLog::DEBUG2 = true;
+    // MyLog::DEBUG2 = true;
   }
 }
 

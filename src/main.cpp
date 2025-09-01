@@ -40,9 +40,9 @@
 const char *TAG = "main";
 
 bool MyLog::DEBUG = false;
-bool MyLog::DEBUG2 = true;
-bool MyLog::DEBUG3 = true;
-bool MyLog::DEBUG4 = true;
+bool MyLog::DEBUG2 = false;
+bool MyLog::DEBUG3 = false;
+bool MyLog::DEBUG4 = false;
 bool MyLog::INFO = true;
 bool MyLog::WARN = true;
 bool MyLog::ERROR = true;
@@ -141,18 +141,18 @@ void setup()
   M5.begin(); // Init M5Core2.
   Serial.begin(9600);
   // MySdCard::deleteFile(SD, "/log.txt");
-  INFO_PRINT("\n");
-  INFO_PRINT("loading config file \n");
+  INFO_PRINT("Starting setup\n");
+  INFO_PRINT("loading config file...\n");
   mySdCard.setup();
   configJson = mySdCard.loadConfig(CONFIG_FILE);
   INFO_PRINT("loading done\n");
 
-  INFO_PRINT("Setting up WiFi\n");
+  INFO_PRINT("Setting up WiFi...\n");
   myWiFi.setup(configJson);
   INFO_PRINT("WiFi setup done\n");
 
   // setup DateTime
-  INFO_PRINT("Setting up date\n");
+  INFO_PRINT("Setting up date...\n");
   myM5.println("Setting up date");
   myWiFi.setupDateTime();
   myM5.lastReset = DateTime.getTime(); //
@@ -171,7 +171,7 @@ void setup()
   INFO_PRINT("MQTT setup done\n");
 
   // download POI
-  INFO_PRINT("Going to download POI\n");
+  INFO_PRINT("Going to download POI...\n");
   mySdCard.updatePOI(configJson);
   INFO_PRINT("POI download done\n");
 
@@ -218,7 +218,7 @@ void loop()
     }
     else
     {
-      WARN_PRINT("Failed to connect BMS, goint to reconnect\n");
+      WARN_PRINT("Failed to connect all BMS found, goint to reconnect\n");
       myScanCallbacks.doConnect = true;
       /*
       DEBUG_PRINT("Failed to connect BMS, goint to reset\n");
@@ -259,6 +259,7 @@ void loop()
   {
     for (int bleIndex = 0; bleIndex < myNotification.numberOfConnectedBMS; bleIndex++)
     {
+      /*
       if (!myBleArr[bleIndex].connected)
       {
         /*
@@ -278,9 +279,9 @@ void loop()
         }
         failCount++;
         continue;
-        */
         throw std::runtime_error("BMS disconnected");
       }
+      */
       if (myBleArr[bleIndex].pChr_tx)
       {
         // bool timeout = false;

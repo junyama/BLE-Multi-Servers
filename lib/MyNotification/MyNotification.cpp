@@ -126,7 +126,7 @@ bool MyNotification::connectToServer()
     try
     {
       std::string deviceName = myScanCallbacks->advDevices.at(index)->getName();
-      DEBUG2_PRINT("Start connecting a BMS[%d/%d]: %s\n",
+      INFO_PRINT("Start connecting a BMS[%d/%d]: %s\n",
                    (index + 1), myScanCallbacks->advDevices.size(), deviceName.c_str());
       // Check if we have a client we should reuse first
       if (NimBLEDevice::getCreatedClientCount())
@@ -174,12 +174,12 @@ bool MyNotification::connectToServer()
          */
         pClient->setConnectionParams(12, 12, 0, 150);
         /** Set how long we are willing to wait for the connection to complete (milliseconds), default is 30000. */
-        pClient->setConnectTimeout(10 * 1000);
-
+        pClient->setConnectTimeout(30 * 1000);
+        pClient->setSelfDelete(true, true);
         if (!pClient->connect(myScanCallbacks->advDevices.at(index)))
         {
           /** Created a client but failed to connect, don't need to keep it as it has no data */
-          NimBLEDevice::deleteClient(pClient);
+          //NimBLEDevice::deleteClient(pClient);
           char buff[256];
           sprintf(buff, "Failed to connect BMS[%d/%d]: %s, deleted client",
                   (index + 1), myScanCallbacks->advDevices.size(), deviceName.c_str());
@@ -228,7 +228,7 @@ bool MyNotification::connectToServer()
       {
         throw std::runtime_error("serviceUUID of BMS not found.\n");
       }
-      DEBUG2_PRINT("Done with an advertized BMS[%d/%d]!\n", (index + 1), myScanCallbacks->advDevices.size());
+      INFO_PRINT("Connected with an advertized BMS[%d/%d]!\n", (index + 1), myScanCallbacks->advDevices.size());
       atLeastOneConnected = true;
       numberOfConnectedBMS++;
 
@@ -245,7 +245,7 @@ bool MyNotification::connectToServer()
       continue;
     }
   }
-  DEBUG2_PRINT("Done with all the advertized BMS, connected(%d/%d)!\n",
+  INFO_PRINT("Done with all the advertized BMS, connected(%d/%d)!\n",
               numberOfConnectedBMS, myScanCallbacks->advDevices.size());
   return atLeastOneConnected;
 }
@@ -261,7 +261,7 @@ bool MyNotification::connectToThermo()
     try
     {
       std::string deviceName = myScanCallbacks->advThermoDevices.at(index)->getName();
-      DEBUG2_PRINT("Start connecting a thermometer[%d/%d]: %s\n",
+      INFO_PRINT("Start connecting a thermometer[%d/%d]: %s\n",
                    (index + 1), myScanCallbacks->advThermoDevices.size(), deviceName.c_str());
       // Check if we have a client we should reuse first
       if (NimBLEDevice::getCreatedClientCount())
@@ -301,14 +301,13 @@ bool MyNotification::connectToThermo()
         }
         pClient = NimBLEDevice::createClient();
         DEBUG_PRINT("New client created for a thermomater\n");
-
         pClient->setClientCallbacks(myClientCallbacks, false);
         pClient->setConnectionParams(12, 12, 0, 150);
-        pClient->setConnectTimeout(20 * 1000); // set longer than 5 as an original
-        bool result = pClient->connect(myScanCallbacks->advThermoDevices.at(index));
-        if (!result)
+        pClient->setConnectTimeout(40 * 1000); // set longer than 5 as an original
+        pClient->setSelfDelete(true, true);
+        if (!pClient->connect(myScanCallbacks->advThermoDevices.at(index)))
         {
-          NimBLEDevice::deleteClient(pClient);
+          //NimBLEDevice::deleteClient(pClient);
           char buff[256];
           sprintf(buff, "Failed to connect thermomater[%d/%d]: %s, deleted client",
                   (index + 1), myScanCallbacks->advThermoDevices.size(), deviceName.c_str());
@@ -360,7 +359,7 @@ bool MyNotification::connectToThermo()
           throw std::runtime_error("serviceUUID of Thermomater not found.\n");
         }
       }
-      DEBUG2_PRINT("Done with an advertized thermomater[%d/%d]!\n", (index + 1), myScanCallbacks->advThermoDevices.size());
+      INFO_PRINT("Connected with an advertized thermomater[%d/%d]!\n", (index + 1), myScanCallbacks->advThermoDevices.size());
       // thermomater[index].available = true;
       atLeastOneConnected = true;
       numberOfConnectedThermo++;
@@ -372,7 +371,7 @@ bool MyNotification::connectToThermo()
       continue;
     }
   }
-  DEBUG2_PRINT("Done with all the advertized thermomaters, connected (%d/%d)\n",
+  INFO_PRINT("Done with all the advertized thermomaters, connected (%d/%d)\n",
                numberOfConnectedThermo, myScanCallbacks->advThermoDevices.size());
   return atLeastOneConnected;
 }
