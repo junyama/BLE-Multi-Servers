@@ -368,6 +368,7 @@ bool MyNotification::connectToThermo()
     catch (const std::runtime_error &e)
     {
       ERROR_PRINT("%s\n", e.what());
+      //return false; //not workring
       continue;
     }
   }
