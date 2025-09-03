@@ -6,8 +6,8 @@
  *  Created: on March 24 2020
  *      Author: H2zero
  */
-#define BLE_ARR_SIZE 3
-#define THERMO_ARR_SIZE 5
+// #define BLE_ARR_SIZE 3
+// #define THERMO_ARR_SIZE 5
 
 #include <Arduino.h>
 #include <ArduinoJson.h>
@@ -18,9 +18,6 @@
 #include <NimBLEDevice.h>
 #include <M5Core2.h>
 
-// #include "PowerSaving2.hpp"
-// #include "MyLcd2.hpp"
-//  #include "MyBLE.cpp"
 #include "MyBLE2.hpp"
 #include "MyThermo.hpp"
 // #include "MyScanCallbacks.hpp"
@@ -32,20 +29,21 @@
 #include "MyWiFi.hpp"
 #include "MyMqtt.hpp"
 #include "VoltMater.hpp"
-// #include "LipoMater.hpp"
 #include "MyM5.hpp"
+#include "MyGetIndex.hpp"
 
 #define CONFIG_FILE "/config.json"
 
 const char *TAG = "main";
+const char *MyGetIndex::TAG = "MyGetIndex";
 
-bool MyLog::DEBUG = false;
-bool MyLog::DEBUG2 = false;
-bool MyLog::DEBUG3 = false;
-bool MyLog::DEBUG4 = false;
-bool MyLog::INFO = true;
-bool MyLog::WARN = true;
-bool MyLog::ERROR = true;
+const bool MyLog::DEBUG = false;
+const bool MyLog::DEBUG2 = false;
+const bool MyLog::DEBUG3 = true;
+const bool MyLog::DEBUG4 = true;
+const bool MyLog::INFO = true;
+const bool MyLog::WARN = true;
+const bool MyLog::ERROR = true;
 
 MyBLE2 myBleArr[BLE_ARR_SIZE];
 // int numberOfConnectedBMS = 0;
@@ -75,6 +73,8 @@ MyScanCallbacks myScanCallbacks(myBleArr, &myM5, myThermoArr);
 MyClientCallbacks myClientCallbacks(myBleArr, myThermoArr);
 MyNotification myNotification(myBleArr, &myScanCallbacks, &myClientCallbacks, myThermoArr);
 MyMqtt myMqtt(&mqttClient, myBleArr, &voltMater, &myM5, myThermoArr, &myWiFi, &myNotification);
+
+// MyGetIndex myGetIndex(myBleArr, &myScanCallbacks.numberOfBMS, myThermoArr, &myScanCallbacks.numberOfThermo);
 
 // void loadConfig();
 // void saveConfig();
@@ -161,6 +161,7 @@ void setup()
   // setup MQTT
   INFO_PRINT("Setting up MQTT\n");
   myMqtt.mqttServerSetup(configJson);
+  myMqtt.deviceSetup();
   // publishing Homeassistant discovery
   if (!mqttClient.connected())
   {
@@ -199,13 +200,15 @@ void loop()
   if (myScanCallbacks.doConnect)
   {
     myScanCallbacks.doConnect = false;
-    DEBUG_PRINT("Found a BMS we want to connect to, do it now.\n");
+    INFO_PRINT("Found %d of BMSs we want to connect to, do it now.\n", myScanCallbacks.numberOfBMS);
+    myNotification.numberOfBMS = myScanCallbacks.numberOfBMS;
     if (myNotification.connectToServer())
     {
       DEBUG_PRINT("Success! we should now be getting notifications from BMS(%d).\n", myNotification.numberOfConnectedBMS);
-      myMqtt.mqttDeviceSetup(myNotification.numberOfConnectedBMS);
+      // myMqtt.mqttDeviceSetup(myNotification.numberOfConnectedBMS);
+      myMqtt.bmsSetup();
       myM5.numberOfConnectedBMS = myNotification.numberOfConnectedBMS;
-      myClientCallbacks.numberOfConnectedBMS = myNotification.numberOfConnectedBMS;
+      // myClientCallbacks.numberOfConnectedBMS = myNotification.numberOfConnectedBMS;
       /*
       if (!mqttClient.connected())
       {
@@ -232,15 +235,15 @@ void loop()
   if (myScanCallbacks.doConnectThermo)
   {
     myScanCallbacks.doConnectThermo = false;
-    DEBUG_PRINT("Found a thermomater we want to connect to, do it now.\n");
-    // DEBUG_PRINT("*myClientCallbacks.numberOfConnectedThermo: %d\n", *myClientCallbacks.numberOfConnectedThermo);
+    INFO_PRINT("Found %d of thermomaters we want to connect to, do it now.\n", myScanCallbacks.numberOfThermo);
+    myNotification.numberOfThermo = myScanCallbacks.numberOfThermo;
     if (myNotification.connectToThermo())
     {
       DEBUG_PRINT("Success! we should now be getting notifications from Thermometers(%d).\n", myNotification.numberOfConnectedThermo);
       // myMqtt.mqttThermoSetup(myNotification.numberOfConnectedThermo);
       myMqtt.thermoSetup();
       myM5.numberOfConnectedThermo = myNotification.numberOfConnectedThermo;
-      myClientCallbacks.numberOfConnectedThermo = myNotification.numberOfConnectedThermo;
+      // myClientCallbacks.numberOfConnectedThermo = myNotification.numberOfConnectedThermo;
     }
     else
     {
@@ -255,39 +258,23 @@ void loop()
     }
   }
 
-  try
+  for (int bleIndex = 0; bleIndex < myNotification.numberOfBMS; bleIndex++)
   {
-    for (int bleIndex = 0; bleIndex < myNotification.numberOfConnectedBMS; bleIndex++)
+    try
     {
-      /*
-      if (!myBleArr[bleIndex].connected)
-      {
-        /*
-        WARN_PRINT("[%d}check myBleArr[%d].connected == false, going to skip the next bleIndex\n", failCount, bleIndex);
-        if (failCount > 100)
-        {
-          DEBUG_PRINT("exceeaded the limit\n");
-          delay(2000);
-          throw std::runtime_error("BMS disconnected");
-          // DEBUG_PRINT(", goint to reconnect\n");
-          // delay(2000);
-          // myScanCallbacks.doConnect = true; // does not work
-
-          // DEBUG_PRINT(", goint to reset\n");
-          // delay(2000);
-          // myM5.reset();
-        }
-        failCount++;
-        continue;
-        throw std::runtime_error("BMS disconnected");
-      }
-      */
       if (myBleArr[bleIndex].pChr_tx)
       {
         // bool timeout = false;
         // if (timeout = myTimerArr[bleIndex].timeout(millis()))
         if (myBleArr[bleIndex].timeout(millis() + bleIndex * 3000))
         {
+          if (!myBleArr[bleIndex].connected)
+          {
+            char buff[256];
+            sprintf(buff, "myBleArr[%d], Name: %s, topic: %s not connected",
+                    bleIndex, myBleArr[bleIndex].deviceName.c_str(), myBleArr[bleIndex].topic.c_str());
+            throw std::runtime_error(std::string(buff));
+          }
           myBleArr[bleIndex].sendInfoCommand();
         }
         // DEBUG_PRINT("timeout: %d, myBleArr[%d].newPacketReceived: %d\n", timeout, bleIndex, myBleArr[bleIndex].newPacketReceived);
@@ -303,14 +290,35 @@ void loop()
         }
       }
     }
-  }
-  catch (const std::runtime_error &e)
-  {
-    ERROR_PRINT("%s\n", e.what());
-    DEBUG_PRINT("reconnect myBleArr\n");
-    myScanCallbacks.doConnect = false;
-    DEBUG_PRINT("rescan BLE\n");
-    scanBle();
+    catch (const std::runtime_error &e)
+    {
+      ERROR_PRINT("%s\n", e.what());
+      continue;
+    }
+
+    /*
+    if (!myBleArr[bleIndex].connected)
+    {
+      /*
+      WARN_PRINT("[%d}check myBleArr[%d].connected == false, going to skip the next bleIndex\n", failCount, bleIndex);
+      if (failCount > 100)
+      {
+        DEBUG_PRINT("exceeaded the limit\n");
+        delay(2000);
+        throw std::runtime_error("BMS disconnected");
+        // DEBUG_PRINT(", goint to reconnect\n");
+        // delay(2000);
+        // myScanCallbacks.doConnect = true; // does not work
+
+        // DEBUG_PRINT(", goint to reset\n");
+        // delay(2000);
+        // myM5.reset();
+      }
+      failCount++;
+      continue;
+      throw std::runtime_error("BMS disconnected");
+    }
+    */
   }
 
   /*
@@ -345,28 +353,25 @@ void loop()
     myM5.powerSave(1);
   }
 
-  for (int index = 0; index < myNotification.numberOfConnectedThermo; index++)
+  for (int index = 0; index < myScanCallbacks.numberOfThermo; index++)
   {
     try
     {
-      /*
-      if (!myThermoArr[index].available)
-      {
-        char buff[256];
-        sprintf(buff, "myThermoArr[%d/%d] not available", index, myNotification.numberOfConnectedThermo);
-        //ERROR_PRINT("%s\n", buff);
-        throw std::runtime_error(std::string(buff));
-      }
-      */
       if (myThermoArr[index].timeout(millis() + index * 3000))
       {
-        myMqtt.publishJson("stat/" + myThermoArr[index].topic + "STATE",
-                           myThermoArr[index].getState(), true);
+        if (!myThermoArr[index].connected)
+        {
+          char buff[256];
+          sprintf(buff, "myThermoArr[%d], Name: %s, topic: %s not connected",
+                  index, myThermoArr[index].deviceName.c_str(), myThermoArr[index].topic.c_str());
+          throw std::runtime_error(std::string(buff));
+        }
+        myMqtt.publishJson("stat/" + myThermoArr[index].topic + "STATE", myThermoArr[index].getState(), true);
       }
     }
     catch (const std::runtime_error &e)
     {
-      ERROR_PRINT("%s\n", e.what());
+      WARN_PRINT("%s\n", e.what());
       continue;
     }
   }

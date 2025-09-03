@@ -70,14 +70,14 @@
 class MyLog
 {
 public:
-    static bool DEBUG;
-    static bool DEBUG2;
-    static bool DEBUG3;
-    static bool DEBUG4;
+    static const bool DEBUG;
+    static const bool DEBUG2;
+    static const bool DEBUG3;
+    static const bool DEBUG4;
 
-    static bool INFO;
-    static bool WARN;
-    static bool ERROR;
+    static const bool INFO;
+    static const bool WARN;
+    static const bool ERROR;
 };
 
 #endif /* MY_LOG_HPP  */

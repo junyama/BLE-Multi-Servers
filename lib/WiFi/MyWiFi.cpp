@@ -8,6 +8,7 @@ void MyWiFi::setup(JsonDocument configJson)
 {
   WiFi.mode(WIFI_STA);
   WiFi.hostname("JunBMS");
+  INFO_PRINT("WiFi MAC Address: %s\n", WiFi.macAddress().c_str());
 
   // Add list of wifi networks
   for (int i = 0; i < configJson["wifi"].size(); i++)

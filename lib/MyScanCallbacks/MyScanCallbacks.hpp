@@ -36,8 +36,8 @@ public:
   std::vector<const NimBLEAdvertisedDevice *> advDevices;
   std::vector<const NimBLEAdvertisedDevice *> advThermoDevices;
 
-  //int numberOfAdvDevices = 0;
-  //int numberOfAdvThermoDevices = 0;
+  int numberOfBMS = 0;
+  int numberOfThermo = 0;
 
   //int *numberOfDevicesFound;
   //int *numberOfThermoDevicesFound;

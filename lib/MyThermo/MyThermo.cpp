@@ -26,17 +26,22 @@ void MyThermo::processTempPacket(char *data, uint32_t dataSize)
 {
     temp = (data[0] | (data[1] << 8)) * 0.1; // little endian
     DEBUG_PRINT("temperature: %.1f C\n", temp);
+    if (temp < 1.0)
+        WARN_PRINT("temperature: %.1f C\n", temp);
 }
 
 void MyThermo::processHumidPacket(char *data, uint32_t dataSize)
 {
     humi = (data[0] | (data[1] << 8)) * 0.01; // little endian
     DEBUG_PRINT("humidity: %.1f %%\n", humi);
+    if (humi < 1.0)
+        WARN_PRINT("humidity: %.1f C\n", humi);
 }
 
 JsonDocument MyThermo::getState()
 {
     JsonDocument doc;
+    doc["deviceName"] = deviceName;
     doc["temperature"] = temp;
     doc["humidity"] = humi;
     return doc;

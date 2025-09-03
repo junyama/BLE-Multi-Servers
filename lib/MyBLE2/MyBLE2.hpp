@@ -62,10 +62,10 @@ public:
     packBasicInfoStruct packBasicInfo = {}; // here shall be the latest data got from BMS
     packCellInfoStruct packCellInfo = {};   // here shall be the latest data got from BMS
     String deviceName = "UNKNOWN";
-    String mac = "UNKNOWN";
+    String mac = "00:00:00:00:00:00";
     int numberOfTemperature = 2;
     String topic = "NOT_DEFINED";
-    //bool connected = false;
+    bool connected = false;
 
     int measurmentIntervalMs = 10000;
     unsigned long lastMeasurment = 0;

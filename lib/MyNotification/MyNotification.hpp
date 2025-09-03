@@ -8,7 +8,8 @@
 #include "MyScanCallbacks.hpp"
 #include "MyClientCallbacks.hpp"
 #include "MyLog.hpp"
-//#include "MyTimer.hpp"
+#include "MyGetIndex.hpp"
+// #include "MyTimer.hpp"
 
 class MyNotification
 {
@@ -17,11 +18,14 @@ private:
     MyBLE2 *myBleArr;
     MyThermo *myThermoArr;
 
-    //MyTimer *myTimerArr;
+    // MyTimer *myTimerArr;
     MyClientCallbacks *myClientCallbacks;
     MyScanCallbacks *myScanCallbacks;
 
 public:
+    int numberOfBMS = 0;
+    int numberOfThermo = 0;
+    
     int numberOfConnectedBMS = 0;
     int numberOfConnectedThermo = 0;
 
@@ -33,7 +37,7 @@ public:
     /** Handles the provisioning of clients and connects / interfaces with the server */
     bool connectToServer();
     bool connectToThermo();
-    //void printBatteryInfo(int bleIndex, int numberOfAdvDevices, MyBLE2 myBle);
+    // void printBatteryInfo(int bleIndex, int numberOfAdvDevices, MyBLE2 myBle);
     void clear();
 };
 

@@ -51,7 +51,7 @@ void MyNotification::notifyCB(NimBLERemoteCharacteristic *pRemoteCharacteristic,
   str += ", Value = " + std::string((char *)pData, length);
   DEBUG_PRINT("%s\n", str.c_str());
   */
-  DEBUG3_PRINT("Notification from mac: %s, Service: %s, Characteristic: %s, Value: 0x%x\n",
+  DEBUG_PRINT("Notification from Address: %s, Service: %s, Characteristic: %s, Value: 0x%x\n",
               pRemoteCharacteristic->getClient()->getPeerAddress().toString().c_str(),
               pRemoteCharacteristic->getRemoteService()->getUUID().toString().c_str(),
               pRemoteCharacteristic->getUUID().toString().c_str(),
@@ -62,7 +62,8 @@ void MyNotification::notifyCB(NimBLERemoteCharacteristic *pRemoteCharacteristic,
     if (pRemoteCharacteristic->getRemoteService()->getUUID() == myScanCallbacks->serviceUUID2)
     {
       DEBUG_PRINT("notification from BMS\n");
-      int bleIndex = getIndexOfMyBleArr(pRemoteCharacteristic->getClient());
+      // int bleIndex = getIndexOfMyBleArr(pRemoteCharacteristic->getClient());
+      int bleIndex = MyGetIndex::myBleArr(myBleArr, pRemoteCharacteristic->getClient());
       if (bleIndex > -1)
       {
         DEBUG3_PRINT("notification from myBleArr[%d]\n", bleIndex);
@@ -79,20 +80,25 @@ void MyNotification::notifyCB(NimBLERemoteCharacteristic *pRemoteCharacteristic,
     if (pRemoteCharacteristic->getRemoteService()->getUUID() == myScanCallbacks->serviceDataUUID_thermo)
     {
       DEBUG_PRINT("notification from Thermomater\n");
-      int thermoIndex = getIndexOfMyThermoArr(pRemoteCharacteristic->getClient());
+      // int thermoIndex = getIndexOfMyThermoArr(pRemoteCharacteristic->getClient());
+      int thermoIndex = MyGetIndex::myThermoArr(myThermoArr, pRemoteCharacteristic->getClient());
       if (thermoIndex > -1)
       {
-        //DEBUG3_PRINT("notification from myThermoArr[%d]\n", thermoIndex);
+        // DEBUG3_PRINT("notification from myThermoArr[%d]\n", thermoIndex);
         auto remoteCharacteristicUUID = pRemoteCharacteristic->getUUID();
-        DEBUG3_PRINT("notification from myThermoArr[%d], UUID: %s\n", thermoIndex,
-                     remoteCharacteristicUUID.toString().c_str());
+        DEBUG_PRINT("notification from myThermoArr[%d], UUID: %s\n", thermoIndex,
+                    remoteCharacteristicUUID.toString().c_str());
         if (remoteCharacteristicUUID.equals(myScanCallbacks->charUUID_thermo_temp))
         {
+          DEBUG3_PRINT("notification from myThermoArr[%d], topic: %s, tempatarure: 0x%x\n",
+                       thermoIndex, myThermoArr[thermoIndex].topic.c_str(), (int)pData);
           myThermoArr[thermoIndex].processTempPacket((char *)pData, length);
           return;
         }
         if (remoteCharacteristicUUID.equals(myScanCallbacks->charUUID_thermo_humid))
         {
+          DEBUG3_PRINT("notification from myThermoArr[%d], topic: %s, humidity: 0x%x\n",
+                       thermoIndex, myThermoArr[thermoIndex].topic.c_str(), (int)pData);
           myThermoArr[thermoIndex].processHumidPacket((char *)pData, length);
           return;
         }
@@ -126,8 +132,8 @@ bool MyNotification::connectToServer()
     try
     {
       std::string deviceName = myScanCallbacks->advDevices.at(index)->getName();
-      INFO_PRINT("Start connecting a BMS[%d/%d]: %s\n",
-                   (index + 1), myScanCallbacks->advDevices.size(), deviceName.c_str());
+      INFO_PRINT("Start connecting a BMS[%d} in %d: %s\n",
+                 index , myScanCallbacks->advDevices.size(), deviceName.c_str());
       // Check if we have a client we should reuse first
       if (NimBLEDevice::getCreatedClientCount())
       {
@@ -179,10 +185,10 @@ bool MyNotification::connectToServer()
         if (!pClient->connect(myScanCallbacks->advDevices.at(index)))
         {
           /** Created a client but failed to connect, don't need to keep it as it has no data */
-          //NimBLEDevice::deleteClient(pClient);
+          // NimBLEDevice::deleteClient(pClient);
           char buff[256];
-          sprintf(buff, "Failed to connect BMS[%d/%d]: %s, deleted client",
-                  (index + 1), myScanCallbacks->advDevices.size(), deviceName.c_str());
+          sprintf(buff, "Failed to connect BMS[%d} in %d: %s, deleted client",
+                  index , myScanCallbacks->advDevices.size(), deviceName.c_str());
           throw std::runtime_error(buff);
         }
       }
@@ -195,7 +201,7 @@ bool MyNotification::connectToServer()
         }
       }
 
-      DEBUG_PRINT("Connected to BMS[%d/%d] at: %s RSSI: %d\n", (index + 1), myScanCallbacks->advDevices.size(),
+      DEBUG_PRINT("Connected to BMS[%d} in %d at: %s RSSI: %d\n", index , myScanCallbacks->advDevices.size(),
                   pClient->getPeerAddress().toString().c_str(), pClient->getRssi());
 
       /** Now we can read/write/subscribe the characteristics of the services we are interested in */
@@ -228,7 +234,7 @@ bool MyNotification::connectToServer()
       {
         throw std::runtime_error("serviceUUID of BMS not found.\n");
       }
-      INFO_PRINT("Connected with an advertized BMS[%d/%d]!\n", (index + 1), myScanCallbacks->advDevices.size());
+      INFO_PRINT("Connected with an advertized BMS[%d} in %d!\n", index , myScanCallbacks->advDevices.size());
       atLeastOneConnected = true;
       numberOfConnectedBMS++;
 
@@ -246,7 +252,7 @@ bool MyNotification::connectToServer()
     }
   }
   INFO_PRINT("Done with all the advertized BMS, connected(%d/%d)!\n",
-              numberOfConnectedBMS, myScanCallbacks->advDevices.size());
+             numberOfConnectedBMS, myScanCallbacks->advDevices.size());
   return atLeastOneConnected;
 }
 
@@ -258,11 +264,12 @@ bool MyNotification::connectToThermo()
   numberOfConnectedThermo = 0;
   for (int index = 0; index < myScanCallbacks->advThermoDevices.size(); index++)
   {
+    int count = index + 1;
     try
     {
       std::string deviceName = myScanCallbacks->advThermoDevices.at(index)->getName();
-      INFO_PRINT("Start connecting a thermometer[%d/%d]: %s\n",
-                   (index + 1), myScanCallbacks->advThermoDevices.size(), deviceName.c_str());
+      INFO_PRINT("[%d/%d]: Start connecting a thermometer[%d]: %s >>>>>>>\n",
+                 count , numberOfThermo, index, deviceName.c_str());
       // Check if we have a client we should reuse first
       if (NimBLEDevice::getCreatedClientCount())
       {
@@ -307,14 +314,14 @@ bool MyNotification::connectToThermo()
         pClient->setSelfDelete(true, true);
         if (!pClient->connect(myScanCallbacks->advThermoDevices.at(index)))
         {
-          //NimBLEDevice::deleteClient(pClient);
+          // NimBLEDevice::deleteClient(pClient);
           char buff[256];
-          sprintf(buff, "Failed to connect thermomater[%d/%d]: %s, deleted client",
-                  (index + 1), myScanCallbacks->advThermoDevices.size(), deviceName.c_str());
+          sprintf(buff, "[%d/%d]: Failed to connect with myThermoArr[%d]: %s, deleted client",
+                  count, numberOfThermo, index, deviceName.c_str());
           throw std::runtime_error(buff);
         }
-        DEBUG2_PRINT("Connected to a thermomater[%d/%d]: %s at: %s RSSI: %d\n",
-                     (index + 1), myScanCallbacks->advThermoDevices.size(), deviceName.c_str(),
+        DEBUG2_PRINT("Connected to a thermomater[%d} in %d: %s at: %s RSSI: %d\n",
+                     index , myScanCallbacks->advThermoDevices.size(), deviceName.c_str(),
                      pClient->getPeerAddress().toString().c_str(), pClient->getRssi());
         NimBLERemoteService *pSvc = nullptr;
         pSvc = pClient->getService(myScanCallbacks->serviceDataUUID_thermo);
@@ -359,7 +366,9 @@ bool MyNotification::connectToThermo()
           throw std::runtime_error("serviceUUID of Thermomater not found.\n");
         }
       }
-      INFO_PRINT("Connected with an advertized thermomater[%d/%d]!\n", (index + 1), myScanCallbacks->advThermoDevices.size());
+      INFO_PRINT("[%d/%d]: Connected with an myThermoArr[%d]: %s <<<<<<<<\n", count , numberOfThermo, index, deviceName.c_str());
+      INFO_PRINT("Now getting notifications from myThermoArr[%d]\n", numberOfConnectedThermo);
+      //myThermoArr[index].connected = true;
       // thermomater[index].available = true;
       atLeastOneConnected = true;
       numberOfConnectedThermo++;
@@ -367,12 +376,12 @@ bool MyNotification::connectToThermo()
     catch (const std::runtime_error &e)
     {
       ERROR_PRINT("%s\n", e.what());
-      //return false; //not workring
+      // return false; //not workring
       continue;
     }
   }
   INFO_PRINT("Done with all the advertized thermomaters, connected (%d/%d)\n",
-               numberOfConnectedThermo, myScanCallbacks->advThermoDevices.size());
+             numberOfConnectedThermo, myScanCallbacks->advThermoDevices.size());
   return atLeastOneConnected;
 }
 

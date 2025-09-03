@@ -50,8 +50,10 @@ public:
     MyMqtt(PubSubClient *mqttClient_, MyBLE2 *myBleArr_, VoltMater *voltMater_,
            MyM5 *myM5_, MyThermo *myThermoArr_, MyWiFi *myWiFi_, MyNotification *myNotification_);
     void mqttServerSetup(JsonDocument configJson);
-    void mqttDeviceSetup(int numberOfBleDevices_);
+    //void mqttDeviceSetup(int numberOfBleDevices_);
     // void mqttThermoSetup(int numberOfThermoDevices_);
+    void deviceSetup();
+    void bmsSetup();
     void thermoSetup();
     void reConnectMqttServer();
     void publish(String topic, String message);

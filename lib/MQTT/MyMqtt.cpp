@@ -29,9 +29,84 @@ void MyMqtt::mqttServerSetup(JsonDocument configJson_)
                           { mqttCallback(topic_, payload, length); });
 }
 
+void MyMqtt::deviceSetup()
+{
+  bool controllerFound = false;
+  String mac = WiFi.macAddress();
+  for (int deviceIndex = 0; deviceIndex < deviceList.size(); deviceIndex++)
+  {
+    JsonDocument deviceObj = deviceList[deviceIndex];
+    String type = deviceObj["type"];
+    if (type.equals("VAMater"))
+    {
+      DEBUG_PRINT("setting up volt mater\n");
+      voltMater->setup(deviceObj);
+    }
+    else if (type.equals("Controller"))
+    {
+      if (mac == deviceObj["mac"])
+      {
+        controllerFound = true;
+        INFO_PRINT("Controller with Address: %s found in config file\n", mac.c_str());
+        DEBUG_PRINT("setting up Controller\n");
+        myM5->setup(deviceObj);
+      }
+    }
+  }
+  if (!controllerFound)
+    ERROR_PRINT("Controller with Address: %s not found in config file\n", mac.c_str());
+}
+
+void MyMqtt::bmsSetup()
+{
+  for (int bmsIndex = 0; bmsIndex < myNotification->numberOfBMS; bmsIndex++)
+  {
+    try
+    {
+      bool deviceFound = false;
+      for (int deviceIndex = 0; deviceIndex < deviceList.size(); deviceIndex++)
+      {
+        JsonDocument deviceObj = deviceList[deviceIndex];
+        String type = deviceObj["type"];
+        if (type.equals("BMS"))
+        {
+          String mac = deviceObj["mac"];
+          // DEBUG_PRINT("thermoSetup: myBleArr[%d].mac: %s, deviceList[%d][\"mac\"]: %s\n",
+          // bmsIndex, myBleArr[bmsIndex].mac.c_str(), deviceIndex, mac.c_str());
+          if (NimBLEAddress(myBleArr[bmsIndex].mac.c_str(), 0).equals(NimBLEAddress(mac.c_str(), 0)))
+          {
+            String topic = deviceObj["mqtt"]["topic"];
+            myBleArr[bmsIndex].topic = topic;
+            DEBUG2_PRINT("bmsSetup: myBleArr[%d].mac found at config and set topic: %s\n", bmsIndex,
+                         myBleArr[bmsIndex].topic.c_str());
+            // myBleArr[bmsIndex].available = true;
+            // DEBUG_PRINT("mqttDeviceSetup: myBleArr[%d].available = true\n", bmsIndex);
+            deviceFound = true;
+            break;
+          }
+        }
+      }
+      if (!deviceFound)
+      {
+        char buff[256];
+        sprintf(buff, "myBleArr[%d].mac: %s not found at config",
+                myBleArr[bmsIndex].mac.c_str(), bmsIndex);
+        throw std::runtime_error(buff);
+      }
+    }
+    catch (const std::runtime_error &e)
+    {
+      ERROR_PRINT("%s\n", e.what());
+      continue;
+    }
+  }
+}
+
+/*
 void MyMqtt::mqttDeviceSetup(int numberOfBleDevices_)
 {
   DEBUG_PRINT("mqttDeviceSetup() called\n");
+
   numberOfBleDevices = numberOfBleDevices_;
   // deviceList = configJson["devices"].as<JsonArray>();
   DEBUG_PRINT("mqttDeviceSetup: deviceList.size() = %d\n", deviceList.size());
@@ -44,6 +119,7 @@ void MyMqtt::mqttDeviceSetup(int numberOfBleDevices_)
     String type = deviceObj["type"];
     if (type.equals("BMS"))
     {
+      /*
       for (int bleIndex = 0; bleIndex < numberOfBleDevices; bleIndex++)
       {
         // DEBUG_PRINT("bleIndex = %d deviceIndex = %d\n", bleIndex, deviceIndex);
@@ -72,10 +148,11 @@ void MyMqtt::mqttDeviceSetup(int numberOfBleDevices_)
     }
   }
 }
+*/
 
 void MyMqtt::thermoSetup()
 {
-  for (int thermoIndex = 0; thermoIndex < myNotification->numberOfConnectedThermo; thermoIndex++)
+  for (int thermoIndex = 0; thermoIndex < myNotification->numberOfThermo; thermoIndex++)
   {
     try
     {

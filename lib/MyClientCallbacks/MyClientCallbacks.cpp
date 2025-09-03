@@ -1,40 +1,51 @@
 #include "MyClientCallbacks.hpp"
 
-MyClientCallbacks::MyClientCallbacks(MyBLE2 *myBleArr_, MyThermo *myThermoArr_) 
-: myBleArr(myBleArr_), myThermoArr(myThermoArr_)
+MyClientCallbacks::MyClientCallbacks(MyBLE2 *myBleArr_, MyThermo *myThermoArr_)
+    : myBleArr(myBleArr_), myThermoArr(myThermoArr_)
 {
-}
-
-int MyClientCallbacks::getIndexOfMyBleArr(NimBLEClient *pClient)
-{
-    String peerAddress = String(pClient->getPeerAddress().toString().c_str());
-    DEBUG_PRINT("numberOfConnectedBMS:%d\n", numberOfConnectedBMS);
-    for (int i = 0; i < numberOfConnectedBMS; i++)
-    {
-        String address = myBleArr[i].mac;
-        DEBUG_PRINT("myBleArr[%d].mac = %s\n", i, address.c_str());
-        if (peerAddress.equals(address))
-        {
-            return i;
-        }
-    }
-    return 0;
 }
 
 void MyClientCallbacks::onConnect(NimBLEClient *pClient)
 {
     DEBUG4_PRINT("Connected to %s\n", pClient->getPeerAddress().toString().c_str());
-    int index = getIndexOfMyBleArr(pClient);
-    //myBleArr[index].connected = true;
+    int index = MyGetIndex::myBleArr(myBleArr, pClient);
+    if (index > -1)
+    {
+        myBleArr[index].connected = true;
+        DEBUG4_PRINT("myBleArr[%d] Connected\n", index);
+    }
+    else
+    {
+        index = MyGetIndex::myThermoArr(myThermoArr, pClient);
+        if (index > -1)
+        {
+            myThermoArr[index].connected = true;
+            DEBUG4_PRINT("myThermoArr[%d] Connected\n", index);
+        }
+        else
+        {
+            ERROR_PRINT("Connected event from unkown Address: %s\n", pClient->getPeerAddress().toString().c_str());
+        }
+    }
 }
 
 void MyClientCallbacks::onDisconnect(NimBLEClient *pClient, int reason)
 {
-    // myBleArr[getIndexOfMyBleArr(pClient)].connected = false;
+    // myBleArr[myBleArr(pClient)].connected = false;
     WARN_PRINT("Disconnected from %s, reason = %d\n", pClient->getPeerAddress().toString().c_str(), reason);
-    int index = getIndexOfMyBleArr(pClient);
-    //myBleArr[index].connected = false;
-    // NimBLEDevice::getScan()->start(scanTimeMs, false, true);
+    int index = MyGetIndex::myBleArr(myBleArr, pClient);
+    if (index > -1)
+        myBleArr[index].connected = false;
+    else
+    {
+        index = MyGetIndex::myThermoArr(myThermoArr, pClient);
+        if (index > -1)
+            myThermoArr[index].connected = false;
+        else
+        {
+            ERROR_PRINT("Disconnected event from unkown Address: %s\n", pClient->getPeerAddress().toString().c_str());
+        }
+    }
 }
 
 /********************* Security handled here *********************/

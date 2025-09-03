@@ -28,7 +28,7 @@ public:
 
     //bool available = false;
     String deviceName = "UNKNOWN";
-    String mac = "UNKNOWN";
+    String mac = "00:00:00:00:00:00";
     String topic = "NOT_DEFINED";
     bool connected = false;
 

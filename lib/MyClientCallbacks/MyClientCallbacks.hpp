@@ -5,6 +5,7 @@
 #include "MyLog.hpp"
 #include "MyBLE2.hpp"
 #include "MyThermo.hpp"
+#include "MyGetIndex.hpp"
 
 class MyClientCallbacks : public NimBLEClientCallbacks
 {
@@ -14,12 +15,10 @@ private:
     MyThermo *myThermoArr;
 
 public:
-    int numberOfConnectedBMS;
-    int numberOfConnectedThermo;
+    //int numberOfConnectedBMS;
+    //int numberOfConnectedThermo;
 
     MyClientCallbacks(MyBLE2 *myBleArr_, MyThermo *myThermoArr_);
-
-    int getIndexOfMyBleArr(NimBLEClient *pClient);
 
     void onConnect(NimBLEClient *pClient) override;
 
