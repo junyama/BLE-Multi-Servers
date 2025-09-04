@@ -32,6 +32,9 @@ public:
     //MyGetIndex(MyBLE2 *myBleArr_, MyThermo *myThermoArr_, MyScanCallbacks *myScanCallbacks_);
     static int myBleArr(MyBLE2 *myBleArr, NimBLEClient *client);
     static int myThermoArr(MyThermo *myThermoArr, NimBLEClient *client);
+
+    static String bleInfo(MyBLE2 *myBleArr, int index);
+    static String thermoInfo(MyThermo *myThermoArr, int index);
 };
 
 #endif /* MY_GET_INDEX_HPP */

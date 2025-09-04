@@ -270,10 +270,8 @@ void loop()
         {
           if (!myBleArr[bleIndex].connected)
           {
-            char buff[256];
-            sprintf(buff, "myBleArr[%d], Name: %s, topic: %s not connected",
-                    bleIndex, myBleArr[bleIndex].deviceName.c_str(), myBleArr[bleIndex].topic.c_str());
-            throw std::runtime_error(std::string(buff));
+            String msg = "try to publish " + MyGetIndex::bleInfo(myBleArr, bleIndex) + " not connected";
+            throw std::runtime_error(std::string(msg.c_str()));
           }
           myBleArr[bleIndex].sendInfoCommand();
         }
@@ -361,10 +359,8 @@ void loop()
       {
         if (!myThermoArr[index].connected)
         {
-          char buff[256];
-          sprintf(buff, "myThermoArr[%d], Name: %s, topic: %s not connected",
-                  index, myThermoArr[index].deviceName.c_str(), myThermoArr[index].topic.c_str());
-          throw std::runtime_error(std::string(buff));
+          String msg = "try to publish " + MyGetIndex::thermoInfo(myThermoArr, index) + " not connected";
+          throw std::runtime_error(std::string(msg.c_str()));
         }
         myMqtt.publishJson("stat/" + myThermoArr[index].topic + "STATE", myThermoArr[index].getState(), true);
       }

@@ -32,7 +32,7 @@
 #define DEBUG4_PRINT(...)                                             \
     if (MyLog::DEBUG4)                                                \
     {                                                                 \
-        Serial.print("\033[1;34m");                                     \
+        Serial.print("\033[0;34m");                                     \
         Serial.printf("[%s] %s: ", DateTime.toString().c_str(), TAG); \
         Serial.printf(__VA_ARGS__);                                   \
     }

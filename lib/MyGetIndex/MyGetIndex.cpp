@@ -41,3 +41,19 @@ int MyGetIndex::myThermoArr(MyThermo *myThermoArr, NimBLEClient *client)
   }
   return -1;
 }
+
+String MyGetIndex::bleInfo(MyBLE2 *myBleArr, int index)
+{
+  char buff[256];
+  sprintf(buff, "myBleArr[%d], Name: %s, topic: %s",
+     index, myBleArr[index].deviceName.c_str(), myBleArr[index].topic.c_str());
+  return String(buff);
+}
+
+String MyGetIndex::thermoInfo(MyThermo *myThermoArr, int index)
+{
+  char buff[256];
+  sprintf(buff, "myThermoArr[%d], Name: %s, topic: %s",
+     index, myThermoArr[index].deviceName.c_str(), myThermoArr[index].topic.c_str());
+  return String(buff);
+}
