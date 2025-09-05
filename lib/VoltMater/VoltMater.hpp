@@ -28,7 +28,7 @@ public:
     int measurmentIntervalMs = 10000;
     unsigned long lastMeasurment = 0;
     String topic = "junichiVoltMater_0/";
-    bool timeout(int currentTime);
+    bool timeout(unsigned long currentTime);
     void setup(JsonDocument deviceObj);
     JsonDocument getState();
 };

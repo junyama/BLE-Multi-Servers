@@ -11,6 +11,8 @@
 #include "MyGetIndex.hpp"
 // #include "MyTimer.hpp"
 
+#define FAIL_LIMIT 3
+
 class MyNotification
 {
 private:
@@ -21,6 +23,8 @@ private:
     // MyTimer *myTimerArr;
     MyClientCallbacks *myClientCallbacks;
     MyScanCallbacks *myScanCallbacks;
+
+    int failCount = 0;
 
 public:
     int numberOfBMS = 0;
@@ -38,7 +42,7 @@ public:
     bool connectToServer();
     bool connectToThermo();
     // void printBatteryInfo(int bleIndex, int numberOfAdvDevices, MyBLE2 myBle);
-    void clear();
+    void clearResources();
 };
 
 #endif /* MY_NOTIFICATION_HPP */

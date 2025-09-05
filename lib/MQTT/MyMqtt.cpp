@@ -323,10 +323,12 @@ void MyMqtt::publishJson(String topic, JsonDocument doc, bool retained)
     return;
   String jsonStr;
   serializeJson(doc, jsonStr);
-  String str = "publish " + topic + ", " + jsonStr;
-  if (str.length() > 110)
-    str = str.substring(0, 110) + "...";
-  INFO_PRINT("%s\n", str.c_str());
+  String str = "publish(" + topic + ", " + jsonStr;
+  if (str.length() > 100)
+    str = str.substring(0, 100) + "...)";
+  else
+    str += ")";
+  INFO_PRINT("[%lu]%s\n", millis(), str.c_str());
   // INFO_PRINT("publish %s, %s...\n", topic.c_str(), jsonStr.substring(0, 80).c_str());
   if (!mqttClient->connected())
   {

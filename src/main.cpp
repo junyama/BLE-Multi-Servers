@@ -88,10 +88,10 @@ void printBatteryInfo(int bleIndex, int numberOfAdvDevices, MyBLE2 myBle);
 */
 void scanBle()
 {
-  myNotification.clear(); // may have bugs for the variable
+  // myNotification.clear(); // may have bugs for the variable
   // numberOfConnectedThermo = 0; //may have bugs for the variable, 0 not working
-  myScanCallbacks.advDevices.clear();
-  myScanCallbacks.advThermoDevices.clear();
+  // myScanCallbacks.advDevices.clear();
+  // myScanCallbacks.advThermoDevices.clear();
 
   /** Initialize NimBLE and set the device name */
   NimBLEDevice::init("NimBLE-Client");
@@ -190,6 +190,7 @@ void loop()
 {
   myM5.detectButton();
   mqttClient.loop();
+  unsigned long currentTime;
   /** Loop here until we find a device we want to connect to */
   if (myScanCallbacks.doRescan)
   {
@@ -204,10 +205,15 @@ void loop()
     myNotification.numberOfBMS = myScanCallbacks.numberOfBMS;
     if (myNotification.connectToServer())
     {
-      DEBUG_PRINT("Success! we should now be getting notifications from BMS(%d).\n", myNotification.numberOfConnectedBMS);
+      INFO_PRINT("Success! we should now be getting notifications from BMS(%d).\n", myNotification.numberOfConnectedBMS);
       // myMqtt.mqttDeviceSetup(myNotification.numberOfConnectedBMS);
       myMqtt.bmsSetup();
       myM5.numberOfConnectedBMS = myNotification.numberOfConnectedBMS;
+      for (int index = 0; index < myScanCallbacks.numberOfBMS; index++)
+      {
+        myBleArr[index].lastMeasurment = millis() + 60000 + 4800 * index;
+        INFO_PRINT("myBleArr[%d].lastMeasurment: %lu\n", index, myBleArr[index].lastMeasurment);
+      }
       // myClientCallbacks.numberOfConnectedBMS = myNotification.numberOfConnectedBMS;
       /*
       if (!mqttClient.connected())
@@ -239,25 +245,30 @@ void loop()
     myNotification.numberOfThermo = myScanCallbacks.numberOfThermo;
     if (myNotification.connectToThermo())
     {
-      DEBUG_PRINT("Success! we should now be getting notifications from Thermometers(%d).\n", myNotification.numberOfConnectedThermo);
+      INFO_PRINT("Success! we should now be getting notifications from Thermometers(%d).\n", myNotification.numberOfConnectedThermo);
       // myMqtt.mqttThermoSetup(myNotification.numberOfConnectedThermo);
       myMqtt.thermoSetup();
       myM5.numberOfConnectedThermo = myNotification.numberOfConnectedThermo;
       // myClientCallbacks.numberOfConnectedThermo = myNotification.numberOfConnectedThermo;
+      for (int index = 0; index < myScanCallbacks.numberOfThermo; index++)
+      {
+        myThermoArr[index].lastMeasurment = millis() + 15000 + 6500 * index;
+        INFO_PRINT("myThermoArr[%d].lastMeasurment: %lu\n", index, myThermoArr[index].lastMeasurment);
+      }
     }
     else
     {
-      WARN_PRINT("Failed to connect Thermomaters, goint to reconnect\n");
-      myScanCallbacks.doConnectThermo = true;
+      WARN_PRINT("Failed to connect Thermomaters\n");
       /*
-      DEBUG_PRINT(", goint to reset\n");
-      myM5.println("Failed to connect Thermomater, goint to reset");
-      delay(2000);
-      myM5.reset();
+      WARN_PRINT("goint to reconnect\n");
+      myScanCallbacks.doConnectThermo = true;
       */
+      WARN_PRINT("goint to rescan\n");
+      NimBLEDevice::getScan()->start(myScanCallbacks.scanTimeMs, false, true);
     }
   }
 
+  currentTime = millis();
   for (int bleIndex = 0; bleIndex < myNotification.numberOfBMS; bleIndex++)
   {
     try
@@ -266,14 +277,15 @@ void loop()
       {
         // bool timeout = false;
         // if (timeout = myTimerArr[bleIndex].timeout(millis()))
-        if (myBleArr[bleIndex].timeout(millis() + bleIndex * 3000))
+        if (myBleArr[bleIndex].timeout(currentTime))
         {
           if (!myBleArr[bleIndex].connected)
           {
-            String msg = "try to publish " + MyGetIndex::bleInfo(myBleArr, bleIndex) + " not connected";
+            String msg = "failed to publish " + MyGetIndex::bleInfo(myBleArr, bleIndex) + " not connected";
             throw std::runtime_error(std::string(msg.c_str()));
           }
           myBleArr[bleIndex].sendInfoCommand();
+          INFO_PRINT("[%lu] myBleArr[%d].sendInfoCommand()\n", millis(), bleIndex);
         }
         // DEBUG_PRINT("timeout: %d, myBleArr[%d].newPacketReceived: %d\n", timeout, bleIndex, myBleArr[bleIndex].newPacketReceived);
         if (myBleArr[bleIndex].newPacketReceived)
@@ -290,7 +302,7 @@ void loop()
     }
     catch (const std::runtime_error &e)
     {
-      ERROR_PRINT("%s\n", e.what());
+      WARN_PRINT("%s\n", e.what());
       continue;
     }
 
@@ -351,15 +363,16 @@ void loop()
     myM5.powerSave(1);
   }
 
+  currentTime = millis();
   for (int index = 0; index < myScanCallbacks.numberOfThermo; index++)
   {
     try
     {
-      if (myThermoArr[index].timeout(millis() + index * 3000))
+      if (myThermoArr[index].timeout(currentTime))
       {
         if (!myThermoArr[index].connected)
         {
-          String msg = "try to publish " + MyGetIndex::thermoInfo(myThermoArr, index) + " not connected";
+          String msg = "failed to publish " + MyGetIndex::thermoInfo(myThermoArr, index) + " not connected";
           throw std::runtime_error(std::string(msg.c_str()));
         }
         myMqtt.publishJson("stat/" + myThermoArr[index].topic + "STATE", myThermoArr[index].getState(), true);

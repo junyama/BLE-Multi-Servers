@@ -88,7 +88,7 @@ public:
     bool processCellInfo(packCellInfoStruct *output, byte *data, unsigned int dataLen);
     bool bmsProcessPacket(byte *packet);
 
-    bool timeout(int currentTime);
+    bool timeout(unsigned long currentTime);
 };
 
 #endif /* MY_BLE2_HPP */

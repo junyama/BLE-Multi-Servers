@@ -39,7 +39,7 @@ public:
 
     MyThermo();
     void setup(JsonDocument deviceObj);
-    bool timeout(int currentTime);
+    bool timeout(unsigned long currentTime);
     float processTempPacket(char *data, uint32_t dataSize);
     float processHumidPacket(char *data, uint32_t dataSize);
     JsonDocument getState();

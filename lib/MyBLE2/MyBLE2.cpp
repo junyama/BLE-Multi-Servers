@@ -407,11 +407,12 @@ bool MyBLE2::bmsProcessPacket(byte *packet)
     return result;
 }
 
-bool MyBLE2::timeout(int currentTime)
+bool MyBLE2::timeout(unsigned long currentTime)
 {
-    if ((currentTime - lastMeasurment) >= measurmentIntervalMs)
+    unsigned long tempTime = lastMeasurment + measurmentIntervalMs;
+    if (currentTime >= tempTime)
     {
-        DEBUG_PRINT("millis() - lastMeasument: %d - %d >= measurmentIntervalMs: %d\n", currentTime, lastMeasurment, measurmentIntervalMs);
+        DEBUG_PRINT("currentTime(%lu) >= lastMeasurment + measurmentIntervalMs(%lu)\n", currentTime, tempTime);
         lastMeasurment = currentTime;
         return true;
     }
