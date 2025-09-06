@@ -227,8 +227,9 @@ void loop()
     }
     else
     {
-      WARN_PRINT("Failed to connect all BMS found, goint to reconnect\n");
-      myScanCallbacks.doConnect = true;
+      WARN_PRINT("Failed to connect all BMS found\n");
+      WARN_PRINT("goint to rescan\n");
+      NimBLEDevice::getScan()->start(myScanCallbacks.scanTimeMs, false, true);
       /*
       DEBUG_PRINT("Failed to connect BMS, goint to reset\n");
       myM5.println("Failed to connect BMS, goint to reset");
@@ -252,7 +253,7 @@ void loop()
       // myClientCallbacks.numberOfConnectedThermo = myNotification.numberOfConnectedThermo;
       for (int index = 0; index < myScanCallbacks.numberOfThermo; index++)
       {
-        myThermoArr[index].lastMeasurment = millis() + 15000 + 6500 * index;
+        myThermoArr[index].lastMeasurment = millis() + 30000 + 6500 * index;
         INFO_PRINT("myThermoArr[%d].lastMeasurment: %lu\n", index, myThermoArr[index].lastMeasurment);
       }
     }
