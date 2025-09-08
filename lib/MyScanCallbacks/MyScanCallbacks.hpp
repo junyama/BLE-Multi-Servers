@@ -45,7 +45,7 @@ public:
   bool doConnect = false;
   bool doConnectThermo = false;
 
-  bool doRescan = false;
+  //bool doRescan = false;
 
   MyBLE2 *myBleArr;
   MyThermo *myThermoArr;

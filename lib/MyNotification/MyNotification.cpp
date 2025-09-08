@@ -570,7 +570,7 @@ void MyNotification::clearResources()
     myBleArr[i].connected = false;
     myBleArr[i].mac = "00:00:00:00:00:00";
     myBleArr[i].deviceName = "UNKNOWN";
-    myBleArr[i].topic = "NOT_DEFINED";
+    myBleArr[i].topic = "NOT_DEFINED/";
   }
   myScanCallbacks->advDevices.clear();
   myScanCallbacks->numberOfBMS = 0;
@@ -579,7 +579,7 @@ void MyNotification::clearResources()
     myThermoArr[i].connected = false;
     myThermoArr[i].mac = "00:00:00:00:00:00";
     myThermoArr[i].deviceName = "UNKNOWN";
-    myThermoArr[i].topic = "NOT_DEFINED";
+    myThermoArr[i].topic = "NOT_DEFINED/";
   }
   myScanCallbacks->advThermoDevices.clear();
   myScanCallbacks->numberOfThermo = 0;

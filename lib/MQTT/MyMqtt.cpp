@@ -1,9 +1,9 @@
 #include "MyMqtt.hpp"
 
 MyMqtt::MyMqtt(PubSubClient *mqttClient_, MyBLE2 *myBleArr_, VoltMater *voltMater_,
-               MyM5 *myM5_, MyThermo *myThermoArr_, MyWiFi *myWiFi_, MyNotification *myNotification_)
+               MyM5 *myM5_, MyThermo *myThermoArr_, MyWiFi *myWiFi_, MyNotification *myNotification_, MyScanCallbacks *myScanCallbacks_)
     : mqttClient(mqttClient_), myBleArr(myBleArr_), voltMater(voltMater_),
-      myM5(myM5_), myThermoArr(myThermoArr_), myWiFi(myWiFi_), myNotification(myNotification_)
+      myM5(myM5_), myThermoArr(myThermoArr_), myWiFi(myWiFi_), myNotification(myNotification_), myScanCallbacks(myScanCallbacks_)
 {
 }
 
@@ -39,7 +39,7 @@ void MyMqtt::deviceSetup()
     String type = deviceObj["type"];
     if (type.equals("VAMater"))
     {
-      DEBUG_PRINT("setting up volt mater\n");
+      INFO_PRINT("setting up volt mater\n");
       voltMater->setup(deviceObj);
     }
     else if (type.equals("Controller"))
@@ -59,7 +59,7 @@ void MyMqtt::deviceSetup()
 
 void MyMqtt::bmsSetup()
 {
-  for (int bmsIndex = 0; bmsIndex < myNotification->numberOfBMS; bmsIndex++)
+  for (int bmsIndex = 0; bmsIndex < myScanCallbacks->numberOfBMS; bmsIndex++)
   {
     try
     {
@@ -152,7 +152,7 @@ void MyMqtt::mqttDeviceSetup(int numberOfBleDevices_)
 
 void MyMqtt::thermoSetup()
 {
-  for (int thermoIndex = 0; thermoIndex < myNotification->numberOfThermo; thermoIndex++)
+  for (int thermoIndex = 0; thermoIndex < myScanCallbacks->numberOfThermo; thermoIndex++)
   {
     try
     {
@@ -324,8 +324,8 @@ void MyMqtt::publishJson(String topic, JsonDocument doc, bool retained)
   String jsonStr;
   serializeJson(doc, jsonStr);
   String str = "publish(" + topic + ", " + jsonStr;
-  if (str.length() > 100)
-    str = str.substring(0, 100) + "...}";
+  if (str.length() > 108)
+    str = str.substring(0, 108) + "...}";
   else
     str += ")";
   INFO_PRINT("[%lu]%s\n", millis(), str.c_str());

@@ -15,7 +15,7 @@ void VoltMater::setup(JsonDocument deviceObj)
         // M5.Lcd.println("Unit vmeter Init Fail");
         if (i > 2)
         {
-            DEBUG_PRINT("gave up using volt mater.\n");
+            WARN_PRINT("No response from a volt mater\n");
             M5.Lcd.println("gave up using volt mater.");
             connected = false;
             return;
@@ -45,6 +45,7 @@ void VoltMater::setup(JsonDocument deviceObj)
         calibration_factor = vmeter.getFactoryCalibration();
     if (deviceObj["measurmentIntervalMs"])
         measurmentIntervalMs = deviceObj["measurmentIntervalMs"];
+    INFO_PRINT("volt mater setup up done.\n")
 }
 
 bool VoltMater::timeout(unsigned long currentTime)

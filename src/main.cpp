@@ -75,7 +75,7 @@ VoltMater voltMater;
 MyScanCallbacks myScanCallbacks(myBleArr, &myM5, myThermoArr);
 MyClientCallbacks myClientCallbacks(myBleArr, myThermoArr);
 MyNotification myNotification(myBleArr, &myScanCallbacks, &myClientCallbacks, myThermoArr);
-MyMqtt myMqtt(&mqttClient, myBleArr, &voltMater, &myM5, myThermoArr, &myWiFi, &myNotification);
+MyMqtt myMqtt(&mqttClient, myBleArr, &voltMater, &myM5, myThermoArr, &myWiFi, &myNotification, &myScanCallbacks);
 
 // MyGetIndex myGetIndex(myBleArr, &myScanCallbacks.numberOfBMS, myThermoArr, &myScanCallbacks.numberOfThermo);
 
@@ -195,11 +195,13 @@ void loop()
   mqttClient.loop();
   unsigned long currentTime;
   /** Loop here until we find a device we want to connect to */
+  /*
   if (myScanCallbacks.doRescan)
   {
     myScanCallbacks.doRescan = false;
     scanBle();
   }
+  */
 
   if (myScanCallbacks.doConnect)
   {
@@ -235,15 +237,25 @@ void loop()
       if (failCount <= FAIL_LIMIT_MAIN)
       {
         WARN_PRINT("rescan\n");
+        myM5.println("Failed to connect BMS rescan");
         myNotification.clearResources();
         NimBLEDevice::getScan()->start(myScanCallbacks.scanTimeMs, false, true);
       }
       else
-        WARN_PRINT("Exceeded the fail limit (%d). Continue\n", FAIL_LIMIT_MAIN);
+      {
+        WARN_PRINT("Exceeded the fail limit (%d) of main. Continue\n", FAIL_LIMIT_MAIN);
+        myMqtt.bmsSetup();
+        myM5.numberOfConnectedBMS = myNotification.numberOfConnectedBMS;
+        for (int index = 0; index < myScanCallbacks.numberOfBMS; index++)
+        {
+          myBleArr[index].lastMeasurment = millis() + 30000 + 4800 * index;
+          INFO_PRINT("myBleArr[%d].lastMeasurment: %lu\n", index, myBleArr[index].lastMeasurment);
+        }
+      }
 
-      //WARN_PRINT("Failed to connect all BMS found\n");
-      //WARN_PRINT("goint to rescan\n");
-      //NimBLEDevice::getScan()->start(myScanCallbacks.scanTimeMs, false, true);
+      // WARN_PRINT("Failed to connect all BMS found\n");
+      // WARN_PRINT("goint to rescan\n");
+      // NimBLEDevice::getScan()->start(myScanCallbacks.scanTimeMs, false, true);
       /*
       DEBUG_PRINT("Failed to connect BMS, goint to reset\n");
       myM5.println("Failed to connect BMS, goint to reset");
@@ -278,11 +290,21 @@ void loop()
       if (failCount <= FAIL_LIMIT_MAIN)
       {
         WARN_PRINT("rescan\n");
+        myM5.println("Failed to connect thermo rescan");
         myNotification.clearResources();
         NimBLEDevice::getScan()->start(myScanCallbacks.scanTimeMs, false, true);
       }
       else
-        WARN_PRINT("Exceeded the fail limit (%d). Continue\n", FAIL_LIMIT_MAIN);
+      {
+        WARN_PRINT("Exceeded the fail limit (%d) of main. Continue\n", FAIL_LIMIT_MAIN);
+        myMqtt.thermoSetup();
+        myM5.numberOfConnectedThermo = myNotification.numberOfConnectedThermo;
+        for (int index = 0; index < myScanCallbacks.numberOfThermo; index++)
+        {
+          myThermoArr[index].lastMeasurment = millis() + 30000 + 6500 * index;
+          INFO_PRINT("myThermoArr[%d].lastMeasurment: %lu\n", index, myThermoArr[index].lastMeasurment);
+        }
+      }
 
       /*
       WARN_PRINT("goint to reconnect\n");
@@ -306,7 +328,8 @@ void loop()
         {
           if (!myBleArr[bleIndex].connected)
           {
-            String msg = "Failed to publish " + MyGetIndex::bleInfo(myBleArr, bleIndex) + " not connected";
+            myMqtt.publish("stat/" + myBleArr[bleIndex].topic + "STATE", "{\"connected\": 0}");
+            String msg = MyGetIndex::bleInfo(myBleArr, bleIndex) + " not connected";
             throw std::runtime_error(std::string(msg.c_str()));
           }
           myBleArr[bleIndex].sendInfoCommand();
@@ -375,7 +398,7 @@ void loop()
   }
   */
 
-  if (voltMater.timeout(millis()))
+  if (voltMater.connected && voltMater.timeout(millis()))
   {
     myM5.updateVoltMaterInfo(voltMater.calVoltage);
     myMqtt.publishJson("stat/" + voltMater.topic + "STATE", voltMater.getState(), true);
@@ -397,7 +420,8 @@ void loop()
       {
         if (!myThermoArr[index].connected)
         {
-          String msg = "Failed to publish " + MyGetIndex::thermoInfo(myThermoArr, index) + " not connected";
+          myMqtt.publish("stat/" + myThermoArr[index].topic + "STATE", "{\"connected\": 0}");
+          String msg = MyGetIndex::thermoInfo(myThermoArr, index) + " not connected";
           throw std::runtime_error(std::string(msg.c_str()));
         }
         myMqtt.publishJson("stat/" + myThermoArr[index].topic + "STATE", myThermoArr[index].getState(), true);

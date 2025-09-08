@@ -91,7 +91,7 @@ void MyScanCallbacks::onScanEnd(const NimBLEScanResults &results, int reason)
   //*numberOfDevicesFound *= numberOfAdvDevices;
   // DEBUG_PRINT("numberOfDevicesFound: %d\n", *numberOfDevicesFound);
   char buff[256];
-  sprintf(buff, "BMS scan done, rc: %d, BMS found: %d/%d", reason, numberOfBMS, results.getCount());
+  sprintf(buff, "BMS scan done, found %d", numberOfBMS);
   myM5->println(String(buff));
 
   if (numberOfBMS == 0)
@@ -131,8 +131,7 @@ void MyScanCallbacks::onScanEnd(const NimBLEScanResults &results, int reason)
   // DEBUG_PRINT("advThermoDevices.size(): %d\n", advThermoDevices.size());
   // numberOfThermoDevicesFound = &numberOfAdvThermoDevices;
   // DEBUG_PRINT("numberOfThermoDevicesFound: %d\n", *numberOfThermoDevicesFound);
-  sprintf(buff, "Thermomater scan done, rc: %d, thermomater found: %d/%d",
-          reason, numberOfThermo, results.getCount());
+  sprintf(buff, "Thermo scan done, found %d", numberOfThermo);
   myM5->println(String(buff));
 
   if (numberOfThermo == 0)
