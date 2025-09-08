@@ -7,7 +7,7 @@
 
 void VoltMater::setup(JsonDocument deviceObj)
 {
-    available = true;
+    connected = true;
     int i = 1;
     while (!vmeter.begin(&Wire, M5_UNIT_VMETER_I2C_ADDR, 32, 33, 400000U))
     {
@@ -17,7 +17,7 @@ void VoltMater::setup(JsonDocument deviceObj)
         {
             DEBUG_PRINT("gave up using volt mater.\n");
             M5.Lcd.println("gave up using volt mater.");
-            available = false;
+            connected = false;
             return;
         }
         i++;
@@ -63,7 +63,8 @@ bool VoltMater::timeout(unsigned long currentTime)
 JsonDocument VoltMater::getState()
 {
     JsonDocument doc;
-    if (available)
+    doc["connected"] = (int)connected;
+    if (connected)
     {
         int16_t adc_raw = vmeter.getSingleConversion();
         float voltage = adc_raw * resolution * calibration_factor;

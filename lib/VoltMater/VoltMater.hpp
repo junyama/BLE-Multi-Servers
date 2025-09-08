@@ -23,7 +23,8 @@ private:
     float calibration_factor = 0.0;
 
 public:
-    bool available = false;
+    //bool available = false;
+    bool connected = false;
     float calVoltage;
     int measurmentIntervalMs = 10000;
     unsigned long lastMeasurment = 0;

@@ -61,47 +61,47 @@ void MyNotification::notifyCB(NimBLERemoteCharacteristic *pRemoteCharacteristic,
   {
     if (pRemoteCharacteristic->getRemoteService()->getUUID() == myScanCallbacks->serviceUUID2)
     {
-      DEBUG_PRINT("notification from BMS\n");
+      DEBUG_PRINT("Notification from BMS\n");
       // int bleIndex = getIndexOfMyBleArr(pRemoteCharacteristic->getClient());
       int bleIndex = MyGetIndex::myBleArr(myBleArr, pRemoteCharacteristic->getClient());
       if (bleIndex > -1)
       {
-        DEBUG3_PRINT("notification from %s\n", MyGetIndex::bleInfo(myBleArr, bleIndex).c_str());
+        DEBUG3_PRINT("Notification from %s\n", MyGetIndex::bleInfo(myBleArr, bleIndex).c_str());
         myBleArr[bleIndex].bleCollectPacket((char *)pData, length);
         return;
       }
       else
       {
-        throw std::runtime_error("notification from a BMS with a wrong mac\n");
+        throw std::runtime_error("Notification from a BMS with a wrong mac\n");
       }
       return;
     }
 
     if (pRemoteCharacteristic->getRemoteService()->getUUID() == myScanCallbacks->serviceDataUUID_thermo)
     {
-      DEBUG_PRINT("notification from Thermomater\n");
+      DEBUG_PRINT("Notification from Thermomater\n");
       // int thermoIndex = getIndexOfMyThermoArr(pRemoteCharacteristic->getClient());
       int thermoIndex = MyGetIndex::myThermoArr(myThermoArr, pRemoteCharacteristic->getClient());
       if (thermoIndex > -1)
       {
-        // DEBUG3_PRINT("notification from myThermoArr[%d]\n", thermoIndex);
+        // DEBUG3_PRINT("Notification from myThermoArr[%d]\n", thermoIndex);
         auto remoteCharacteristicUUID = pRemoteCharacteristic->getUUID();
-        DEBUG_PRINT("notification from myThermoArr[%d], UUID: %s\n", thermoIndex,
+        DEBUG_PRINT("Notification from myThermoArr[%d], UUID: %s\n", thermoIndex,
                     remoteCharacteristicUUID.toString().c_str());
         if (remoteCharacteristicUUID.equals(myScanCallbacks->charUUID_thermo_temp))
         {
-          DEBUG3_PRINT("notification from %s, tempatarure: %.1fC\n",
+          DEBUG3_PRINT("Notification from %s, tempatarure: %.1fC\n",
                        MyGetIndex::thermoInfo(myThermoArr, thermoIndex).c_str(),
                        myThermoArr[thermoIndex].processTempPacket((char *)pData, length));
-          // DEBUG3_PRINT("notification from myThermoArr[%d], topic: %s, tempatarure: 0x%x\n",thermoIndex, myThermoArr[thermoIndex].topic.c_str(), (int)pData);
+          // DEBUG3_PRINT("Notification from myThermoArr[%d], topic: %s, tempatarure: 0x%x\n",thermoIndex, myThermoArr[thermoIndex].topic.c_str(), (int)pData);
           return;
         }
         if (remoteCharacteristicUUID.equals(myScanCallbacks->charUUID_thermo_humid))
         {
-          DEBUG3_PRINT("notification from %s, humidity: %.1f%%\n",
+          DEBUG3_PRINT("Notification from %s, humidity: %.1f%%\n",
                        MyGetIndex::thermoInfo(myThermoArr, thermoIndex).c_str(),
                        myThermoArr[thermoIndex].processHumidPacket((char *)pData, length));
-          // DEBUG3_PRINT("notification from myThermoArr[%d], topic: %s, humidity: 0x%x\n",thermoIndex, myThermoArr[thermoIndex].topic.c_str(), (int)pData);
+          // DEBUG3_PRINT("Notification from myThermoArr[%d], topic: %s, humidity: 0x%x\n",thermoIndex, myThermoArr[thermoIndex].topic.c_str(), (int)pData);
           return;
         }
         char buff[256];
@@ -110,11 +110,11 @@ void MyNotification::notifyCB(NimBLERemoteCharacteristic *pRemoteCharacteristic,
       }
       else
       {
-        throw std::runtime_error("notification from a Thermomater with a wrong mac\n");
+        throw std::runtime_error("Notification from a Thermomater with a wrong mac\n");
       }
       return;
     }
-    throw std::runtime_error("notification from a device other than BMS or Thermomater\n");
+    throw std::runtime_error("Notification from a device other than BMS or Thermomater\n");
   }
   catch (const std::runtime_error &e)
   {
@@ -183,7 +183,7 @@ bool MyNotification::connectToServer()
          */
         pClient->setConnectionParams(12, 12, 0, 150);
         /** Set how long we are willing to wait for the connection to complete (milliseconds), default is 30000. */
-        pClient->setConnectTimeout(30 * 1000);
+        pClient->setConnectTimeout(5 * 1000);
         pClient->setSelfDelete(true, true);
         if (!pClient->connect(myScanCallbacks->advDevices.at(index)))
         {
@@ -192,11 +192,11 @@ bool MyNotification::connectToServer()
           WARN_PRINT("[%d/%d] Failed to reconnect with %s\n", ++failCount, FAIL_LIMIT, MyGetIndex::bleInfo(myBleArr, index).c_str());
           if (failCount <= FAIL_LIMIT)
           {
-            WARN_PRINT("clean up and rescan\n");
-            clearResources();
+            WARN_PRINT("return with false\n");
+            // clearResources();
             return false;
           }
-          WARN_PRINT("exceeded the fail limt (%d). delete a client and continue to next device\n", FAIL_LIMIT);
+          WARN_PRINT("Exceeded the fail limit (%d). Delete client and continue to next device\n", FAIL_LIMIT);
           NimBLEDevice::deleteClient(pClient);
           continue;
         }
@@ -209,11 +209,11 @@ bool MyNotification::connectToServer()
           WARN_PRINT("[%d/%d] Failed to connect with %s\n", ++failCount, FAIL_LIMIT, MyGetIndex::bleInfo(myBleArr, index).c_str());
           if (failCount <= FAIL_LIMIT)
           {
-            WARN_PRINT("clean up and rescan\n");
-            clearResources();
+            WARN_PRINT("return with false\n");
+            // clearResources();
             return false;
           }
-          WARN_PRINT("exceeded the fail limt (%d). delete a client and continue to next device\n", FAIL_LIMIT);
+          WARN_PRINT("Exceeded the fail limit (%d). Delete client and continue to next device\n", FAIL_LIMIT);
           NimBLEDevice::deleteClient(pClient);
           continue;
         }
@@ -234,11 +234,11 @@ bool MyNotification::connectToServer()
           WARN_PRINT("[%d/%d] charUUID_rx not found %s\n", ++failCount, FAIL_LIMIT, MyGetIndex::bleInfo(myBleArr, index).c_str());
           if (failCount <= FAIL_LIMIT)
           {
-            WARN_PRINT("clean up and rescan\n");
-            clearResources();
+            WARN_PRINT("return with false\n");
+            // clearResources();
             return false;
           }
-          WARN_PRINT("exceeded the fail limt (%d). delete a client and continue to next device\n", FAIL_LIMIT);
+          WARN_PRINT("Exceeded the fail limit (%d). Delete client and continue to next device\n", FAIL_LIMIT);
           NimBLEDevice::deleteClient(pClient);
           continue;
         }
@@ -250,11 +250,11 @@ bool MyNotification::connectToServer()
             WARN_PRINT("[%d/%d] subscription failed %s\n", ++failCount, FAIL_LIMIT, MyGetIndex::bleInfo(myBleArr, index).c_str());
             if (failCount <= FAIL_LIMIT)
             {
-              WARN_PRINT("clean up and rescan\n");
-              clearResources();
+              WARN_PRINT("return with false\n");
+              // clearResources();
               return false;
             }
-            WARN_PRINT("exceeded the fail limt (%d). delete a client and continue to next device\n", FAIL_LIMIT);
+            WARN_PRINT("Exceeded the fail limit (%d). Deletea client and continue to next device\n", FAIL_LIMIT);
             NimBLEDevice::deleteClient(pClient);
             continue;
           }
@@ -265,11 +265,11 @@ bool MyNotification::connectToServer()
           WARN_PRINT("[%d/%d] charUUID_tx not found %s\n", ++failCount, FAIL_LIMIT, MyGetIndex::bleInfo(myBleArr, index).c_str());
           if (failCount <= FAIL_LIMIT)
           {
-            WARN_PRINT("clean up and rescan\n");
-            clearResources();
+            WARN_PRINT("return with false\n");
+            // clearResources();
             return false;
           }
-          WARN_PRINT("exceeded the fail limt (%d). delete a client and continue to next device\n", FAIL_LIMIT);
+          WARN_PRINT("Exceeded the fail limit (%d). Deletea client and continue to next device\n", FAIL_LIMIT);
           NimBLEDevice::deleteClient(pClient);
           continue;
         }
@@ -279,11 +279,11 @@ bool MyNotification::connectToServer()
         WARN_PRINT("[%d/%d] serviceUUID not found %s\n", ++failCount, FAIL_LIMIT, MyGetIndex::bleInfo(myBleArr, index).c_str());
         if (failCount <= FAIL_LIMIT)
         {
-          WARN_PRINT("clean up and rescan\n");
-          clearResources();
+          WARN_PRINT("return with false\n");
+          // clearResources();
           return false;
         }
-        WARN_PRINT("exceeded the fail limt (%d). delete a client and continue to next device\n", FAIL_LIMIT);
+        WARN_PRINT("Exceeded the fail limit (%d). Deletea client and continue to next device\n", FAIL_LIMIT);
         NimBLEDevice::deleteClient(pClient);
         continue;
       }
@@ -307,7 +307,10 @@ bool MyNotification::connectToServer()
   }
   INFO_PRINT("Done with all the advertized BMS, connected(%d/%d)!\n",
              numberOfConnectedBMS, myScanCallbacks->advDevices.size());
-  return atLeastOneConnected;
+  // return atLeastOneConnected;
+  if (numberOfConnectedBMS > 0)
+    return true;
+  return false;
 }
 
 bool MyNotification::connectToThermo()
@@ -382,7 +385,7 @@ bool MyNotification::connectToThermo()
         WARN_PRINT("%s\n", buff);
         if (failCount <= FAIL_LIMIT)
         {
-          WARN_PRINT("clean up and rescan\n");
+          WARN_PRINT("return with false\n");
           clearResources();
           /*
           auto clientList = NimBLEDevice::getConnectedClients();
@@ -422,7 +425,7 @@ bool MyNotification::connectToThermo()
         throw std::runtime_error(buff);
         // experimental code */
 
-        WARN_PRINT("exceeded the fail limt (%d). delete a client and continue to next device\n", FAIL_LIMIT);
+        WARN_PRINT("Exceeded the fail limit (%d). Deletea client and continue to next device\n", FAIL_LIMIT);
         NimBLEDevice::deleteClient(pClient);
         continue;
       }
@@ -435,11 +438,11 @@ bool MyNotification::connectToThermo()
         WARN_PRINT("[%d/%d] Failed to connect with %s\n", ++failCount, FAIL_LIMIT, MyGetIndex::thermoInfo(myThermoArr, index).c_str());
         if (failCount <= FAIL_LIMIT)
         {
-          WARN_PRINT("clean up and rescan\n");
-          clearResources();
+          WARN_PRINT("return with false\n");
+          // clearResources();
           return false;
         }
-        WARN_PRINT("exceeded the fail limt (%d). delete a client and continue to next device\n", FAIL_LIMIT);
+        WARN_PRINT("Exceeded the fail limit (%d). Deletea client and continue to next device\n", FAIL_LIMIT);
         NimBLEDevice::deleteClient(pClient);
         continue;
       }
@@ -456,18 +459,18 @@ bool MyNotification::connectToThermo()
       if (pSvc)
       {
         DEBUG2_PRINT("serviceDataUUID of Thermomater found: %s\n", pSvc->toString().c_str());
-        // setup temperature notification
+        // setup temperature Notification
         myThermoArr[index].pChr_rx_temp = pSvc->getCharacteristic(myScanCallbacks->charUUID_thermo_temp);
         if (!myThermoArr[index].pChr_rx_temp)
         {
           WARN_PRINT("[%d/%d] charUUID_thermo_temp not found\n", ++failCount, FAIL_LIMIT);
           if (failCount <= FAIL_LIMIT)
           {
-            WARN_PRINT("clean up and rescan\n");
-            clearResources();
+            WARN_PRINT("return with false\n");
+            // clearResources();
             return false;
           }
-          WARN_PRINT("exceeded the fail limt (%d). delete a client and continue to next device\n", FAIL_LIMIT);
+          WARN_PRINT("Exceeded the fail limit (%d). Deletea client and continue to next device\n", FAIL_LIMIT);
           NimBLEDevice::deleteClient(pClient);
           continue;
         }
@@ -480,28 +483,28 @@ bool MyNotification::connectToThermo()
             WARN_PRINT("[%d/%d] Failed subscribeing charUUID_thermo_temp.\n", ++failCount, FAIL_LIMIT);
             if (failCount <= FAIL_LIMIT)
             {
-              WARN_PRINT("clean up and rescan\n");
-              clearResources();
+              WARN_PRINT("return with false\n");
+              // clearResources();
               return false;
             }
-            WARN_PRINT("exceeded the fail limt (%d). delete a client and continue to next device\n", FAIL_LIMIT);
+            WARN_PRINT("Exceeded the fail limit (%d). Deletea client and continue to next device\n", FAIL_LIMIT);
             pClient->disconnect();
             NimBLEDevice::deleteClient(pClient);
             continue;
           }
         }
-        // setup humidity notification
+        // setup humidity Notification
         myThermoArr[index].pChr_rx_humid = pSvc->getCharacteristic(myScanCallbacks->charUUID_thermo_humid);
         if (!myThermoArr[index].pChr_rx_humid)
         {
           WARN_PRINT("[%d/%d] charUUID_thermo_humid not found.\n", ++failCount, FAIL_LIMIT);
           if (failCount <= FAIL_LIMIT)
           {
-            WARN_PRINT("clean up and rescan\n");
-            clearResources();
+            WARN_PRINT("return with false\n");
+            // clearResources();
             return false;
           }
-          WARN_PRINT("exceeded the fail limt (%d). delete a client and continue to next device\n", FAIL_LIMIT);
+          WARN_PRINT("Exceeded the fail limit (%d). Delete client and continue to next device\n", FAIL_LIMIT);
           NimBLEDevice::deleteClient(pClient);
           continue;
         }
@@ -514,11 +517,11 @@ bool MyNotification::connectToThermo()
             WARN_PRINT("[%d/%d] Failed subscribeing charUUID_thermo_humid.\n", ++failCount, FAIL_LIMIT);
             if (failCount <= FAIL_LIMIT)
             {
-              WARN_PRINT("clean up and rescan\n");
-              clearResources();
+              WARN_PRINT("return with false\n");
+              // clearResources();
               return false;
             }
-            WARN_PRINT("exceeded the fail limt (%d). delete a client and continue to next device\n", FAIL_LIMIT);
+            WARN_PRINT("Exceeded the fail limit (%d). Delete client and continue to next device\n", FAIL_LIMIT);
             NimBLEDevice::deleteClient(pClient);
             continue;
           }
@@ -529,11 +532,11 @@ bool MyNotification::connectToThermo()
         WARN_PRINT("[%d/%d] serviceUUID of Thermomater not found.\n", ++failCount, FAIL_LIMIT);
         if (failCount <= FAIL_LIMIT)
         {
-          WARN_PRINT("clean up and rescan\n");
-          clearResources();
+          WARN_PRINT("return with false\n");
+          // clearResources();
           return false;
         }
-        WARN_PRINT("exceeded the fail limt (%d). delete a client and continue to next device\n", FAIL_LIMIT);
+        WARN_PRINT("Exceeded the fail limit (%d). Delete client and continue to next device\n", FAIL_LIMIT);
         NimBLEDevice::deleteClient(pClient);
         continue;
       }
@@ -546,9 +549,11 @@ bool MyNotification::connectToThermo()
     atLeastOneConnected = true;
     numberOfConnectedThermo++;
   }
-  INFO_PRINT("Done with all the advertized thermomaters, connected (%d/%d)\n",
-             numberOfConnectedThermo, myScanCallbacks->numberOfThermo);
-  return atLeastOneConnected;
+  // INFO_PRINT("Done with all the advertized thermomaters, connected (%d/%d)\n", numberOfConnectedThermo, myScanCallbacks->numberOfThermo);
+  //  return atLeastOneConnected;
+  if (numberOfConnectedThermo > 0)
+    return true;
+  return false;
 }
 
 void MyNotification::clearResources()
@@ -560,9 +565,22 @@ void MyNotification::clearResources()
   }
   numberOfConnectedBMS = 0;
   numberOfConnectedThermo = 0;
-
+  for (int i = 0; i < myScanCallbacks->numberOfBMS; i++)
+  {
+    myBleArr[i].connected = false;
+    myBleArr[i].mac = "00:00:00:00:00:00";
+    myBleArr[i].deviceName = "UNKNOWN";
+    myBleArr[i].topic = "NOT_DEFINED";
+  }
   myScanCallbacks->advDevices.clear();
   myScanCallbacks->numberOfBMS = 0;
+  for (int i = 0; i < myScanCallbacks->numberOfThermo; i++)
+  {
+    myThermoArr[i].connected = false;
+    myThermoArr[i].mac = "00:00:00:00:00:00";
+    myThermoArr[i].deviceName = "UNKNOWN";
+    myThermoArr[i].topic = "NOT_DEFINED";
+  }
   myScanCallbacks->advThermoDevices.clear();
   myScanCallbacks->numberOfThermo = 0;
 }

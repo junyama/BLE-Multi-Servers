@@ -33,6 +33,7 @@
 #include "MyGetIndex.hpp"
 
 #define CONFIG_FILE "/config.json"
+#define FAIL_LIMIT_MAIN 4
 
 const char *TAG = "main";
 const char *MyGetIndex::TAG = "MyGetIndex";
@@ -44,6 +45,8 @@ const bool MyLog::DEBUG4 = true;
 const bool MyLog::INFO = true;
 const bool MyLog::WARN = true;
 const bool MyLog::ERROR = true;
+
+int failCount = 0;
 
 MyBLE2 myBleArr[BLE_ARR_SIZE];
 // int numberOfConnectedBMS = 0;
@@ -211,7 +214,7 @@ void loop()
       myM5.numberOfConnectedBMS = myNotification.numberOfConnectedBMS;
       for (int index = 0; index < myScanCallbacks.numberOfBMS; index++)
       {
-        myBleArr[index].lastMeasurment = millis() + 60000 + 4800 * index;
+        myBleArr[index].lastMeasurment = millis() + 30000 + 4800 * index;
         INFO_PRINT("myBleArr[%d].lastMeasurment: %lu\n", index, myBleArr[index].lastMeasurment);
       }
       // myClientCallbacks.numberOfConnectedBMS = myNotification.numberOfConnectedBMS;
@@ -227,9 +230,20 @@ void loop()
     }
     else
     {
-      WARN_PRINT("Failed to connect all BMS found\n");
-      WARN_PRINT("goint to rescan\n");
-      NimBLEDevice::getScan()->start(myScanCallbacks.scanTimeMs, false, true);
+      WARN_PRINT("[%d/%d] Failed to connect BMS found[%d] %s\n",
+                 ++failCount, FAIL_LIMIT_MAIN, myScanCallbacks.numberOfBMS);
+      if (failCount <= FAIL_LIMIT_MAIN)
+      {
+        WARN_PRINT("rescan\n");
+        myNotification.clearResources();
+        NimBLEDevice::getScan()->start(myScanCallbacks.scanTimeMs, false, true);
+      }
+      else
+        WARN_PRINT("Exceeded the fail limit (%d). Continue\n", FAIL_LIMIT_MAIN);
+
+      //WARN_PRINT("Failed to connect all BMS found\n");
+      //WARN_PRINT("goint to rescan\n");
+      //NimBLEDevice::getScan()->start(myScanCallbacks.scanTimeMs, false, true);
       /*
       DEBUG_PRINT("Failed to connect BMS, goint to reset\n");
       myM5.println("Failed to connect BMS, goint to reset");
@@ -259,13 +273,23 @@ void loop()
     }
     else
     {
-      WARN_PRINT("Failed to connect Thermomaters\n");
+      WARN_PRINT("[%d/%d] Failed to connect thermomaters found[%d] %s\n",
+                 ++failCount, FAIL_LIMIT_MAIN, myScanCallbacks.numberOfThermo);
+      if (failCount <= FAIL_LIMIT_MAIN)
+      {
+        WARN_PRINT("rescan\n");
+        myNotification.clearResources();
+        NimBLEDevice::getScan()->start(myScanCallbacks.scanTimeMs, false, true);
+      }
+      else
+        WARN_PRINT("Exceeded the fail limit (%d). Continue\n", FAIL_LIMIT_MAIN);
+
       /*
       WARN_PRINT("goint to reconnect\n");
       myScanCallbacks.doConnectThermo = true;
       */
-      WARN_PRINT("goint to rescan\n");
-      NimBLEDevice::getScan()->start(myScanCallbacks.scanTimeMs, false, true);
+      // WARN_PRINT("goint to rescan\n");
+      // NimBLEDevice::getScan()->start(myScanCallbacks.scanTimeMs, false, true);
     }
   }
 
@@ -282,7 +306,7 @@ void loop()
         {
           if (!myBleArr[bleIndex].connected)
           {
-            String msg = "failed to publish " + MyGetIndex::bleInfo(myBleArr, bleIndex) + " not connected";
+            String msg = "Failed to publish " + MyGetIndex::bleInfo(myBleArr, bleIndex) + " not connected";
             throw std::runtime_error(std::string(msg.c_str()));
           }
           myBleArr[bleIndex].sendInfoCommand();
@@ -311,8 +335,8 @@ void loop()
     if (!myBleArr[bleIndex].connected)
     {
       /*
-      WARN_PRINT("[%d}check myBleArr[%d].connected == false, going to skip the next bleIndex\n", failCount, bleIndex);
-      if (failCount > 100)
+      WARN_PRINT("[%d}check myBleArr[%d].connected == false, going to skip the next bleIndex\n", FailCount, bleIndex);
+      if (FailCount > 100)
       {
         DEBUG_PRINT("exceeaded the limit\n");
         delay(2000);
@@ -351,7 +375,7 @@ void loop()
   }
   */
 
-  if (voltMater.available && voltMater.timeout(millis()))
+  if (voltMater.timeout(millis()))
   {
     myM5.updateVoltMaterInfo(voltMater.calVoltage);
     myMqtt.publishJson("stat/" + voltMater.topic + "STATE", voltMater.getState(), true);
@@ -373,7 +397,7 @@ void loop()
       {
         if (!myThermoArr[index].connected)
         {
-          String msg = "failed to publish " + MyGetIndex::thermoInfo(myThermoArr, index) + " not connected";
+          String msg = "Failed to publish " + MyGetIndex::thermoInfo(myThermoArr, index) + " not connected";
           throw std::runtime_error(std::string(msg.c_str()));
         }
         myMqtt.publishJson("stat/" + myThermoArr[index].topic + "STATE", myThermoArr[index].getState(), true);

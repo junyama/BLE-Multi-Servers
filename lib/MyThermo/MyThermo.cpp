@@ -45,6 +45,7 @@ JsonDocument MyThermo::getState()
 {
     JsonDocument doc;
     doc["deviceName"] = deviceName;
+    doc["connected"] = (int)connected;
     doc["temperature"] = temp;
     doc["humidity"] = humi;
     return doc;

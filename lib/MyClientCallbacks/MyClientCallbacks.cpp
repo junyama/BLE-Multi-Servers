@@ -32,15 +32,21 @@ void MyClientCallbacks::onConnect(NimBLEClient *pClient)
 void MyClientCallbacks::onDisconnect(NimBLEClient *pClient, int reason)
 {
     // myBleArr[myBleArr(pClient)].connected = false;
-    WARN_PRINT("Disconnected from %s, reason = %d\n", pClient->getPeerAddress().toString().c_str(), reason);
+    DEBUG_PRINT("Disconnected from %s, reason = %d\n", pClient->getPeerAddress().toString().c_str(), reason);
     int index = MyGetIndex::myBleArr(myBleArr, pClient);
     if (index > -1)
+    {
         myBleArr[index].connected = false;
+        WARN_PRINT("Disconnected from %s\n", MyGetIndex::bleInfo(myBleArr, index).c_str());
+    }
     else
     {
         index = MyGetIndex::myThermoArr(myThermoArr, pClient);
         if (index > -1)
+        {
             myThermoArr[index].connected = false;
+            WARN_PRINT("Disconnected from %s\n", MyGetIndex::thermoInfo(myThermoArr, index).c_str());
+        }
         else
         {
             ERROR_PRINT("Disconnected event from unkown Address: %s\n", pClient->getPeerAddress().toString().c_str());

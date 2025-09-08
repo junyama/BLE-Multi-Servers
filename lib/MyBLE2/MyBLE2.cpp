@@ -54,6 +54,9 @@ JsonDocument MyBLE2::getState()
 {
     JsonDocument doc;
     doc["deviceName"] = deviceName;
+    doc["connected"] = (int)connected;
+    doc["chargeStatus"] = (int)packBasicInfo.MosfetStatus & 1;
+    doc["dischargeStatus"] = (int)(packBasicInfo.MosfetStatus & 2) >> 1;
     doc["batteryVoltage"] = packBasicInfo.Volts / 1000.0;
     doc["batteryCurrent"] = packBasicInfo.Amps / 1000.0;
     doc["batteryTemp1"] = packBasicInfo.Temp1 / 10.0;
@@ -125,7 +128,7 @@ void MyBLE2::bmsMosfetCtrl()
 
 void MyBLE2::mosfetCtrl(int chargeStatus, int dischargeStatus)
 {
-    DEBUG_PRINT("mosfetCtrl(%d, %d) called\n", chargeStatus, dischargeStatus);
+    INFO_PRINT("mosfetCtrl(%d, %d) called\n", chargeStatus, dischargeStatus);
     ctrlCommand = 1;
     commandParam = (byte)chargeStatus + (byte)dischargeStatus * 2;
     bmsMosfetCtrl();

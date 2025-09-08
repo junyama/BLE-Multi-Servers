@@ -40,8 +40,8 @@ private:
     VMaterLipoInfoStruct vMaterLipoInfo;
 
 public:
-    int lcdState = 1;
-    int ledState = 1;
+    int lcdState = 0;
+    int ledState = 0;
     float lipoVoltage;
     float lipoCurrent;
     int measurmentIntervalMs = 60000;

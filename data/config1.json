@@ -111,6 +111,17 @@
               "state_off": 0,
               "value_template": "{{ value_json.dischargeStatus }}",
               "unique_id": "27015f42-1831-4e9b-ab9e-9f49234cef3c"
+            },
+            "connected_state": {
+              "platform": "switch",
+              "name": "Connected State",
+              "command_topic": "cmnd/junichiBMS_0/connected",
+              "payload_on": "1",
+              "payload_off": "0",
+              "state_on": 1,
+              "state_off": 0,
+              "value_template": "{{ value_json.connected }}",
+              "unique_id": "4d777350-55dd-494a-89f2-6527bd7831e3"
             }
           },
           "state_topic": "stat/junichiBMS_0/STATE",
@@ -197,6 +208,17 @@
               "state_off": 0,
               "value_template": "{{ value_json.dischargeStatus }}",
               "unique_id": "0c49015d-5e4e-4e3b-837d-4e0ff8b9b090"
+            },
+            "connected_state": {
+              "platform": "switch",
+              "name": "Connected State",
+              "command_topic": "cmnd/junichiBMS_1/connected",
+              "payload_on": "1",
+              "payload_off": "0",
+              "state_on": 1,
+              "state_off": 0,
+              "value_template": "{{ value_json.connected }}",
+              "unique_id": "b68f2fe5-4007-48db-bd51-25f28d1d0371"
             }
           },
           "state_topic": "stat/junichiBMS_1/STATE",
@@ -284,6 +306,17 @@
               "state_off": 0,
               "value_template": "{{ value_json.dischargeStatus }}",
               "unique_id": "d59013a6-2a21-414a-afb0-a31dcc55c57f"
+            },
+            "connected_state": {
+              "platform": "switch",
+              "name": "Connected State",
+              "command_topic": "cmnd/junichiBMS_2/connected",
+              "payload_on": "1",
+              "payload_off": "0",
+              "state_on": 1,
+              "state_off": 0,
+              "value_template": "{{ value_json.connected }}",
+              "unique_id": "18fc07ea-52bd-4c47-88ef-1cbcd412a783"
             }
           },
           "state_topic": "stat/junichiBMS_2/STATE",
@@ -324,6 +357,17 @@
               "unit_of_measurement": "%",
               "value_template": "{{ value_json.humidity}}",
               "unique_id": "06e620b7-2add-453a-bcb2-37fe35d81b99"
+            },
+            "connected_state": {
+              "platform": "switch",
+              "name": "Connected State",
+              "command_topic": "cmnd/junichiThermo_0/connected",
+              "payload_on": "1",
+              "payload_off": "0",
+              "state_on": 1,
+              "state_off": 0,
+              "value_template": "{{ value_json.connected }}",
+              "unique_id": "c6ee3ad4-92dc-48d6-8fc4-3489bc7a0405"
             }
           },
           "state_topic": "stat/junichiThermo_0/STATE",
@@ -364,6 +408,17 @@
               "unit_of_measurement": "%",
               "value_template": "{{ value_json.humidity}}",
               "unique_id": "524ee9dd-4e34-4ecd-9cc5-21697aba2e55"
+            },
+            "connected_state": {
+              "platform": "switch",
+              "name": "Connected State",
+              "command_topic": "cmnd/junichiThermo_1/connected",
+              "payload_on": "1",
+              "payload_off": "0",
+              "state_on": 1,
+              "state_off": 0,
+              "value_template": "{{ value_json.connected }}",
+              "unique_id": "f1bbfea6-a716-4760-9d5b-249fefb2874f"
             }
           },
           "state_topic": "stat/junichiThermo_1/STATE",
@@ -404,6 +459,17 @@
               "unit_of_measurement": "%",
               "value_template": "{{ value_json.humidity}}",
               "unique_id": "0a634ac6-9d31-4898-be7a-f6ca18466d70"
+            },
+            "connected_state": {
+              "platform": "switch",
+              "name": "Connected State",
+              "command_topic": "cmnd/junichiThermo_2/connected",
+              "payload_on": "1",
+              "payload_off": "0",
+              "state_on": 1,
+              "state_off": 0,
+              "value_template": "{{ value_json.connected }}",
+              "unique_id": "777eb94f-ecb9-4685-be9b-c449cb40421a"
             }
           },
           "state_topic": "stat/junichiThermo_2/STATE",
@@ -444,6 +510,17 @@
               "unit_of_measurement": "%",
               "value_template": "{{ value_json.humidity}}",
               "unique_id": "ac2f197d-b022-4856-87af-35e41dc3afd4"
+            },
+            "connected_state": {
+              "platform": "switch",
+              "name": "Connected State",
+              "command_topic": "cmnd/junichiThermo_3/connected",
+              "payload_on": "1",
+              "payload_off": "0",
+              "state_on": 1,
+              "state_off": 0,
+              "value_template": "{{ value_json.connected }}",
+              "unique_id": "60e5b7ae-a324-4763-b24c-a1d0ca2e6412"
             }
           },
           "state_topic": "stat/junichiThermo_3/STATE",
@@ -484,6 +561,17 @@
               "unit_of_measurement": "%",
               "value_template": "{{ value_json.humidity}}",
               "unique_id": "484ce20a-43b3-4f8b-90b8-520e34b55927"
+            },
+            "connected_state": {
+              "platform": "switch",
+              "name": "Connected State",
+              "command_topic": "cmnd/junichiThermo_4/connected",
+              "payload_on": "1",
+              "payload_off": "0",
+              "state_on": 1,
+              "state_off": 0,
+              "value_template": "{{ value_json.connected }}",
+              "unique_id": "83006e8e-e841-46cb-878f-34c6e990214a"
             }
           },
           "state_topic": "stat/junichiThermo_4/STATE",
@@ -516,6 +604,17 @@
               "unit_of_measurement": "V",
               "value_template": "{{ value_json.calVoltage }}",
               "unique_id": "3bd7ebc9-4a10-4553-b00d-e6ca1755cf6d"
+            },
+            "connected_state": {
+              "platform": "switch",
+              "name": "Connected State",
+              "command_topic": "cmnd/junichiVoltMater_0/connected",
+              "payload_on": "1",
+              "payload_off": "0",
+              "state_on": 1,
+              "state_off": 0,
+              "value_template": "{{ value_json.connected }}",
+              "unique_id": "6494d70c-67c2-4059-aced-5327ee29cb8b"
             }
           },
           "state_topic": "stat/junichiVoltMater_0/STATE",
@@ -527,7 +626,7 @@
       "type": "Controller",
       "measurmentIntervalMs": 60000,
       "resetIntervalSec": 86400,
-      "mac": "2C:BC:BB:82:8C:15",
+      "mac": "EC:64:C9:A0:B1:F8",
       "mqtt": {
         "topic": "M5Core2_0/",
         "discoveryPayload": {
@@ -586,6 +685,22 @@
               "name": "Reset Button",
               "command_topic": "cmnd/M5Core2_0/reset",
               "unique_id": "35359cac-9f9a-487d-8966-88cc91aabf08"
+            },
+            "number_of_bms": {
+              "platform": "sensor",
+              "name": "Number of BMS",
+              "device_class": "current",
+              "unit_of_measurement": "A",
+              "value_template": "{{ value_json.numberOfBleDevices}}",
+              "unique_id": "0277fba1-51ff-465c-b2ff-4c6fc16b52be"
+            },
+            "number_of_thermo": {
+              "platform": "sensor",
+              "name": "Number of Thermometers",
+              "device_class": "current",
+              "unit_of_measurement": "A",
+              "value_template": "{{ value_json.numberOfThermoDevices}}",
+              "unique_id": "7a916f30-0bcf-4d03-bfa0-f9f508a5abbe"
             }
           },
           "state_topic": "stat/M5Core2_0/STATE",
@@ -661,7 +776,7 @@
               "platform": "sensor",
               "name": "Number of BMS",
               "device_class": "current",
-              "unit_of_measurement": "A",
+              "unit_of_measurement": "Unit",
               "value_template": "{{ value_json.numberOfBleDevices}}",
               "unique_id": "2703d77b-bcec-4639-8088-7f72bce2d2c5"
             },
@@ -669,7 +784,7 @@
               "platform": "sensor",
               "name": "Number of Thermometers",
               "device_class": "current",
-              "unit_of_measurement": "A",
+              "unit_of_measurement": "Unit",
               "value_template": "{{ value_json.numberOfThermoDevices}}",
               "unique_id": "fa386ebb-487f-47d8-87c9-7ec767074ab1"
             }
