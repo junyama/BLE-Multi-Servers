@@ -71,6 +71,8 @@ public:
     unsigned long lastMeasurment = 0;
 
     MyBLE2();
+    MyBLE2(NimBLEAddress peerAddress_);
+    MyBLE2(String mac_);
     void sendInfoCommand();
     JsonDocument getMosfetState();
     JsonDocument getState();

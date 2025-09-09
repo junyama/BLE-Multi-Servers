@@ -4,8 +4,8 @@ MyScanCallbacks::MyScanCallbacks()
 {
 }
 
-MyScanCallbacks::MyScanCallbacks(MyBLE2 *myBleArr_, MyM5 *myM5_, MyThermo *myThermoArr_)
-    : myBleArr(myBleArr_), myM5(myM5_), myThermoArr(myThermoArr_)
+MyScanCallbacks::MyScanCallbacks(MyBLE2 *myBleArr_, MyM5 *myM5_, MyThermo *myThermoArr_, std::vector<MyBLE2> *bleDevices_)
+    : myBleArr(myBleArr_), myM5(myM5_), myThermoArr(myThermoArr_), bleDevices(bleDevices_)
 {
 }
 
@@ -114,7 +114,12 @@ void MyScanCallbacks::onScanEnd(const NimBLEScanResults &results, int reason)
     myBleArr[bleIndex].deviceName = String(deviceName.c_str());
     myM5->bmsInfoArr[bleIndex].deviceName = myBleArr[bleIndex].deviceName;
     DEBUG_PRINT("myBleArr[%d].deviceName set by %s\n", bleIndex, myBleArr[bleIndex].deviceName.c_str());
-    // bleDevices->push_back(MyBLE(advDevices[bleIndex]->getAddress())); //crash
+    
+    //MyBLE2 myBle;
+    //MyBLE2 myBle(advDevices[bleIndex]->getAddress());
+    //bleDevices->push_back(myBle); //crash
+    //bleDevices->push_back(MyBLE2(advDevices[bleIndex]->getAddress()));
+    //bleDevices->push_back(MyBLE2(String(address.c_str())));
   }
   // NimBLEDevice::getScan()->start(scanTimeMs, false, true);
   if (numberOfBMS != 0 && !doConnect)

@@ -48,13 +48,14 @@ public:
   //bool doRescan = false;
 
   MyBLE2 *myBleArr;
+  std::vector<MyBLE2> *bleDevices;
   MyThermo *myThermoArr;
 
   MyM5 *myM5;
 
   MyScanCallbacks();
 
-  MyScanCallbacks(MyBLE2 *myBleArr_, MyM5 *myM5_, MyThermo *myThermoArr);
+  MyScanCallbacks(MyBLE2 *myBleArr_, MyM5 *myM5_, MyThermo *myThermoArr, std::vector<MyBLE2> *bleDevices_);
 
   void onResult(const NimBLEAdvertisedDevice *advertisedDevice) override;
 

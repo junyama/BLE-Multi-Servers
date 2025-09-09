@@ -51,6 +51,13 @@ const bool MyLog::ERROR = true;   // Red
 int failCount = 0;
 
 MyBLE2 myBleArr[BLE_ARR_SIZE];
+
+std::vector<MyBLE2> *bleDevices;
+
+std::vector<std::shared_ptr<MyBLE2>>myVector;
+auto obj = std::make_shared<MyBLE2>();
+myVector.push_back(obj); // Calls MyClass's copy constructor
+
 // int numberOfConnectedBMS = 0;
 
 MyThermo myThermoArr[THERMO_ARR_SIZE];
@@ -72,9 +79,7 @@ PubSubClient mqttClient(wifiClient);
 // int timeoutCount = 0;
 VoltMater voltMater;
 
-// std::vector<MyBLE2> *bleDevices;
-
-MyScanCallbacks myScanCallbacks(myBleArr, &myM5, myThermoArr);
+MyScanCallbacks myScanCallbacks(myBleArr, &myM5, myThermoArr, bleDevices);
 MyClientCallbacks myClientCallbacks(myBleArr, myThermoArr);
 MyNotification myNotification(myBleArr, &myScanCallbacks, &myClientCallbacks, myThermoArr);
 MyMqtt myMqtt(&mqttClient, myBleArr, &voltMater, &myM5, myThermoArr, &myWiFi, &myNotification, &myScanCallbacks);
