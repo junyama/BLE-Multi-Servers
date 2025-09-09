@@ -16,7 +16,7 @@ void VoltMater::setup(JsonDocument deviceObj)
         if (i > 2)
         {
             WARN_PRINT("No response from a volt mater\n");
-            M5.Lcd.println("gave up using volt mater.");
+            M5.Lcd.println("gave up using volt mater");
             connected = false;
             return;
         }

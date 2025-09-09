@@ -34,17 +34,19 @@
 
 #define CONFIG_FILE "/config.json"
 #define FAIL_LIMIT_MAIN 4
+#define PUBLISH_LEAD_TIME_BMS 60000
+#define PUBLISH_LEAD_TIME_THERMO 60000
 
 const char *TAG = "main";
 const char *MyGetIndex::TAG = "MyGetIndex";
 
-const bool MyLog::DEBUG = false;
-const bool MyLog::DEBUG2 = false;
-const bool MyLog::DEBUG3 = true;
-const bool MyLog::DEBUG4 = true;
-const bool MyLog::INFO = true;
-const bool MyLog::WARN = true;
-const bool MyLog::ERROR = true;
+const bool MyLog::DEBUG = false;  // White
+const bool MyLog::DEBUG2 = false; // Cyan
+const bool MyLog::DEBUG3 = true;  // Magenda
+const bool MyLog::DEBUG4 = true;  // Blue
+const bool MyLog::INFO = true;    // Green
+const bool MyLog::WARN = true;    // Yellow
+const bool MyLog::ERROR = true;   // Red
 
 int failCount = 0;
 
@@ -207,16 +209,17 @@ void loop()
   {
     myScanCallbacks.doConnect = false;
     INFO_PRINT("Found %d of BMSs we want to connect to, do it now.\n", myScanCallbacks.numberOfBMS);
+    myMqtt.bmsSetup();
     myNotification.numberOfBMS = myScanCallbacks.numberOfBMS;
     if (myNotification.connectToServer())
     {
       INFO_PRINT("Success! we should now be getting notifications from BMS(%d).\n", myNotification.numberOfConnectedBMS);
       // myMqtt.mqttDeviceSetup(myNotification.numberOfConnectedBMS);
-      myMqtt.bmsSetup();
+      // myMqtt.bmsSetup();
       myM5.numberOfConnectedBMS = myNotification.numberOfConnectedBMS;
       for (int index = 0; index < myScanCallbacks.numberOfBMS; index++)
       {
-        myBleArr[index].lastMeasurment = millis() + 30000 + 4800 * index;
+        myBleArr[index].lastMeasurment = millis() + PUBLISH_LEAD_TIME_BMS + 4800 * index;
         INFO_PRINT("myBleArr[%d].lastMeasurment: %lu\n", index, myBleArr[index].lastMeasurment);
       }
       // myClientCallbacks.numberOfConnectedBMS = myNotification.numberOfConnectedBMS;
@@ -244,11 +247,11 @@ void loop()
       else
       {
         WARN_PRINT("Exceeded the fail limit (%d) of main. Continue\n", FAIL_LIMIT_MAIN);
-        myMqtt.bmsSetup();
+        // myMqtt.bmsSetup();
         myM5.numberOfConnectedBMS = myNotification.numberOfConnectedBMS;
         for (int index = 0; index < myScanCallbacks.numberOfBMS; index++)
         {
-          myBleArr[index].lastMeasurment = millis() + 30000 + 4800 * index;
+          myBleArr[index].lastMeasurment = millis() + PUBLISH_LEAD_TIME_BMS + 4800 * index;
           INFO_PRINT("myBleArr[%d].lastMeasurment: %lu\n", index, myBleArr[index].lastMeasurment);
         }
       }
@@ -269,17 +272,18 @@ void loop()
   {
     myScanCallbacks.doConnectThermo = false;
     INFO_PRINT("Found %d of thermomaters we want to connect to, do it now.\n", myScanCallbacks.numberOfThermo);
+    myMqtt.thermoSetup();
     myNotification.numberOfThermo = myScanCallbacks.numberOfThermo;
     if (myNotification.connectToThermo())
     {
       INFO_PRINT("Success! we should now be getting notifications from Thermometers(%d).\n", myNotification.numberOfConnectedThermo);
       // myMqtt.mqttThermoSetup(myNotification.numberOfConnectedThermo);
-      myMqtt.thermoSetup();
+      // myMqtt.thermoSetup();
       myM5.numberOfConnectedThermo = myNotification.numberOfConnectedThermo;
       // myClientCallbacks.numberOfConnectedThermo = myNotification.numberOfConnectedThermo;
       for (int index = 0; index < myScanCallbacks.numberOfThermo; index++)
       {
-        myThermoArr[index].lastMeasurment = millis() + 30000 + 6500 * index;
+        myThermoArr[index].lastMeasurment = millis() + PUBLISH_LEAD_TIME_THERMO + 6500 * index;
         INFO_PRINT("myThermoArr[%d].lastMeasurment: %lu\n", index, myThermoArr[index].lastMeasurment);
       }
     }
@@ -297,11 +301,11 @@ void loop()
       else
       {
         WARN_PRINT("Exceeded the fail limit (%d) of main. Continue\n", FAIL_LIMIT_MAIN);
-        myMqtt.thermoSetup();
+        // myMqtt.thermoSetup();
         myM5.numberOfConnectedThermo = myNotification.numberOfConnectedThermo;
         for (int index = 0; index < myScanCallbacks.numberOfThermo; index++)
         {
-          myThermoArr[index].lastMeasurment = millis() + 30000 + 6500 * index;
+          myThermoArr[index].lastMeasurment = millis() + PUBLISH_LEAD_TIME_THERMO + 6500 * index;
           INFO_PRINT("myThermoArr[%d].lastMeasurment: %lu\n", index, myThermoArr[index].lastMeasurment);
         }
       }
