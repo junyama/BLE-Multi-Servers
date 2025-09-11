@@ -20,7 +20,7 @@
 
 #include "MyBLE2.hpp"
 #include "MyThermo.hpp"
-// #include "MyScanCallbacks.hpp"
+#include "MyScanCallbacks.hpp"
 #include "MyNotification.hpp"
 #include "MyClientCallBacks.hpp"
 #include "MyLog.hpp"
@@ -40,24 +40,18 @@
 const char *TAG = "main";
 const char *MyGetIndex::TAG = "MyGetIndex";
 
-const bool MyLog::DEBUG = false;  // White
-const bool MyLog::DEBUG2 = false; // Cyan
-const bool MyLog::DEBUG3 = true;  // Magenda
-const bool MyLog::DEBUG4 = true;  // Blue
-const bool MyLog::INFO = true;    // Green
-const bool MyLog::WARN = true;    // Yellow
-const bool MyLog::ERROR = true;   // Red
+const bool MyLog::DEBUG = false; // White
+const bool MyLog::DEBUG2 = true; // Cyan
+const bool MyLog::DEBUG3 = true; // Magenda
+const bool MyLog::DEBUG4 = true; // Blue
+const bool MyLog::DEBUG5 = true; // White
+const bool MyLog::INFO = true;   // Green
+const bool MyLog::WARN = true;   // Yellow
+const bool MyLog::ERROR = true;  // Red
 
 int failCount = 0;
 
 MyBLE2 myBleArr[BLE_ARR_SIZE];
-
-std::vector<MyBLE2> *bleDevices;
-
-std::vector<std::shared_ptr<MyBLE2>>myVector;
-auto obj = std::make_shared<MyBLE2>();
-myVector.push_back(obj); // Calls MyClass's copy constructor
-
 // int numberOfConnectedBMS = 0;
 
 MyThermo myThermoArr[THERMO_ARR_SIZE];
@@ -79,10 +73,15 @@ PubSubClient mqttClient(wifiClient);
 // int timeoutCount = 0;
 VoltMater voltMater;
 
-MyScanCallbacks myScanCallbacks(myBleArr, &myM5, myThermoArr, bleDevices);
-MyClientCallbacks myClientCallbacks(myBleArr, myThermoArr);
+// std::vector<MyBLE2> *bleDevices;
+
+MyScanCallbacks myScanCallbacks(myBleArr, &myM5, myThermoArr);
+MyClientCallbacks myClientCallbacks(myBleArr, myThermoArr, &myScanCallbacks);
 MyNotification myNotification(myBleArr, &myScanCallbacks, &myClientCallbacks, myThermoArr);
 MyMqtt myMqtt(&mqttClient, myBleArr, &voltMater, &myM5, myThermoArr, &myWiFi, &myNotification, &myScanCallbacks);
+
+// auto bleDevices = myScanCallbacks.bleDevices;
+// auto thermoDevices = myScanCallbacks.thermoDevices;
 
 // MyGetIndex myGetIndex(myBleArr, &myScanCallbacks.numberOfBMS, myThermoArr, &myScanCallbacks.numberOfThermo);
 
@@ -222,11 +221,14 @@ void loop()
       // myMqtt.mqttDeviceSetup(myNotification.numberOfConnectedBMS);
       // myMqtt.bmsSetup();
       myM5.numberOfConnectedBMS = myNotification.numberOfConnectedBMS;
-      for (int index = 0; index < myScanCallbacks.numberOfBMS; index++)
+      DEBUG5_PRINT("DEBUG1\n");
+      for (int index = 0; index < myScanCallbacks.advDevices.size(); index++)
       {
-        myBleArr[index].lastMeasurment = millis() + PUBLISH_LEAD_TIME_BMS + 4800 * index;
-        INFO_PRINT("myBleArr[%d].lastMeasurment: %lu\n", index, myBleArr[index].lastMeasurment);
+        myScanCallbacks.bleDevices[index].lastMeasurment = millis() + PUBLISH_LEAD_TIME_BMS + 4800 * index;
+        INFO_PRINT("bleDevices[%d/%d].lastMeasurment: %lu\n",
+                   index, myScanCallbacks.advDevices.size(), myScanCallbacks.bleDevices[index].lastMeasurment);
       }
+      DEBUG5_PRINT("DEBUG2\n");
       // myClientCallbacks.numberOfConnectedBMS = myNotification.numberOfConnectedBMS;
       /*
       if (!mqttClient.connected())
@@ -256,8 +258,8 @@ void loop()
         myM5.numberOfConnectedBMS = myNotification.numberOfConnectedBMS;
         for (int index = 0; index < myScanCallbacks.numberOfBMS; index++)
         {
-          myBleArr[index].lastMeasurment = millis() + PUBLISH_LEAD_TIME_BMS + 4800 * index;
-          INFO_PRINT("myBleArr[%d].lastMeasurment: %lu\n", index, myBleArr[index].lastMeasurment);
+          myScanCallbacks.bleDevices[index].lastMeasurment = millis() + PUBLISH_LEAD_TIME_BMS + 4800 * index;
+          INFO_PRINT("bleDevices[%d].lastMeasurment: %lu\n", index, myScanCallbacks.bleDevices[index].lastMeasurment);
         }
       }
 
@@ -276,9 +278,9 @@ void loop()
   if (myScanCallbacks.doConnectThermo)
   {
     myScanCallbacks.doConnectThermo = false;
-    INFO_PRINT("Found %d of thermomaters we want to connect to, do it now.\n", myScanCallbacks.numberOfThermo);
+    INFO_PRINT("Found %d of thermomaters we want to connect to, do it now.\n", myScanCallbacks.advThermoDevices.size());
     myMqtt.thermoSetup();
-    myNotification.numberOfThermo = myScanCallbacks.numberOfThermo;
+    myNotification.numberOfThermo = myScanCallbacks.advThermoDevices.size();
     if (myNotification.connectToThermo())
     {
       INFO_PRINT("Success! we should now be getting notifications from Thermometers(%d).\n", myNotification.numberOfConnectedThermo);
@@ -286,16 +288,16 @@ void loop()
       // myMqtt.thermoSetup();
       myM5.numberOfConnectedThermo = myNotification.numberOfConnectedThermo;
       // myClientCallbacks.numberOfConnectedThermo = myNotification.numberOfConnectedThermo;
-      for (int index = 0; index < myScanCallbacks.numberOfThermo; index++)
+      for (int index = 0; index < myScanCallbacks.advThermoDevices.size(); index++)
       {
-        myThermoArr[index].lastMeasurment = millis() + PUBLISH_LEAD_TIME_THERMO + 6500 * index;
-        INFO_PRINT("myThermoArr[%d].lastMeasurment: %lu\n", index, myThermoArr[index].lastMeasurment);
+        myScanCallbacks.thermoDevices[index].lastMeasurment = millis() + PUBLISH_LEAD_TIME_THERMO + 6500 * index;
+        INFO_PRINT("thermoDevices[%d].lastMeasurment: %lu\n", index, myScanCallbacks.thermoDevices[index].lastMeasurment);
       }
     }
     else
     {
       WARN_PRINT("[%d/%d] Failed to connect thermomaters found[%d] %s\n",
-                 ++failCount, FAIL_LIMIT_MAIN, myScanCallbacks.numberOfThermo);
+                 ++failCount, FAIL_LIMIT_MAIN, myScanCallbacks.advThermoDevices.size());
       if (failCount <= FAIL_LIMIT_MAIN)
       {
         WARN_PRINT("rescan\n");
@@ -308,10 +310,10 @@ void loop()
         WARN_PRINT("Exceeded the fail limit (%d) of main. Continue\n", FAIL_LIMIT_MAIN);
         // myMqtt.thermoSetup();
         myM5.numberOfConnectedThermo = myNotification.numberOfConnectedThermo;
-        for (int index = 0; index < myScanCallbacks.numberOfThermo; index++)
+        for (int index = 0; index < myScanCallbacks.advThermoDevices.size(); index++)
         {
-          myThermoArr[index].lastMeasurment = millis() + PUBLISH_LEAD_TIME_THERMO + 6500 * index;
-          INFO_PRINT("myThermoArr[%d].lastMeasurment: %lu\n", index, myThermoArr[index].lastMeasurment);
+          myScanCallbacks.thermoDevices[index].lastMeasurment = millis() + PUBLISH_LEAD_TIME_THERMO + 6500 * index;
+          INFO_PRINT("thermoDevices[%d].lastMeasurment: %lu\n", index, myScanCallbacks.thermoDevices[index].lastMeasurment);
         }
       }
 
@@ -325,35 +327,35 @@ void loop()
   }
 
   currentTime = millis();
-  for (int bleIndex = 0; bleIndex < myNotification.numberOfBMS; bleIndex++)
+  for (int bleIndex = 0; bleIndex < myScanCallbacks.bleDevices.size(); bleIndex++)
   {
     try
     {
-      if (myBleArr[bleIndex].pChr_tx)
+      if (myScanCallbacks.bleDevices[bleIndex].pChr_tx)
       {
-        // bool timeout = false;
         // if (timeout = myTimerArr[bleIndex].timeout(millis()))
-        if (myBleArr[bleIndex].timeout(currentTime))
+        if (myScanCallbacks.bleDevices[bleIndex].timeout(currentTime))
         {
-          if (!myBleArr[bleIndex].connected)
+          DEBUG5_PRINT("DEBUG3\n");
+          if (!myScanCallbacks.bleDevices[bleIndex].connected)
           {
-            myMqtt.publish("stat/" + myBleArr[bleIndex].topic + "STATE", "{\"connected\": 0}");
-            String msg = MyGetIndex::bleInfo(myBleArr, bleIndex) + " not connected";
+            myMqtt.publish("stat/" + myScanCallbacks.bleDevices[bleIndex].topic + "STATE", "{\"connected\": 0}");
+            String msg = MyGetIndex::bleInfo(&myScanCallbacks, bleIndex) + " not connected";
             throw std::runtime_error(std::string(msg.c_str()));
           }
-          myBleArr[bleIndex].sendInfoCommand();
-          INFO_PRINT("[%lu] myBleArr[%d].sendInfoCommand()\n", millis(), bleIndex);
+          myScanCallbacks.bleDevices[bleIndex].sendInfoCommand();
+          INFO_PRINT("[%lu] bleDevices[%d].sendInfoCommand()\n", millis(), bleIndex);
         }
         // DEBUG_PRINT("timeout: %d, myBleArr[%d].newPacketReceived: %d\n", timeout, bleIndex, myBleArr[bleIndex].newPacketReceived);
-        if (myBleArr[bleIndex].newPacketReceived)
+        if (myScanCallbacks.bleDevices[bleIndex].newPacketReceived)
         {
-          DEBUG_PRINT("myBleArr[%d].newPacketReceived: %d\n", bleIndex, myBleArr[bleIndex].newPacketReceived);
-          myBleArr[bleIndex].newPacketReceived = false;
-          myM5.updateBmsInfo(bleIndex, myBleArr[bleIndex].packBasicInfo.Volts, myBleArr[bleIndex].packBasicInfo.Amps,
-                             myBleArr[bleIndex].packCellInfo.CellDiff,
-                             myBleArr[bleIndex].packBasicInfo.Temp1, myBleArr[bleIndex].packBasicInfo.Temp2,
-                             myBleArr[bleIndex].packBasicInfo.CapacityRemainPercent);
-          myMqtt.publishJson("stat/" + myBleArr[bleIndex].topic + "STATE", myBleArr[bleIndex].getState(), true);
+          DEBUG_PRINT("bleDevices[%d].newPacketReceived: %d\n", bleIndex, myScanCallbacks.bleDevices[bleIndex].newPacketReceived);
+          myScanCallbacks.bleDevices[bleIndex].newPacketReceived = false;
+          myM5.updateBmsInfo(bleIndex, myScanCallbacks.bleDevices[bleIndex].packBasicInfo.Volts, myScanCallbacks.bleDevices[bleIndex].packBasicInfo.Amps,
+                             myScanCallbacks.bleDevices[bleIndex].packCellInfo.CellDiff,
+                             myScanCallbacks.bleDevices[bleIndex].packBasicInfo.Temp1, myScanCallbacks.bleDevices[bleIndex].packBasicInfo.Temp2,
+                             myScanCallbacks.bleDevices[bleIndex].packBasicInfo.CapacityRemainPercent);
+          myMqtt.publishJson("stat/" + myScanCallbacks.bleDevices[bleIndex].topic + "STATE", myScanCallbacks.bleDevices[bleIndex].getState(), true);
         }
       }
     }
@@ -421,19 +423,19 @@ void loop()
   }
 
   currentTime = millis();
-  for (int index = 0; index < myScanCallbacks.numberOfThermo; index++)
+  for (int index = 0; index < myScanCallbacks.advThermoDevices.size(); index++)
   {
     try
     {
-      if (myThermoArr[index].timeout(currentTime))
+      if (myScanCallbacks.thermoDevices[index].timeout(currentTime))
       {
-        if (!myThermoArr[index].connected)
+        if (!myScanCallbacks.thermoDevices[index].connected)
         {
-          myMqtt.publish("stat/" + myThermoArr[index].topic + "STATE", "{\"connected\": 0}");
-          String msg = MyGetIndex::thermoInfo(myThermoArr, index) + " not connected";
+          myMqtt.publish("stat/" + myScanCallbacks.thermoDevices[index].topic + "STATE", "{\"connected\": 0}");
+          String msg = MyGetIndex::thermoInfo(&myScanCallbacks, index) + " not connected";
           throw std::runtime_error(std::string(msg.c_str()));
         }
-        myMqtt.publishJson("stat/" + myThermoArr[index].topic + "STATE", myThermoArr[index].getState(), true);
+        myMqtt.publishJson("stat/" + myScanCallbacks.thermoDevices[index].topic + "STATE", myScanCallbacks.thermoDevices[index].getState(), true);
       }
     }
     catch (const std::runtime_error &e)

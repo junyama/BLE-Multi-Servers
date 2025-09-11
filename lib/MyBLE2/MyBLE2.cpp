@@ -4,21 +4,21 @@ MyBLE2::MyBLE2()
 {
 }
 
-//
+/*
 MyBLE2::MyBLE2(NimBLEAddress peerAddress_) : peerAddress(peerAddress_)
 {
 }
-//
 
 MyBLE2::MyBLE2(String mac_) : mac(mac_)
 {
 }
-
-/*
-MyBLE2::MyBLE2(const MyBLE2 &obj) : peerAddress(obj.peerAddress)
-{
-}
 */
+
+MyBLE2::MyBLE2(NimBLEAddress peerAddress_, String deviceName_) :
+peerAddress(peerAddress_), mac(String(peerAddress_.toString().c_str())), deviceName(deviceName_)
+{
+    //mac = String(peerAddress.toString().c_str());
+}
 
 void MyBLE2::sendInfoCommand()
 {

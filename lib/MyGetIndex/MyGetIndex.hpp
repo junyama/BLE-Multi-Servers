@@ -2,6 +2,7 @@
 #define MY_GET_INDEX_HPP
 
 #include <NimBLEDevice.h>
+#include "MyScanCallbacks.hpp"
 #include "MyBLE2.hpp"
 #include "MyThermo.hpp"
 
@@ -33,8 +34,14 @@ public:
     static int myBleArr(MyBLE2 *myBleArr, NimBLEClient *client);
     static int myThermoArr(MyThermo *myThermoArr, NimBLEClient *client);
 
+    static int bleDevices(MyScanCallbacks *myScanCallbacks, NimBLEClient *client);
+    static int thermoDevices(MyScanCallbacks *myScanCallbacks, NimBLEClient *client);
+
     static String bleInfo(MyBLE2 *myBleArr, int index);
     static String thermoInfo(MyThermo *myThermoArr, int index);
+
+    static String bleInfo(MyScanCallbacks *myScanCallbacks, int index);
+    static String thermoInfo(MyScanCallbacks *myScanCallbacks, int index);
 };
 
 #endif /* MY_GET_INDEX_HPP */

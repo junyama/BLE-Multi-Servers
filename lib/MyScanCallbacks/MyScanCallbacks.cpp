@@ -4,8 +4,8 @@ MyScanCallbacks::MyScanCallbacks()
 {
 }
 
-MyScanCallbacks::MyScanCallbacks(MyBLE2 *myBleArr_, MyM5 *myM5_, MyThermo *myThermoArr_, std::vector<MyBLE2> *bleDevices_)
-    : myBleArr(myBleArr_), myM5(myM5_), myThermoArr(myThermoArr_), bleDevices(bleDevices_)
+MyScanCallbacks::MyScanCallbacks(MyBLE2 *myBleArr_, MyM5 *myM5_, MyThermo *myThermoArr_)
+    : myBleArr(myBleArr_), myM5(myM5_), myThermoArr(myThermoArr_)
 {
 }
 
@@ -46,7 +46,7 @@ void MyScanCallbacks::onResult(const NimBLEAdvertisedDevice *advertisedDevice)
       }
       // advDevice = advertisedDevice;
       advDevices.push_back(advertisedDevice);
-      DEBUG_PRINT("onResult> push_back add> advDevices.size(): %d\n", advDevices.size());
+      INFO_PRINT("onResult> push_back add> advDevices.size(): %d\n", advDevices.size());
     }
     return;
   }
@@ -54,13 +54,17 @@ void MyScanCallbacks::onResult(const NimBLEAdvertisedDevice *advertisedDevice)
   // else if (advertisedDevice->getAddress().equals(targeThermoAddress)) // tentative code2 to mach mac address
   if (advertisedDevice->getServiceDataUUID(0).equals(serviceDataUUID_thermo))
   {
-    DEBUG4_PRINT("Found Thermomater Service, Name: %s, Address: %s\n",
+    DEBUG4_PRINT("[%d]: Found Thermomater Service, Name: %s, Address: %s\n",
+                 advThermoDevices.size(),
                  advertisedDevice->getName().c_str(),
                  advertisedDevice->getAddress().toString().c_str());
+    DEBUG5_PRINT("DEBUG6\n");
     if (advThermoDevices.size() == 0)
     {
+      DEBUG5_PRINT("DEBUG7\n");
       advThermoDevices.push_back(advertisedDevice);
-      DEBUG_PRINT("onResult> first push_back> advThermoDevices.size(): %d\n", advThermoDevices.size());
+      DEBUG5_PRINT("DEBUG8\n");
+      DEBUG5_PRINT("onResult> first push_back> advThermoDevices.size(): %d\n", advThermoDevices.size());
     }
     else
     {
@@ -75,6 +79,7 @@ void MyScanCallbacks::onResult(const NimBLEAdvertisedDevice *advertisedDevice)
       advThermoDevices.push_back(advertisedDevice);
       DEBUG_PRINT("onResult> push_back add> advThermoDevices.size(): %d\n", advThermoDevices.size());
     }
+    DEBUG5_PRINT("DEBUG9\n");
     return;
   }
   DEBUG_PRINT("Advertized device is not BSM or Thermomater: %s\n", advertisedDevice->toString().c_str());
@@ -97,49 +102,38 @@ void MyScanCallbacks::onScanEnd(const NimBLEScanResults &results, int reason)
   if (numberOfBMS == 0)
   {
     WARN_PRINT("no BMS found\n");
-    return;
-    //WARN_PRINT("no BMS found and goint to rescan BLE\n");
-    // doRescan = true;
-    // delay(2000);
-    // myM5->reset();
+    // return;
+    // WARN_PRINT("no BMS found and goint to rescan BLE\n");
+    //   doRescan = true;
+    //   delay(2000);
+    //   myM5->reset();
   }
 
   for (int bleIndex = 0; bleIndex < numberOfBMS; bleIndex++)
   {
-    std::string address = advDevices[bleIndex]->getAddress().toString();
-    myBleArr[bleIndex].mac = String(address.c_str());
-    myM5->bmsInfoArr[bleIndex].mac = myBleArr[bleIndex].mac;
-    DEBUG_PRINT("myBleArr[%d].mac set by %s\n", bleIndex, address.c_str());
-    std::string deviceName = advDevices[bleIndex]->getName();
-    myBleArr[bleIndex].deviceName = String(deviceName.c_str());
-    myM5->bmsInfoArr[bleIndex].deviceName = myBleArr[bleIndex].deviceName;
-    DEBUG_PRINT("myBleArr[%d].deviceName set by %s\n", bleIndex, myBleArr[bleIndex].deviceName.c_str());
-    
-    //MyBLE2 myBle;
-    //MyBLE2 myBle(advDevices[bleIndex]->getAddress());
-    //bleDevices->push_back(myBle); //crash
-    //bleDevices->push_back(MyBLE2(advDevices[bleIndex]->getAddress()));
-    //bleDevices->push_back(MyBLE2(String(address.c_str())));
+    MyBLE2 myBle(advDevices[bleIndex]->getAddress(), String(advDevices[bleIndex]->getName().c_str()));
+    bleDevices.push_back(myBle);
+    DEBUG_PRINT("[%d]: bleDevices.push_back: %s\n", bleIndex, bleDevices[bleIndex].deviceName);
   }
-  // NimBLEDevice::getScan()->start(scanTimeMs, false, true);
+
   if (numberOfBMS != 0 && !doConnect)
   {
     doConnect = true;
   }
-
+  DEBUG5_PRINT("D4\n");
   // added for Thermomater
-  numberOfThermo = advThermoDevices.size(); ////////////////
-
-  INFO_PRINT("Thermomater scan done, reason: %d, device count: %d, numberOfThermo: %d\n",
-             reason, results.getCount(), numberOfThermo);
+  // numberOfThermo = advThermoDevices.size(); ////////////////
+  DEBUG5_PRINT("D5\n");
+  INFO_PRINT("Thermomater scan done, reason: %d, device count: %d, advThermoDevices.size(): %d\n",
+             reason, results.getCount(), advThermoDevices.size());
   // numberOfAdvThermoDevices = advThermoDevices.size();
   // DEBUG_PRINT("advThermoDevices.size(): %d\n", advThermoDevices.size());
   // numberOfThermoDevicesFound = &numberOfAdvThermoDevices;
   // DEBUG_PRINT("numberOfThermoDevicesFound: %d\n", *numberOfThermoDevicesFound);
-  sprintf(buff, "Thermo scan done, found %d", numberOfThermo);
+  sprintf(buff, "Thermo scan done, found %d", advThermoDevices.size());
   myM5->println(String(buff));
 
-  if (numberOfThermo == 0)
+  if (advThermoDevices.size() == 0)
   {
     WARN_PRINT("no thermomater found\n");
     return;
@@ -147,18 +141,23 @@ void MyScanCallbacks::onScanEnd(const NimBLEScanResults &results, int reason)
     // doRescan = true;
   }
 
-  for (int index = 0; index < numberOfThermo; index++)
+  for (int index = 0; index < advThermoDevices.size(); index++)
   {
+    /*
     std::string address = advThermoDevices[index]->getAddress().toString();
-    myThermoArr[index].mac = String(address.c_str());
-    // myM5->bmsInfoArr[bleIndex].mac = myBleArr[index].mac;
-    DEBUG2_PRINT("myThermoArr[%d].mac set by %s\n", index, address.c_str());
+    thermoDevices[index].mac = String(address.c_str());
+    // myM5->bmsInfoArr[bleIndex].mac = bleDevices[index].mac;
+    DEBUG2_PRINT("thermoDevices[%d].mac set by %s\n", index, address.c_str());
     std::string deviceName = advThermoDevices[index]->getName();
-    myThermoArr[index].deviceName = String(deviceName.c_str());
-    // myM5->bmsInfoArr[index].deviceName = myBleArr[index].deviceName;
-    DEBUG2_PRINT("myThermoArr[%d].deviceName set by %s\n", index, myThermoArr[index].deviceName.c_str());
+    thermoDevices[index].deviceName = String(deviceName.c_str());
+    // myM5->bmsInfoArr[index].deviceName = bleDevices[index].deviceName;
+    DEBUG2_PRINT("thermoDevices[%d].deviceName set by %s\n", index, thermoDevices[index].deviceName.c_str());
+    */
+    MyThermo myThermo(advThermoDevices[index]->getAddress(), String(advThermoDevices[index]->getName().c_str()));
+    thermoDevices.push_back(myThermo);
+    WARN_PRINT("[%d/%d]: thermoDevices.push_back: %s\n", index, advThermoDevices.size(), thermoDevices[index].deviceName);
   }
-  if (numberOfThermo != 0 && !doConnectThermo)
+  if (advThermoDevices.size() != 0 && !doConnectThermo)
   {
     doConnectThermo = true;
   }

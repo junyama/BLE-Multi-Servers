@@ -1,26 +1,28 @@
 #include "MyClientCallbacks.hpp"
 
-MyClientCallbacks::MyClientCallbacks(MyBLE2 *myBleArr_, MyThermo *myThermoArr_)
-    : myBleArr(myBleArr_), myThermoArr(myThermoArr_)
+MyClientCallbacks::MyClientCallbacks(MyBLE2 *myBleArr_, MyThermo *myThermoArr_, MyScanCallbacks *myScanCallbacks_)
+    : myBleArr(myBleArr_), myThermoArr(myThermoArr_), myScanCallbacks(myScanCallbacks_)
 {
 }
 
 void MyClientCallbacks::onConnect(NimBLEClient *pClient)
 {
+    //auto bleDevices = myScanCallbacks->bleDevices;
+    //auto thermoDevices = myScanCallbacks->thermoDevices;
     DEBUG4_PRINT("Connected to %s\n", pClient->getPeerAddress().toString().c_str());
-    int index = MyGetIndex::myBleArr(myBleArr, pClient);
+    int index = MyGetIndex::bleDevices(myScanCallbacks, pClient);
     if (index > -1)
     {
-        myBleArr[index].connected = true;
-        DEBUG4_PRINT("myBleArr[%d] Connected\n", index);
+        myScanCallbacks->bleDevices[index].connected = true; ///////////
+        DEBUG4_PRINT("bleDevices[%d] Connected\n", index);
     }
     else
     {
-        index = MyGetIndex::myThermoArr(myThermoArr, pClient);
+        index = MyGetIndex::thermoDevices(myScanCallbacks, pClient);
         if (index > -1)
         {
-            myThermoArr[index].connected = true;
-            DEBUG4_PRINT("myThermoArr[%d] Connected\n", index);
+            myScanCallbacks->thermoDevices[index].connected = true; //////////
+            DEBUG4_PRINT("thermoDevices[%d] Connected\n", index);
         }
         else
         {
@@ -31,21 +33,22 @@ void MyClientCallbacks::onConnect(NimBLEClient *pClient)
 
 void MyClientCallbacks::onDisconnect(NimBLEClient *pClient, int reason)
 {
-    // myBleArr[myBleArr(pClient)].connected = false;
+    //auto bleDevices = myScanCallbacks->bleDevices;
+    //auto thermoDevices = myScanCallbacks->thermoDevices;
     DEBUG_PRINT("Disconnected from %s, reason = %d\n", pClient->getPeerAddress().toString().c_str(), reason);
-    int index = MyGetIndex::myBleArr(myBleArr, pClient);
+    int index = MyGetIndex::bleDevices(myScanCallbacks, pClient);
     if (index > -1)
     {
-        myBleArr[index].connected = false;
-        WARN_PRINT("Disconnected from %s\n", MyGetIndex::bleInfo(myBleArr, index).c_str());
+        myScanCallbacks->bleDevices[index].connected = false; //////////
+        WARN_PRINT("Disconnected from %s\n", MyGetIndex::bleInfo(myScanCallbacks, index).c_str());
     }
     else
     {
-        index = MyGetIndex::myThermoArr(myThermoArr, pClient);
+        index = MyGetIndex::thermoDevices(myScanCallbacks, pClient);
         if (index > -1)
         {
-            myThermoArr[index].connected = false;
-            WARN_PRINT("Disconnected from %s\n", MyGetIndex::thermoInfo(myThermoArr, index).c_str());
+            myScanCallbacks->thermoDevices[index].connected = false; ///////////
+            WARN_PRINT("Disconnected from %s\n", MyGetIndex::thermoInfo(myScanCallbacks, index).c_str());
         }
         else
         {

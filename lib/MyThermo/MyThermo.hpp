@@ -11,7 +11,6 @@ class MyThermo
 {
 private:
     const char *TAG = "MyThermo";
-    NimBLEAddress peerAddress;
     byte commandParam = 0;
     bool toggle = false;
     byte ctrlCommand = 0;
@@ -19,14 +18,15 @@ private:
     float temp = 0.0;
     float humi = 0.0;
     float voltage = 0.0;
-    //bool freeL = true;
+    // bool freeL = true;
 
 public:
     bool newPacketReceived = false;
     NimBLERemoteCharacteristic *pChr_rx_temp = nullptr;
     NimBLERemoteCharacteristic *pChr_rx_humid = nullptr;
 
-    //bool available = false;
+    // bool available = false;
+    NimBLEAddress peerAddress;
     String deviceName = "UNKNOWN";
     String mac = "00:00:00:00:00:00";
     String topic = "NOT_DEFINED";
@@ -38,6 +38,7 @@ public:
     // NimBLEClientCallbacks clientCallbacks;
 
     MyThermo();
+    MyThermo(NimBLEAddress peerAddress_, String deviceName_);
     void setup(JsonDocument deviceObj);
     bool timeout(unsigned long currentTime);
     float processTempPacket(char *data, uint32_t dataSize);

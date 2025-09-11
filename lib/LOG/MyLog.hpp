@@ -5,7 +5,7 @@
 #define DEBUG_PRINT(...)                                              \
     if (MyLog::DEBUG)                                                 \
     {                                                                 \
-        Serial.print("\033[0;0m");                                      \
+        Serial.print("\033[0;0m");                                    \
         Serial.printf("[%s] %s: ", DateTime.toString().c_str(), TAG); \
         Serial.printf(__VA_ARGS__);                                   \
     }
@@ -14,7 +14,7 @@
 #define DEBUG2_PRINT(...)                                             \
     if (MyLog::DEBUG2)                                                \
     {                                                                 \
-        Serial.print("\033[0;36m");                                     \
+        Serial.print("\033[0;36m");                                   \
         Serial.printf("[%s] %s: ", DateTime.toString().c_str(), TAG); \
         Serial.printf(__VA_ARGS__);                                   \
     }
@@ -23,7 +23,7 @@
 #define DEBUG3_PRINT(...)                                             \
     if (MyLog::DEBUG3)                                                \
     {                                                                 \
-        Serial.print("\033[0;35m");                                     \
+        Serial.print("\033[0;35m");                                   \
         Serial.printf("[%s] %s: ", DateTime.toString().c_str(), TAG); \
         Serial.printf(__VA_ARGS__);                                   \
     }
@@ -32,7 +32,16 @@
 #define DEBUG4_PRINT(...)                                             \
     if (MyLog::DEBUG4)                                                \
     {                                                                 \
-        Serial.print("\033[0;34m");                                     \
+        Serial.print("\033[0;34m");                                   \
+        Serial.printf("[%s] %s: ", DateTime.toString().c_str(), TAG); \
+        Serial.printf(__VA_ARGS__);                                   \
+    }
+
+// white
+#define DEBUG5_PRINT(...)                                             \
+    if (MyLog::DEBUG5)                                                \
+    {                                                                 \
+        Serial.print("\033[1;0m");                                    \
         Serial.printf("[%s] %s: ", DateTime.toString().c_str(), TAG); \
         Serial.printf(__VA_ARGS__);                                   \
     }
@@ -41,7 +50,7 @@
 #define INFO_PRINT(...)                                               \
     if (MyLog::INFO)                                                  \
     {                                                                 \
-        Serial.print("\033[0;32m");                                     \
+        Serial.print("\033[0;32m");                                   \
         Serial.printf("[%s] %s: ", DateTime.toString().c_str(), TAG); \
         Serial.printf(__VA_ARGS__);                                   \
     }
@@ -50,7 +59,7 @@
 #define WARN_PRINT(...)                                               \
     if (MyLog::WARN)                                                  \
     {                                                                 \
-        Serial.print("\033[0;33m");                                     \
+        Serial.print("\033[0;33m");                                   \
         Serial.printf("[%s] %s: ", DateTime.toString().c_str(), TAG); \
         Serial.printf(__VA_ARGS__);                                   \
     }
@@ -59,7 +68,7 @@
 #define ERROR_PRINT(...)                                              \
     if (MyLog::ERROR)                                                 \
     {                                                                 \
-        Serial.print("\033[0;31m");                                     \
+        Serial.print("\033[0;31m");                                   \
         Serial.printf("[%s] %s: ", DateTime.toString().c_str(), TAG); \
         Serial.printf(__VA_ARGS__);                                   \
     }
@@ -74,6 +83,7 @@ public:
     static const bool DEBUG2;
     static const bool DEBUG3;
     static const bool DEBUG4;
+    static const bool DEBUG5;
 
     static const bool INFO;
     static const bool WARN;

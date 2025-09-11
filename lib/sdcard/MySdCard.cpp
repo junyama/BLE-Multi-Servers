@@ -324,7 +324,7 @@ void MySdCard::updatePOI(JsonDocument configJson)
             createDir(SD, "/PersonalPOI");
             writeFile(SD, "/PersonalPOI/index.json", indexJsonStr.c_str());
             JsonArray poiIndexArray = poiIndexJson.as<JsonArray>();
-            DEBUG_PRINT("%d of POI files being written\n", poiIndexArray.size());
+            INFO_PRINT("%d of POI files being written\n", poiIndexArray.size());
             myM5->println(String(poiIndexArray.size()) + " of POI found");
 
             int fileIndex = 1;

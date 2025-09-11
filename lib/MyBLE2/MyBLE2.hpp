@@ -50,7 +50,6 @@ class MyBLE2
 {
 private:
     const char *TAG = "MyBLE";
-    NimBLEAddress peerAddress;
     byte commandParam = 0;
     bool toggle = false;
     byte ctrlCommand = 0;
@@ -61,18 +60,19 @@ public:
     NimBLERemoteCharacteristic *pChr_tx = nullptr;
     packBasicInfoStruct packBasicInfo = {}; // here shall be the latest data got from BMS
     packCellInfoStruct packCellInfo = {};   // here shall be the latest data got from BMS
+
+    NimBLEAddress peerAddress;
     String deviceName = "UNKNOWN";
     String mac = "00:00:00:00:00:00";
     int numberOfTemperature = 2;
-    String topic = "NOT_DEFINED";
+    String topic = "NOT_DEFINED/";
     bool connected = false;
 
     int measurmentIntervalMs = 10000;
     unsigned long lastMeasurment = 0;
 
     MyBLE2();
-    MyBLE2(NimBLEAddress peerAddress_);
-    MyBLE2(String mac_);
+    MyBLE2(NimBLEAddress peerAddress_, String deviceName_);
     void sendInfoCommand();
     JsonDocument getMosfetState();
     JsonDocument getState();

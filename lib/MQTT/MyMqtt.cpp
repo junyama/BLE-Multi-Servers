@@ -59,7 +59,8 @@ void MyMqtt::deviceSetup()
 
 void MyMqtt::bmsSetup()
 {
-  for (int bmsIndex = 0; bmsIndex < myScanCallbacks->numberOfBMS; bmsIndex++)
+  //auto bleDevices = myScanCallbacks->bleDevices;
+  for (int bmsIndex = 0; bmsIndex < myScanCallbacks->bleDevices.size(); bmsIndex++)
   {
     try
     {
@@ -73,12 +74,13 @@ void MyMqtt::bmsSetup()
           String mac = deviceObj["mac"];
           // DEBUG_PRINT("thermoSetup: myBleArr[%d].mac: %s, deviceList[%d][\"mac\"]: %s\n",
           // bmsIndex, myBleArr[bmsIndex].mac.c_str(), deviceIndex, mac.c_str());
-          if (NimBLEAddress(myBleArr[bmsIndex].mac.c_str(), 0).equals(NimBLEAddress(mac.c_str(), 0)))
+          if (myScanCallbacks->bleDevices[bmsIndex].peerAddress == NimBLEAddress(mac.c_str(), 0))
           {
             String topic = deviceObj["mqtt"]["topic"];
             myBleArr[bmsIndex].topic = topic;
-            DEBUG2_PRINT("bmsSetup: myBleArr[%d].mac found at config and set topic: %s\n", bmsIndex,
-                         myBleArr[bmsIndex].topic.c_str());
+            myScanCallbacks->bleDevices[bmsIndex].topic = topic; /////////////////
+            DEBUG2_PRINT("bmsSetup: bleDevices[%d].mac found at config and set topic: %s\n", bmsIndex,
+                         myScanCallbacks->bleDevices[bmsIndex].topic.c_str());
             // myBleArr[bmsIndex].available = true;
             // DEBUG_PRINT("mqttDeviceSetup: myBleArr[%d].available = true\n", bmsIndex);
             deviceFound = true;
@@ -89,8 +91,8 @@ void MyMqtt::bmsSetup()
       if (!deviceFound)
       {
         char buff[256];
-        sprintf(buff, "myBleArr[%d].mac: %s not found at config",
-                myBleArr[bmsIndex].mac.c_str(), bmsIndex);
+        sprintf(buff, "bleDevices[%d].mac: %s not found at config",
+                myScanCallbacks->bleDevices[bmsIndex].mac.c_str(), bmsIndex);
         throw std::runtime_error(buff);
       }
     }
@@ -152,7 +154,8 @@ void MyMqtt::mqttDeviceSetup(int numberOfBleDevices_)
 
 void MyMqtt::thermoSetup()
 {
-  for (int thermoIndex = 0; thermoIndex < myScanCallbacks->numberOfThermo; thermoIndex++)
+  //auto thermoDevices = myScanCallbacks->thermoDevices;
+  for (int thermoIndex = 0; thermoIndex < myScanCallbacks->thermoDevices.size(); thermoIndex++)
   {
     try
     {
@@ -166,12 +169,12 @@ void MyMqtt::thermoSetup()
           String mac = deviceObj["mac"];
           // DEBUG_PRINT("thermoSetup: myThermoArr[%d].mac: %s, deviceList[%d][\"mac\"]: %s\n",
           // thermoIndex, myThermoArr[thermoIndex].mac.c_str(), deviceIndex, mac.c_str());
-          if (NimBLEAddress(myThermoArr[thermoIndex].mac.c_str(), 0).equals(NimBLEAddress(mac.c_str(), 0)))
+          if (myScanCallbacks->thermoDevices[thermoIndex].peerAddress == (NimBLEAddress(mac.c_str(), 0)))
           {
             String topic = deviceObj["mqtt"]["topic"];
-            myThermoArr[thermoIndex].topic = topic;
-            DEBUG2_PRINT("thermoSetup: myThermoArr[%d].mac found at config and set topic: %s\n", thermoIndex,
-                         myThermoArr[thermoIndex].topic.c_str());
+            myScanCallbacks->thermoDevices[thermoIndex].topic = topic;
+            DEBUG2_PRINT("thermoSetup: thermoDevices[%d].mac found at config and set topic: %s\n", thermoIndex,
+                         myScanCallbacks->thermoDevices[thermoIndex].topic.c_str());
             // myThermoArr[thermoIndex].available = true;
             // DEBUG_PRINT("mqttDeviceSetup: myThermoArr[%d].available = true\n", thermoIndex);
             deviceFound = true;
@@ -182,8 +185,8 @@ void MyMqtt::thermoSetup()
       if (!deviceFound)
       {
         char buff[256];
-        sprintf(buff, "myThermoArr[%d].mac: %s not found at config",
-                myThermoArr[thermoIndex].mac.c_str(), thermoIndex);
+        sprintf(buff, "thermoDevices[%d].mac: %s not found at config",
+                myScanCallbacks->thermoDevices[thermoIndex].mac.c_str(), thermoIndex);
         throw std::runtime_error(buff);
       }
     }

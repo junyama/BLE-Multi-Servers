@@ -6,6 +6,7 @@
 #include "MyBLE2.hpp"
 #include "MyThermo.hpp"
 #include "MyGetIndex.hpp"
+#include "MyScanCallbacks.hpp"
 
 class MyClientCallbacks : public NimBLEClientCallbacks
 {
@@ -13,12 +14,13 @@ private:
     const char *TAG = "MyClientCallbacks";
     MyBLE2 *myBleArr;
     MyThermo *myThermoArr;
+    MyScanCallbacks *myScanCallbacks;
 
 public:
     //int numberOfConnectedBMS;
     //int numberOfConnectedThermo;
 
-    MyClientCallbacks(MyBLE2 *myBleArr_, MyThermo *myThermoArr_);
+    MyClientCallbacks(MyBLE2 *myBleArr_, MyThermo *myThermoArr_, MyScanCallbacks *myScanCallbacks_);
 
     void onConnect(NimBLEClient *pClient) override;
 

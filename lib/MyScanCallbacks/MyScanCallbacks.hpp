@@ -1,5 +1,5 @@
-#ifndef MY_SACN_CB_HPP
-#define MY_SCAN_CB_HPP
+#ifndef MY_SCAN_HPP
+#define MY_SCAN_HPP
 
 #include <NimBLEDevice.h>
 #include "MyLog.hpp"
@@ -48,14 +48,16 @@ public:
   //bool doRescan = false;
 
   MyBLE2 *myBleArr;
-  std::vector<MyBLE2> *bleDevices;
+  std::vector<MyBLE2> bleDevices;
+
   MyThermo *myThermoArr;
+  std::vector<MyThermo> thermoDevices;
 
   MyM5 *myM5;
 
   MyScanCallbacks();
 
-  MyScanCallbacks(MyBLE2 *myBleArr_, MyM5 *myM5_, MyThermo *myThermoArr, std::vector<MyBLE2> *bleDevices_);
+  MyScanCallbacks(MyBLE2 *myBleArr_, MyM5 *myM5_, MyThermo *myThermoArr);
 
   void onResult(const NimBLEAdvertisedDevice *advertisedDevice) override;
 
@@ -63,4 +65,4 @@ public:
   void onScanEnd(const NimBLEScanResults &results, int reason) override;
 };
 
-#endif /* MY_SACN_CB_HPP_ */
+#endif /* MY_SACN_HPP */
