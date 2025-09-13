@@ -75,7 +75,7 @@ VoltMater voltMater;
 // std::vector<MyBLE2> *bleDevices;
 
 MyScanCallbacks myScanCallbacks(myBleArr, &myM5, myThermoArr);
-MyClientCallbacks myClientCallbacks(myBleArr, myThermoArr);
+MyClientCallbacks myClientCallbacks(myBleArr, myThermoArr, &myScanCallbacks);
 MyNotification myNotification(myBleArr, &myScanCallbacks, &myClientCallbacks, myThermoArr);
 MyMqtt myMqtt(&mqttClient, myBleArr, &voltMater, &myM5, myThermoArr, &myWiFi, &myNotification, &myScanCallbacks);
 
@@ -416,19 +416,19 @@ void loop()
   }
 
   currentTime = millis();
-  for (int index = 0; index < myScanCallbacks.numberOfThermo; index++)
+  for (int index = 0; index < myScanCallbacks.thermoDevices.size(); index++)
   {
     try
     {
-      if (myThermoArr[index].timeout(currentTime))
+      if (myScanCallbacks.thermoDevices[index].timeout(currentTime))
       {
-        if (!myThermoArr[index].connected)
+        if (!myScanCallbacks.thermoDevices[index].connected)
         {
-          myMqtt.publish("stat/" + myThermoArr[index].topic + "STATE", "{\"connected\": 0}");
+          myMqtt.publish("stat/" + myScanCallbacks.thermoDevices[index].topic + "STATE", "{\"connected\": 0}");
           String msg = MyGetIndex::thermoInfo(myThermoArr, index) + " not connected";
           throw std::runtime_error(std::string(msg.c_str()));
         }
-        myMqtt.publishJson("stat/" + myThermoArr[index].topic + "STATE", myThermoArr[index].getState(), true);
+        myMqtt.publishJson("stat/" + myScanCallbacks.thermoDevices[index].topic + "STATE", myScanCallbacks.thermoDevices[index].getState(), true);
       }
     }
     catch (const std::runtime_error &e)

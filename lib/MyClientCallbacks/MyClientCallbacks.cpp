@@ -1,7 +1,7 @@
 #include "MyClientCallbacks.hpp"
 
-MyClientCallbacks::MyClientCallbacks(MyBLE2 *myBleArr_, MyThermo *myThermoArr_)
-    : myBleArr(myBleArr_), myThermoArr(myThermoArr_)
+MyClientCallbacks::MyClientCallbacks(MyBLE2 *myBleArr_, MyThermo *myThermoArr_, MyScanCallbacks *myScanCallbacks_)
+    : myBleArr(myBleArr_), myThermoArr(myThermoArr_), myScanCallbacks(myScanCallbacks_)
 {
 }
 
@@ -20,6 +20,7 @@ void MyClientCallbacks::onConnect(NimBLEClient *pClient)
         if (index > -1)
         {
             myThermoArr[index].connected = true;
+            myScanCallbacks->thermoDevices[index].connected = true;
             DEBUG4_PRINT("myThermoArr[%d] Connected\n", index);
         }
         else
@@ -45,6 +46,7 @@ void MyClientCallbacks::onDisconnect(NimBLEClient *pClient, int reason)
         if (index > -1)
         {
             myThermoArr[index].connected = false;
+            myScanCallbacks->thermoDevices[index].connected = false;
             WARN_PRINT("Disconnected from %s\n", MyGetIndex::thermoInfo(myThermoArr, index).c_str());
         }
         else

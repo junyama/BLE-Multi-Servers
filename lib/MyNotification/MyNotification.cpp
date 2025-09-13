@@ -81,7 +81,8 @@ void MyNotification::notifyCB(NimBLERemoteCharacteristic *pRemoteCharacteristic,
     {
       DEBUG_PRINT("Notification from Thermomater\n");
       // int thermoIndex = getIndexOfMyThermoArr(pRemoteCharacteristic->getClient());
-      int thermoIndex = MyGetIndex::myThermoArr(myThermoArr, pRemoteCharacteristic->getClient());
+      // int thermoIndex = MyGetIndex::myThermoArr(myThermoArr, pRemoteCharacteristic->getClient());
+      int thermoIndex = MyGetIndex::thermoDevices(&myScanCallbacks->thermoDevices, pRemoteCharacteristic->getClient());
       if (thermoIndex > -1)
       {
         // DEBUG3_PRINT("Notification from myThermoArr[%d]\n", thermoIndex);
@@ -91,15 +92,17 @@ void MyNotification::notifyCB(NimBLERemoteCharacteristic *pRemoteCharacteristic,
         if (remoteCharacteristicUUID.equals(myScanCallbacks->charUUID_thermo_temp))
         {
           DEBUG3_PRINT("Notification from %s, tempatarure: %.1fC\n",
-                       MyGetIndex::thermoInfo(myThermoArr, thermoIndex).c_str(),
-                       myThermoArr[thermoIndex].processTempPacket((char *)pData, length));
+                       MyGetIndex::thermoInfo(&myScanCallbacks->thermoDevices, thermoIndex).c_str(),
+                       myScanCallbacks->thermoDevices[thermoIndex].processTempPacket((char *)pData, length));
+          myThermoArr[thermoIndex].processTempPacket((char *)pData, length);
+
           // DEBUG3_PRINT("Notification from myThermoArr[%d], topic: %s, tempatarure: 0x%x\n",thermoIndex, myThermoArr[thermoIndex].topic.c_str(), (int)pData);
           return;
         }
         if (remoteCharacteristicUUID.equals(myScanCallbacks->charUUID_thermo_humid))
         {
           DEBUG3_PRINT("Notification from %s, humidity: %.1f%%\n",
-                       MyGetIndex::thermoInfo(myThermoArr, thermoIndex).c_str(),
+                       MyGetIndex::thermoInfo(&myScanCallbacks->thermoDevices, thermoIndex).c_str(),
                        myThermoArr[thermoIndex].processHumidPacket((char *)pData, length));
           // DEBUG3_PRINT("Notification from myThermoArr[%d], topic: %s, humidity: 0x%x\n",thermoIndex, myThermoArr[thermoIndex].topic.c_str(), (int)pData);
           return;
@@ -381,7 +384,7 @@ bool MyNotification::connectToThermo()
       {
         //++failCount;
         char buff[256];
-        sprintf(buff, "[%d/%d] Failed to connect with %s\n", ++failCount, FAIL_LIMIT, MyGetIndex::thermoInfo(myThermoArr, index).c_str());
+        sprintf(buff, "[%d/%d] Failed to connect with %s\n", ++failCount, FAIL_LIMIT, MyGetIndex::thermoInfo(&myScanCallbacks->thermoDevices, index).c_str());
         WARN_PRINT("%s\n", buff);
         if (failCount <= FAIL_LIMIT)
         {
@@ -435,7 +438,7 @@ bool MyNotification::connectToThermo()
     {
       if (!pClient->connect(myScanCallbacks->advThermoDevices.at(index)))
       {
-        WARN_PRINT("[%d/%d] Failed to connect with %s\n", ++failCount, FAIL_LIMIT, MyGetIndex::thermoInfo(myThermoArr, index).c_str());
+        WARN_PRINT("[%d/%d] Failed to connect with %s\n", ++failCount, FAIL_LIMIT, MyGetIndex::thermoInfo(&myScanCallbacks->thermoDevices, index).c_str());
         if (failCount <= FAIL_LIMIT)
         {
           WARN_PRINT("return with false\n");

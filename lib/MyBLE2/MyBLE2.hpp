@@ -50,7 +50,6 @@ class MyBLE2
 {
 private:
     const char *TAG = "MyBLE";
-    NimBLEAddress peerAddress;
     byte commandParam = 0;
     bool toggle = false;
     byte ctrlCommand = 0;
@@ -62,6 +61,7 @@ public:
     packBasicInfoStruct packBasicInfo = {}; // here shall be the latest data got from BMS
     packCellInfoStruct packCellInfo = {};   // here shall be the latest data got from BMS
     String deviceName = "UNKNOWN";
+    NimBLEAddress peerAddress;
     String mac = "00:00:00:00:00:00";
     int numberOfTemperature = 2;
     String topic = "NOT_DEFINED";

@@ -152,6 +152,10 @@ void MyScanCallbacks::onScanEnd(const NimBLEScanResults &results, int reason)
     myThermoArr[index].deviceName = String(deviceName.c_str());
     // myM5->bmsInfoArr[index].deviceName = myBleArr[index].deviceName;
     DEBUG2_PRINT("myThermoArr[%d].deviceName set by %s\n", index, myThermoArr[index].deviceName.c_str());
+
+    //MyThermo myThermo(advThermoDevices[index]->getAddress(), String(advThermoDevices[index]->getName().c_str()));
+    //thermoDevices.push_back(myThermo);
+    thermoDevices.emplace_back(advThermoDevices[index]->getAddress(), String(advThermoDevices[index]->getName().c_str()));
   }
   if (numberOfThermo != 0 && !doConnectThermo)
   {

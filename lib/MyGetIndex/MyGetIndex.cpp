@@ -46,7 +46,7 @@ String MyGetIndex::bleInfo(MyBLE2 *myBleArr, int index)
 {
   char buff[256];
   sprintf(buff, "myBleArr[%d], Name: %s, topic: %s",
-     index, myBleArr[index].deviceName.c_str(), myBleArr[index].topic.c_str());
+          index, myBleArr[index].deviceName.c_str(), myBleArr[index].topic.c_str());
   return String(buff);
 }
 
@@ -54,6 +54,52 @@ String MyGetIndex::thermoInfo(MyThermo *myThermoArr, int index)
 {
   char buff[256];
   sprintf(buff, "myThermoArr[%d], Name: %s, topic: %s",
-     index, myThermoArr[index].deviceName.c_str(), myThermoArr[index].topic.c_str());
+          index, myThermoArr[index].deviceName.c_str(), myThermoArr[index].topic.c_str());
+  return String(buff);
+}
+
+int MyGetIndex::bleDevices(std::vector<MyBLE2> *bleDevices, NimBLEClient *client)
+{
+  auto peerAddress = client->getPeerAddress();
+  DEBUG_PRINT("client peerAddress: %s\n", peerAddress.toString().c_str());
+  for (int index = 0; index < bleDevices->size(); index++)
+  {
+    DEBUG_PRINT("bleDevices[%d].mac: %s\n", index, bleDevices->at(index).mac.c_str());
+    if (peerAddress == bleDevices->at(index).peerAddress)
+    {
+      return index;
+    }
+  }
+  return -1;
+}
+
+int MyGetIndex::thermoDevices(std::vector<MyThermo> *thermoDevices, NimBLEClient *client)
+{
+  auto peerAddress = client->getPeerAddress();
+  DEBUG_PRINT("client peerAddress: %s\n", peerAddress.toString().c_str());
+  for (int index = 0; index < thermoDevices->size(); index++)
+  {
+    DEBUG_PRINT("thermoDevices[%d].mac: %s\n", index, thermoDevices->at(index).mac.c_str());
+    if (peerAddress == thermoDevices->at(index).peerAddress)
+    {
+      return index;
+    }
+  }
+  return -1;
+}
+
+String MyGetIndex::bleInfo(std::vector<MyBLE2> *bleDevices, int index)
+{
+  char buff[256];
+  sprintf(buff, "bleDevices[%d], Name: %s, topic: %s",
+          index, bleDevices->at(index).deviceName.c_str(), bleDevices->at(index).topic.c_str());
+  return String(buff);
+}
+
+String MyGetIndex::thermoInfo(std::vector<MyThermo> *thermoDevices, int index)
+{
+  char buff[256];
+  sprintf(buff, "thermoDevices[%d], Name: %s, topic: %s",
+          index, thermoDevices->at(index).deviceName.c_str(), thermoDevices->at(index).topic.c_str());
   return String(buff);
 }

@@ -1,4 +1,4 @@
-#ifndef MY_SACN_CB_HPP
+#ifndef MY_SCAN_CB_HPP
 #define MY_SCAN_CB_HPP
 
 #include <NimBLEDevice.h>
@@ -49,6 +49,9 @@ public:
 
   MyBLE2 *myBleArr;
   MyThermo *myThermoArr;
+
+  std::vector<MyBLE2> bleDevices;
+  std::vector<MyThermo> thermoDevices;
 
   MyM5 *myM5;
 

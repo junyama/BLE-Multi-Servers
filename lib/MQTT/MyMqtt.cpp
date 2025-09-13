@@ -152,7 +152,7 @@ void MyMqtt::mqttDeviceSetup(int numberOfBleDevices_)
 
 void MyMqtt::thermoSetup()
 {
-  for (int thermoIndex = 0; thermoIndex < myScanCallbacks->numberOfThermo; thermoIndex++)
+  for (int thermoIndex = 0; thermoIndex < myScanCallbacks->thermoDevices.size(); thermoIndex++)
   {
     try
     {
@@ -166,12 +166,15 @@ void MyMqtt::thermoSetup()
           String mac = deviceObj["mac"];
           // DEBUG_PRINT("thermoSetup: myThermoArr[%d].mac: %s, deviceList[%d][\"mac\"]: %s\n",
           // thermoIndex, myThermoArr[thermoIndex].mac.c_str(), deviceIndex, mac.c_str());
-          if (NimBLEAddress(myThermoArr[thermoIndex].mac.c_str(), 0).equals(NimBLEAddress(mac.c_str(), 0)))
+          // if (NimBLEAddress(myThermoArr[thermoIndex].mac.c_str(), 0) == (NimBLEAddress(mac.c_str(), 0)))
+          if (myScanCallbacks->thermoDevices.at(thermoIndex).peerAddress == NimBLEAddress(mac.c_str(), 0))
           {
             String topic = deviceObj["mqtt"]["topic"];
-            myThermoArr[thermoIndex].topic = topic;
-            DEBUG2_PRINT("thermoSetup: myThermoArr[%d].mac found at config and set topic: %s\n", thermoIndex,
-                         myThermoArr[thermoIndex].topic.c_str());
+            //myThermoArr[thermoIndex].topic = topic;
+            myScanCallbacks->thermoDevices.at(thermoIndex).topic = topic;
+            DEBUG2_PRINT("thermoSetup: thermoDevices[%d].mac found at config and set topic: %s\n", thermoIndex,
+                         //myThermoArr[thermoIndex].topic.c_str());
+                         myScanCallbacks->thermoDevices.at(thermoIndex).topic.c_str());
             // myThermoArr[thermoIndex].available = true;
             // DEBUG_PRINT("mqttDeviceSetup: myThermoArr[%d].available = true\n", thermoIndex);
             deviceFound = true;
@@ -182,8 +185,8 @@ void MyMqtt::thermoSetup()
       if (!deviceFound)
       {
         char buff[256];
-        sprintf(buff, "myThermoArr[%d].mac: %s not found at config",
-                myThermoArr[thermoIndex].mac.c_str(), thermoIndex);
+        sprintf(buff, "thermoDevices[%d].mac: %s not found at config",
+                myScanCallbacks->thermoDevices[thermoIndex].mac.c_str(), thermoIndex);
         throw std::runtime_error(buff);
       }
     }
