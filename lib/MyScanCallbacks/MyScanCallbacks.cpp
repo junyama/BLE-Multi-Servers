@@ -4,8 +4,8 @@ MyScanCallbacks::MyScanCallbacks()
 {
 }
 
-MyScanCallbacks::MyScanCallbacks(MyBLE2 *myBleArr_, MyM5 *myM5_, MyThermo *myThermoArr_)
-    : myBleArr(myBleArr_), myM5(myM5_), myThermoArr(myThermoArr_)
+MyScanCallbacks::MyScanCallbacks(MyBLE2 *myBleArr_, MyM5 *myM5_)
+    : myBleArr(myBleArr_), myM5(myM5_)
 {
 }
 
@@ -123,18 +123,18 @@ void MyScanCallbacks::onScanEnd(const NimBLEScanResults &results, int reason)
   }
 
   // added for Thermomater
-  numberOfThermo = advThermoDevices.size(); ////////////////
+  //numberOfThermo = advThermoDevices.size(); ////////////////
 
-  INFO_PRINT("Thermomater scan done, reason: %d, device count: %d, numberOfThermo: %d\n",
-             reason, results.getCount(), numberOfThermo);
+  INFO_PRINT("Thermomater scan done, reason: %d, device count: %d, advThermoDevices.size(): %d\n",
+             reason, results.getCount(), advThermoDevices.size());
   // numberOfAdvThermoDevices = advThermoDevices.size();
   // DEBUG_PRINT("advThermoDevices.size(): %d\n", advThermoDevices.size());
-  // numberOfThermoDevicesFound = &numberOfAdvThermoDevices;
-  // DEBUG_PRINT("numberOfThermoDevicesFound: %d\n", *numberOfThermoDevicesFound);
-  sprintf(buff, "Thermo scan done, found %d", numberOfThermo);
+  // advThermoDevices.size()DevicesFound = &numberOfAdvThermoDevices;
+  // DEBUG_PRINT("advThermoDevices.size()DevicesFound: %d\n", *advThermoDevices.size()DevicesFound);
+  sprintf(buff, "Thermo scan done, found %d", advThermoDevices.size());
   myM5->println(String(buff));
 
-  if (numberOfThermo == 0)
+  if (advThermoDevices.size() == 0)
   {
     WARN_PRINT("no thermomater found\n");
     return;
@@ -142,8 +142,9 @@ void MyScanCallbacks::onScanEnd(const NimBLEScanResults &results, int reason)
     // doRescan = true;
   }
 
-  for (int index = 0; index < numberOfThermo; index++)
+  for (int index = 0; index < advThermoDevices.size(); index++)
   {
+    /*
     std::string address = advThermoDevices[index]->getAddress().toString();
     myThermoArr[index].mac = String(address.c_str());
     // myM5->bmsInfoArr[bleIndex].mac = myBleArr[index].mac;
@@ -155,9 +156,12 @@ void MyScanCallbacks::onScanEnd(const NimBLEScanResults &results, int reason)
 
     //MyThermo myThermo(advThermoDevices[index]->getAddress(), String(advThermoDevices[index]->getName().c_str()));
     //thermoDevices.push_back(myThermo);
+    */
     thermoDevices.emplace_back(advThermoDevices[index]->getAddress(), String(advThermoDevices[index]->getName().c_str()));
+    DEBUG4_PRINT("thermoDevices[%d] created with Name: %s, Address: %s\n", 
+      index, thermoDevices[index].deviceName.c_str(), thermoDevices[index].mac.c_str());
   }
-  if (numberOfThermo != 0 && !doConnectThermo)
+  if (advThermoDevices.size() != 0 && !doConnectThermo)
   {
     doConnectThermo = true;
   }

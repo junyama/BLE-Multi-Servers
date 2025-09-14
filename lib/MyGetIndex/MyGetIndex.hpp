@@ -11,7 +11,7 @@
 // #include "MyTimer.hpp"
 
 #define BLE_ARR_SIZE 3
-#define THERMO_ARR_SIZE 5
+//#define THERMO_ARR_SIZE 5
 
 class MyGetIndex
 {
@@ -31,10 +31,10 @@ public:
 
     // MyGetIndex(MyBLE2 *myBleArr_, MyThermo *myThermoArr_, MyScanCallbacks *myScanCallbacks_);
     static int myBleArr(MyBLE2 *myBleArr, NimBLEClient *client);
-    static int myThermoArr(MyThermo *myThermoArr, NimBLEClient *client);
+    //static int myThermoArr(MyThermo *myThermoArr, NimBLEClient *client);
 
     static String bleInfo(MyBLE2 *myBleArr, int index);
-    static String thermoInfo(MyThermo *myThermoArr, int index);
+    //static String thermoInfo(MyThermo *myThermoArr, int index);
 
     static int bleDevices(std::vector<MyBLE2> *bleDevices, NimBLEClient *client);
     static int thermoDevices(std::vector<MyThermo> *thermoDevices, NimBLEClient *client);

@@ -1,7 +1,7 @@
 #include "MyNotification.hpp"
 
-MyNotification::MyNotification(MyBLE2 *myBleArr_, MyScanCallbacks *myScanCallbacks_, MyClientCallbacks *myClientCallbacks_, MyThermo *myThermoArr_)
-    : myBleArr(myBleArr_), myScanCallbacks(myScanCallbacks_), myClientCallbacks(myClientCallbacks_), myThermoArr(myThermoArr_)
+MyNotification::MyNotification(MyBLE2 *myBleArr_, MyScanCallbacks *myScanCallbacks_, MyClientCallbacks *myClientCallbacks_)
+    : myBleArr(myBleArr_), myScanCallbacks(myScanCallbacks_), myClientCallbacks(myClientCallbacks_)
 {
   DEBUG_PRINT("an instance created\n");
 }
@@ -30,7 +30,7 @@ int MyNotification::getIndexOfMyThermoArr(NimBLEClient *client)
   for (int index = 0; index < myScanCallbacks->advThermoDevices.size(); index++)
   {
     // if (peerAddress == myThermoArr[i].pChr_rx_temp->getClient()->getPeerAddress())
-    std::string macStr = myThermoArr[index].mac.c_str();
+    std::string macStr = myScanCallbacks->thermoDevices[index].mac.c_str();
     if (peerAddress == NimBLEAddress(macStr, 0))
     {
       return index;
@@ -87,14 +87,14 @@ void MyNotification::notifyCB(NimBLERemoteCharacteristic *pRemoteCharacteristic,
       {
         // DEBUG3_PRINT("Notification from myThermoArr[%d]\n", thermoIndex);
         auto remoteCharacteristicUUID = pRemoteCharacteristic->getUUID();
-        DEBUG_PRINT("Notification from myThermoArr[%d], UUID: %s\n", thermoIndex,
+        DEBUG_PRINT("Notification from myScanCallbacks->thermoDevices[%d], UUID: %s\n", thermoIndex,
                     remoteCharacteristicUUID.toString().c_str());
         if (remoteCharacteristicUUID.equals(myScanCallbacks->charUUID_thermo_temp))
         {
           DEBUG3_PRINT("Notification from %s, tempatarure: %.1fC\n",
                        MyGetIndex::thermoInfo(&myScanCallbacks->thermoDevices, thermoIndex).c_str(),
                        myScanCallbacks->thermoDevices[thermoIndex].processTempPacket((char *)pData, length));
-          myThermoArr[thermoIndex].processTempPacket((char *)pData, length);
+          //myThermoArr[thermoIndex].processTempPacket((char *)pData, length);
 
           // DEBUG3_PRINT("Notification from myThermoArr[%d], topic: %s, tempatarure: 0x%x\n",thermoIndex, myThermoArr[thermoIndex].topic.c_str(), (int)pData);
           return;
@@ -103,12 +103,12 @@ void MyNotification::notifyCB(NimBLERemoteCharacteristic *pRemoteCharacteristic,
         {
           DEBUG3_PRINT("Notification from %s, humidity: %.1f%%\n",
                        MyGetIndex::thermoInfo(&myScanCallbacks->thermoDevices, thermoIndex).c_str(),
-                       myThermoArr[thermoIndex].processHumidPacket((char *)pData, length));
+                       myScanCallbacks->thermoDevices[thermoIndex].processHumidPacket((char *)pData, length));
           // DEBUG3_PRINT("Notification from myThermoArr[%d], topic: %s, humidity: 0x%x\n",thermoIndex, myThermoArr[thermoIndex].topic.c_str(), (int)pData);
           return;
         }
         char buff[256];
-        sprintf(buff, "no matching UUID: %s of myThermoArr[%d]", remoteCharacteristicUUID.toString().c_str(), thermoIndex);
+        sprintf(buff, "no matching UUID: %s of myScanCallbacks->thermoDevices[%d]", remoteCharacteristicUUID.toString().c_str(), thermoIndex);
         throw std::runtime_error(buff);
       }
       else
@@ -328,7 +328,7 @@ bool MyNotification::connectToThermo()
     int count = index + 1;
     std::string deviceName = myScanCallbacks->advThermoDevices.at(index)->getName();
     INFO_PRINT("[%d/%d]: Start connecting a thermometer[%d]: %s >>>>>>>\n",
-               count, numberOfThermo, index, deviceName.c_str());
+               count, myScanCallbacks->thermoDevices.size(), index, deviceName.c_str());
     // Check if we have a client we should reuse first
     if (NimBLEDevice::getCreatedClientCount())
     {
@@ -463,8 +463,8 @@ bool MyNotification::connectToThermo()
       {
         DEBUG2_PRINT("serviceDataUUID of Thermomater found: %s\n", pSvc->toString().c_str());
         // setup temperature Notification
-        myThermoArr[index].pChr_rx_temp = pSvc->getCharacteristic(myScanCallbacks->charUUID_thermo_temp);
-        if (!myThermoArr[index].pChr_rx_temp)
+        myScanCallbacks->thermoDevices[index].pChr_rx_temp = pSvc->getCharacteristic(myScanCallbacks->charUUID_thermo_temp);
+        if (!myScanCallbacks->thermoDevices[index].pChr_rx_temp)
         {
           WARN_PRINT("[%d/%d] charUUID_thermo_temp not found\n", ++failCount, FAIL_LIMIT);
           if (failCount <= FAIL_LIMIT)
@@ -478,9 +478,9 @@ bool MyNotification::connectToThermo()
           continue;
         }
         DEBUG2_PRINT("charUUID_thermo_temp found.\n");
-        if (myThermoArr[index].pChr_rx_temp->canNotify())
+        if (myScanCallbacks->thermoDevices[index].pChr_rx_temp->canNotify())
         {
-          if (!myThermoArr[index].pChr_rx_temp->subscribe(true, [this](NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify)
+          if (!myScanCallbacks->thermoDevices[index].pChr_rx_temp->subscribe(true, [this](NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify)
                                                           { notifyCB(pRemoteCharacteristic, pData, length, isNotify); }))
           {
             WARN_PRINT("[%d/%d] Failed subscribeing charUUID_thermo_temp.\n", ++failCount, FAIL_LIMIT);
@@ -497,8 +497,8 @@ bool MyNotification::connectToThermo()
           }
         }
         // setup humidity Notification
-        myThermoArr[index].pChr_rx_humid = pSvc->getCharacteristic(myScanCallbacks->charUUID_thermo_humid);
-        if (!myThermoArr[index].pChr_rx_humid)
+        myScanCallbacks->thermoDevices[index].pChr_rx_humid = pSvc->getCharacteristic(myScanCallbacks->charUUID_thermo_humid);
+        if (!myScanCallbacks->thermoDevices[index].pChr_rx_humid)
         {
           WARN_PRINT("[%d/%d] charUUID_thermo_humid not found.\n", ++failCount, FAIL_LIMIT);
           if (failCount <= FAIL_LIMIT)
@@ -512,9 +512,9 @@ bool MyNotification::connectToThermo()
           continue;
         }
         DEBUG2_PRINT("charUUID_thermo_humid found.\n");
-        if (myThermoArr[index].pChr_rx_humid->canNotify())
+        if (myScanCallbacks->thermoDevices[index].pChr_rx_humid->canNotify())
         {
-          if (!myThermoArr[index].pChr_rx_humid->subscribe(true, [this](NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify)
+          if (!myScanCallbacks->thermoDevices[index].pChr_rx_humid->subscribe(true, [this](NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify)
                                                            { notifyCB(pRemoteCharacteristic, pData, length, isNotify); }))
           {
             WARN_PRINT("[%d/%d] Failed subscribeing charUUID_thermo_humid.\n", ++failCount, FAIL_LIMIT);
@@ -545,14 +545,14 @@ bool MyNotification::connectToThermo()
       }
     }
 
-    INFO_PRINT("[%d/%d]: Connected with an myThermoArr[%d]: %s <<<<<<<<\n", count, numberOfThermo, index, deviceName.c_str());
-    INFO_PRINT("Now getting notifications from myThermoArr[%d]\n", numberOfConnectedThermo);
+    INFO_PRINT("[%d/%d]: Connected with an myScanCallbacks->thermoDevices[%d]: %s <<<<<<<<\n", count, myScanCallbacks->thermoDevices.size(), index, deviceName.c_str());
+    INFO_PRINT("Now getting notifications from myScanCallbacks->thermoDevices[%d]\n", numberOfConnectedThermo);
     // myThermoArr[index].connected = true;
     //  thermomater[index].available = true;
     atLeastOneConnected = true;
     numberOfConnectedThermo++;
   }
-  // INFO_PRINT("Done with all the advertized thermomaters, connected (%d/%d)\n", numberOfConnectedThermo, myScanCallbacks->numberOfThermo);
+  // INFO_PRINT("Done with all the advertized thermomaters, connected (%d/%d)\n", numberOfConnectedThermo, myScanCallbacks->myScanCallbacks->thermoDevices.size());
   //  return atLeastOneConnected;
   if (numberOfConnectedThermo > 0)
     return true;
@@ -577,6 +577,7 @@ void MyNotification::clearResources()
   }
   myScanCallbacks->advDevices.clear();
   myScanCallbacks->numberOfBMS = 0;
+  /*
   for (int i = 0; i < myScanCallbacks->numberOfThermo; i++)
   {
     myThermoArr[i].connected = false;
@@ -584,6 +585,7 @@ void MyNotification::clearResources()
     myThermoArr[i].deviceName = "UNKNOWN";
     myThermoArr[i].topic = "NOT_DEFINED/";
   }
+  */
   myScanCallbacks->advThermoDevices.clear();
-  myScanCallbacks->numberOfThermo = 0;
+  //myScanCallbacks->numberOfThermo = 0;
 }

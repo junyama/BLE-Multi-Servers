@@ -28,12 +28,12 @@ private:
 
 public:
     int numberOfBMS = 0;
-    int numberOfThermo = 0;
+    //int numberOfThermo = 0;
     
     int numberOfConnectedBMS = 0;
     int numberOfConnectedThermo = 0;
 
-    MyNotification(MyBLE2 *myBleArr_, MyScanCallbacks *myScanCallbacks_, MyClientCallbacks *myClientCallbacks, MyThermo *myThermoArr_);
+    MyNotification(MyBLE2 *myBleArr_, MyScanCallbacks *myScanCallbacks_, MyClientCallbacks *myClientCallbacks);
     /** Notification / Indication receiving handler callback */
     void notifyCB(NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify);
     int getIndexOfMyBleArr(NimBLEClient *client);

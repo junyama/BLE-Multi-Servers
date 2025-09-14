@@ -25,6 +25,7 @@ int MyGetIndex::myBleArr(MyBLE2 *myBleArr, NimBLEClient *client)
   return -1;
 }
 
+/*
 int MyGetIndex::myThermoArr(MyThermo *myThermoArr, NimBLEClient *client)
 {
   DEBUG_PRINT("myThermoArr() called, THERMO_ARR_SIZE: %d\n", THERMO_ARR_SIZE);
@@ -41,6 +42,7 @@ int MyGetIndex::myThermoArr(MyThermo *myThermoArr, NimBLEClient *client)
   }
   return -1;
 }
+*/
 
 String MyGetIndex::bleInfo(MyBLE2 *myBleArr, int index)
 {
@@ -50,6 +52,7 @@ String MyGetIndex::bleInfo(MyBLE2 *myBleArr, int index)
   return String(buff);
 }
 
+/*
 String MyGetIndex::thermoInfo(MyThermo *myThermoArr, int index)
 {
   char buff[256];
@@ -57,6 +60,7 @@ String MyGetIndex::thermoInfo(MyThermo *myThermoArr, int index)
           index, myThermoArr[index].deviceName.c_str(), myThermoArr[index].topic.c_str());
   return String(buff);
 }
+*/
 
 int MyGetIndex::bleDevices(std::vector<MyBLE2> *bleDevices, NimBLEClient *client)
 {

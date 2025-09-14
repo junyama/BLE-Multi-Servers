@@ -53,7 +53,7 @@ int failCount = 0;
 MyBLE2 myBleArr[BLE_ARR_SIZE];
 // int numberOfConnectedBMS = 0;
 
-MyThermo myThermoArr[THERMO_ARR_SIZE];
+//MyThermo myThermoArr[THERMO_ARR_SIZE];
 // int numberOfConnectedThermo = 0;
 
 MyM5 myM5;
@@ -74,12 +74,12 @@ VoltMater voltMater;
 
 // std::vector<MyBLE2> *bleDevices;
 
-MyScanCallbacks myScanCallbacks(myBleArr, &myM5, myThermoArr);
-MyClientCallbacks myClientCallbacks(myBleArr, myThermoArr, &myScanCallbacks);
-MyNotification myNotification(myBleArr, &myScanCallbacks, &myClientCallbacks, myThermoArr);
-MyMqtt myMqtt(&mqttClient, myBleArr, &voltMater, &myM5, myThermoArr, &myWiFi, &myNotification, &myScanCallbacks);
+MyScanCallbacks myScanCallbacks(myBleArr, &myM5);
+MyClientCallbacks myClientCallbacks(myBleArr, &myScanCallbacks);
+MyNotification myNotification(myBleArr, &myScanCallbacks, &myClientCallbacks);
+MyMqtt myMqtt(&mqttClient, myBleArr, &voltMater, &myM5, &myWiFi, &myNotification, &myScanCallbacks);
 
-// MyGetIndex myGetIndex(myBleArr, &myScanCallbacks.numberOfBMS, myThermoArr, &myScanCallbacks.numberOfThermo);
+// MyGetIndex myGetIndex(myBleArr, &myScanCallbacks.numberOfBMS, myThermoArr, &myScanCallbacks.advThermoDevices.size());
 
 // void loadConfig();
 // void saveConfig();
@@ -242,6 +242,8 @@ void loop()
         WARN_PRINT("rescan\n");
         myM5.println("Failed to connect BMS rescan");
         myNotification.clearResources();
+        myScanCallbacks.thermoDevices.clear();
+
         NimBLEDevice::getScan()->start(myScanCallbacks.scanTimeMs, false, true);
       }
       else
@@ -271,9 +273,9 @@ void loop()
   if (myScanCallbacks.doConnectThermo)
   {
     myScanCallbacks.doConnectThermo = false;
-    INFO_PRINT("Found %d of thermomaters we want to connect to, do it now.\n", myScanCallbacks.numberOfThermo);
+    INFO_PRINT("Found %d of thermomaters we want to connect to, do it now.\n", myScanCallbacks.advThermoDevices.size());
     myMqtt.thermoSetup();
-    myNotification.numberOfThermo = myScanCallbacks.numberOfThermo;
+    //myNotification.numberOfThermo = myScanCallbacks.advThermoDevices.size();
     if (myNotification.connectToThermo())
     {
       INFO_PRINT("Success! we should now be getting notifications from Thermometers(%d).\n", myNotification.numberOfConnectedThermo);
@@ -281,21 +283,23 @@ void loop()
       // myMqtt.thermoSetup();
       myM5.numberOfConnectedThermo = myNotification.numberOfConnectedThermo;
       // myClientCallbacks.numberOfConnectedThermo = myNotification.numberOfConnectedThermo;
-      for (int index = 0; index < myScanCallbacks.numberOfThermo; index++)
+      for (int index = 0; index < myScanCallbacks.advThermoDevices.size(); index++)
       {
-        myThermoArr[index].lastMeasurment = millis() + PUBLISH_LEAD_TIME_THERMO + 6500 * index;
-        INFO_PRINT("myThermoArr[%d].lastMeasurment: %lu\n", index, myThermoArr[index].lastMeasurment);
+        myScanCallbacks.thermoDevices[index].lastMeasurment = millis() + PUBLISH_LEAD_TIME_THERMO + 6500 * index;
+        INFO_PRINT("myScanCallbacks.thermoDevices[%d].lastMeasurment: %lu\n", index, myScanCallbacks.thermoDevices[index].lastMeasurment);
       }
     }
     else
     {
       WARN_PRINT("[%d/%d] Failed to connect thermomaters found[%d] %s\n",
-                 ++failCount, FAIL_LIMIT_MAIN, myScanCallbacks.numberOfThermo);
+                 ++failCount, FAIL_LIMIT_MAIN, myScanCallbacks.advThermoDevices.size());
       if (failCount <= FAIL_LIMIT_MAIN)
       {
         WARN_PRINT("rescan\n");
         myM5.println("Failed to connect thermo rescan");
         myNotification.clearResources();
+        myScanCallbacks.thermoDevices.clear();
+
         NimBLEDevice::getScan()->start(myScanCallbacks.scanTimeMs, false, true);
       }
       else
@@ -303,10 +307,10 @@ void loop()
         WARN_PRINT("Exceeded the fail limit (%d) of main. Continue\n", FAIL_LIMIT_MAIN);
         // myMqtt.thermoSetup();
         myM5.numberOfConnectedThermo = myNotification.numberOfConnectedThermo;
-        for (int index = 0; index < myScanCallbacks.numberOfThermo; index++)
+        for (int index = 0; index < myScanCallbacks.advThermoDevices.size(); index++)
         {
-          myThermoArr[index].lastMeasurment = millis() + PUBLISH_LEAD_TIME_THERMO + 6500 * index;
-          INFO_PRINT("myThermoArr[%d].lastMeasurment: %lu\n", index, myThermoArr[index].lastMeasurment);
+          myScanCallbacks.thermoDevices[index].lastMeasurment = millis() + PUBLISH_LEAD_TIME_THERMO + 6500 * index;
+          INFO_PRINT("myScanCallbacks.thermoDevices[%d].lastMeasurment: %lu\n", index, myScanCallbacks.thermoDevices[index].lastMeasurment);
         }
       }
 
@@ -425,7 +429,7 @@ void loop()
         if (!myScanCallbacks.thermoDevices[index].connected)
         {
           myMqtt.publish("stat/" + myScanCallbacks.thermoDevices[index].topic + "STATE", "{\"connected\": 0}");
-          String msg = MyGetIndex::thermoInfo(myThermoArr, index) + " not connected";
+          String msg = MyGetIndex::thermoInfo(&myScanCallbacks.thermoDevices, index) + " not connected";
           throw std::runtime_error(std::string(msg.c_str()));
         }
         myMqtt.publishJson("stat/" + myScanCallbacks.thermoDevices[index].topic + "STATE", myScanCallbacks.thermoDevices[index].getState(), true);

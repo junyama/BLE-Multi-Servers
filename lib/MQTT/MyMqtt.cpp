@@ -1,9 +1,9 @@
 #include "MyMqtt.hpp"
 
 MyMqtt::MyMqtt(PubSubClient *mqttClient_, MyBLE2 *myBleArr_, VoltMater *voltMater_,
-               MyM5 *myM5_, MyThermo *myThermoArr_, MyWiFi *myWiFi_, MyNotification *myNotification_, MyScanCallbacks *myScanCallbacks_)
+               MyM5 *myM5_, MyWiFi *myWiFi_, MyNotification *myNotification_, MyScanCallbacks *myScanCallbacks_)
     : mqttClient(mqttClient_), myBleArr(myBleArr_), voltMater(voltMater_),
-      myM5(myM5_), myThermoArr(myThermoArr_), myWiFi(myWiFi_), myNotification(myNotification_), myScanCallbacks(myScanCallbacks_)
+      myM5(myM5_), myWiFi(myWiFi_), myNotification(myNotification_), myScanCallbacks(myScanCallbacks_)
 {
 }
 
@@ -102,54 +102,6 @@ void MyMqtt::bmsSetup()
   }
 }
 
-/*
-void MyMqtt::mqttDeviceSetup(int numberOfBleDevices_)
-{
-  DEBUG_PRINT("mqttDeviceSetup() called\n");
-
-  numberOfBleDevices = numberOfBleDevices_;
-  // deviceList = configJson["devices"].as<JsonArray>();
-  DEBUG_PRINT("mqttDeviceSetup: deviceList.size() = %d\n", deviceList.size());
-  // myBleArr = myBleArr_;
-  // int numberOfBleDevices = myScanCallbacks.numberOfBleDevices;
-  DEBUG_PRINT("mqttDeviceSetup: numberOfBleDevices = %d\n", numberOfBleDevices);
-  for (int deviceIndex = 0; deviceIndex < deviceList.size(); deviceIndex++)
-  {
-    JsonDocument deviceObj = deviceList[deviceIndex];
-    String type = deviceObj["type"];
-    if (type.equals("BMS"))
-    {
-      /*
-      for (int bleIndex = 0; bleIndex < numberOfBleDevices; bleIndex++)
-      {
-        // DEBUG_PRINT("bleIndex = %d deviceIndex = %d\n", bleIndex, deviceIndex);
-        String mac = deviceObj["mac"];
-        DEBUG_PRINT("mqttDeviceSetup: myBleArr[%d].mac = %s, deviceList[%d][\"mac\"] = %s\n", bleIndex, myBleArr[bleIndex].mac.c_str(), deviceIndex, mac.c_str());
-        if (myBleArr[bleIndex].mac.equals(mac))
-        {
-          String topic = deviceObj["mqtt"]["topic"];
-          myBleArr[bleIndex].topic = topic;
-          myBleArr[bleIndex].numberOfTemperature = (int)deviceObj["numberOfTemperature"];
-          DEBUG_PRINT("mqttDeviceSetup: myBleArr[%d].topic = %s, numberOfTemperature = %d\n", bleIndex,
-                      myBleArr[bleIndex].topic.c_str(), myBleArr[bleIndex].numberOfTemperature);
-          break;
-        }
-      }
-    }
-    else if (type.equals("VAMater"))
-    {
-      DEBUG_PRINT("setting up volt mater\n");
-      voltMater->setup(deviceObj);
-    }
-    else if (type.equals("Controller"))
-    {
-      DEBUG_PRINT("setting up Controller\n");
-      myM5->setup(deviceObj);
-    }
-  }
-}
-*/
-
 void MyMqtt::thermoSetup()
 {
   for (int thermoIndex = 0; thermoIndex < myScanCallbacks->thermoDevices.size(); thermoIndex++)
@@ -197,36 +149,6 @@ void MyMqtt::thermoSetup()
     }
   }
 }
-/*
-void MyMqtt::mqttThermoSetup(int numberOfThermoDevices_)
-{
-  numberOfThermoDevices = numberOfThermoDevices_;
-  for (int deviceIndex = 0; deviceIndex < deviceList.size(); deviceIndex++)
-  {
-    JsonDocument deviceObj = deviceList[deviceIndex];
-    String type = deviceObj["type"];
-    if (type.equals("Thermomater"))
-    {
-      for (int thermoIndex = 0; thermoIndex < numberOfThermoDevices; thermoIndex++)
-      {
-        // DEBUG_PRINT("thermoIndex = %d deviceIndex = %d\n", thermoIndex, deviceIndex);
-        String mac = deviceObj["mac"];
-        DEBUG_PRINT("mqttThermoSetup: myThermoArr[%d].mac = %s, deviceList[%d][\"mac\"] = %s\n", thermoIndex, myThermoArr[thermoIndex].mac.c_str(), deviceIndex, mac.c_str());
-        if (myThermoArr[thermoIndex].mac.equals(mac))
-        {
-          String topic = deviceObj["mqtt"]["topic"];
-          myThermoArr[thermoIndex].topic = topic;
-          DEBUG_PRINT("mqttDeviceSetup: myThermoArr[%d].topic = %s\n", thermoIndex,
-                      myThermoArr[thermoIndex].topic.c_str());
-          myThermoArr[thermoIndex].available = true;
-          DEBUG_PRINT("mqttDeviceSetup: myThermoArr[%d].available = true\n", thermoIndex);
-          break;
-        }
-      }
-    }
-  }
-}
-*/
 
 void MyMqtt::reConnectMqttServer()
 {
@@ -328,7 +250,7 @@ void MyMqtt::publishJson(String topic, JsonDocument doc, bool retained)
   serializeJson(doc, jsonStr);
   String str = "publish(" + topic + ", " + jsonStr;
   if (str.length() > 108)
-    str = str.substring(0, 108) + "...}";
+    str = str.substring(0, 108) + "...})";
   else
     str += ")";
   INFO_PRINT("[%lu]%s\n", millis(), str.c_str());

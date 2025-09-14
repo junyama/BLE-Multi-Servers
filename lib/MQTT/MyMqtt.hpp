@@ -38,7 +38,7 @@ private:
     MyScanCallbacks *myScanCallbacks;
     MyNotification *myNotification;
     int numberOfBleDevices;
-    MyThermo *myThermoArr;
+    //MyThermo *myThermoArr;
     int numberOfThermoDevices;
 
     VoltMater *voltMater;
@@ -49,7 +49,7 @@ private:
 
 public:
     MyMqtt(PubSubClient *mqttClient_, MyBLE2 *myBleArr_, VoltMater *voltMater_,
-           MyM5 *myM5_, MyThermo *myThermoArr_, MyWiFi *myWiFi_, MyNotification *myNotification_, MyScanCallbacks *myScanCallbacks_);
+           MyM5 *myM5_, MyWiFi *myWiFi_, MyNotification *myNotification_, MyScanCallbacks *myScanCallbacks_);
     void mqttServerSetup(JsonDocument configJson);
     //void mqttDeviceSetup(int numberOfBleDevices_);
     // void mqttThermoSetup(int numberOfThermoDevices_);

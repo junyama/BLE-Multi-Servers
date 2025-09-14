@@ -13,7 +13,7 @@ class MyClientCallbacks : public NimBLEClientCallbacks
 private:
     const char *TAG = "MyClientCallbacks";
     MyBLE2 *myBleArr;
-    MyThermo *myThermoArr;
+    //MyThermo *myThermoArr;
 
     MyScanCallbacks *myScanCallbacks;
 
@@ -21,7 +21,7 @@ public:
     // int numberOfConnectedBMS;
     // int numberOfConnectedThermo;
 
-    MyClientCallbacks(MyBLE2 *myBleArr_, MyThermo *myThermoArr_, MyScanCallbacks *myScanCallbacks_);
+    MyClientCallbacks(MyBLE2 *myBleArr_, MyScanCallbacks *myScanCallbacks_);
 
     void onConnect(NimBLEClient *pClient) override;
 
