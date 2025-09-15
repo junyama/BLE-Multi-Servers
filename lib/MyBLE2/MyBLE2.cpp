@@ -4,6 +4,12 @@ MyBLE2::MyBLE2()
 {
 }
 
+MyBLE2::MyBLE2(NimBLEAddress peerAddress_, String deviceName_) :
+peerAddress(peerAddress_), mac(String(peerAddress_.toString().c_str())), deviceName(deviceName_)
+{
+
+}
+
 /*
 MyBLE2::MyBLE2(NimBLEAddress peerAddress_) : peerAddress(peerAddress_)
 {

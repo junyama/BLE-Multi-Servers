@@ -6,6 +6,7 @@ MyNotification::MyNotification(MyBLE2 *myBleArr_, MyScanCallbacks *myScanCallbac
   DEBUG_PRINT("an instance created\n");
 }
 
+/*
 // int getIndexOfMyBleArr(NimBLERemoteCharacteristic *pRemoteCharacteristic)
 int MyNotification::getIndexOfMyBleArr(NimBLEClient *client)
 {
@@ -38,6 +39,7 @@ int MyNotification::getIndexOfMyThermoArr(NimBLEClient *client)
   }
   return -1;
 }
+*/
 
 /** Notification / Indication receiving handler callback */
 void MyNotification::notifyCB(NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify)
@@ -63,10 +65,10 @@ void MyNotification::notifyCB(NimBLERemoteCharacteristic *pRemoteCharacteristic,
     {
       DEBUG_PRINT("Notification from BMS\n");
       // int bleIndex = getIndexOfMyBleArr(pRemoteCharacteristic->getClient());
-      int bleIndex = MyGetIndex::myBleArr(myBleArr, pRemoteCharacteristic->getClient());
+      int bleIndex = MyGetIndex::bleDevices(&myScanCallbacks->bleDevices, pRemoteCharacteristic->getClient());
       if (bleIndex > -1)
       {
-        DEBUG3_PRINT("Notification from %s\n", MyGetIndex::bleInfo(myBleArr, bleIndex).c_str());
+        DEBUG3_PRINT("Notification from %s\n", MyGetIndex::bleInfo(&myScanCallbacks->bleDevices, bleIndex).c_str());
         myBleArr[bleIndex].bleCollectPacket((char *)pData, length);
         return;
       }
@@ -154,7 +156,7 @@ bool MyNotification::connectToServer()
         {
           if (!pClient->connect(myScanCallbacks->advDevices.at(index), false))
           {
-            WARN_PRINT("[%d/%d] Failed to reconnect with %s\n", ++failCount, FAIL_LIMIT, MyGetIndex::bleInfo(myBleArr, index).c_str());
+            WARN_PRINT("[%d/%d] Failed to reconnect with %s\n", ++failCount, FAIL_LIMIT, MyGetIndex::bleInfo(&myScanCallbacks->bleDevices, index).c_str());
           }
           DEBUG_PRINT("Reconnected client\n");
         }
@@ -192,7 +194,7 @@ bool MyNotification::connectToServer()
         {
           /** Created a client but failed to connect, don't need to keep it as it has no data */
           // NimBLEDevice::deleteClient(pClient);
-          WARN_PRINT("[%d/%d] Failed to reconnect with %s\n", ++failCount, FAIL_LIMIT, MyGetIndex::bleInfo(myBleArr, index).c_str());
+          WARN_PRINT("[%d/%d] Failed to reconnect with %s\n", ++failCount, FAIL_LIMIT, MyGetIndex::bleInfo(&myScanCallbacks->bleDevices, index).c_str());
           if (failCount <= FAIL_LIMIT)
           {
             WARN_PRINT("return with false\n");
@@ -209,7 +211,7 @@ bool MyNotification::connectToServer()
       {
         if (!pClient->connect(myScanCallbacks->advDevices.at(index)))
         {
-          WARN_PRINT("[%d/%d] Failed to connect with %s\n", ++failCount, FAIL_LIMIT, MyGetIndex::bleInfo(myBleArr, index).c_str());
+          WARN_PRINT("[%d/%d] Failed to connect with %s\n", ++failCount, FAIL_LIMIT, MyGetIndex::bleInfo(&myScanCallbacks->bleDevices, index).c_str());
           if (failCount <= FAIL_LIMIT)
           {
             WARN_PRINT("return with false\n");
@@ -234,7 +236,7 @@ bool MyNotification::connectToServer()
         myBleArr[index].pChr_rx = pSvc->getCharacteristic(myScanCallbacks->charUUID_rx);
         if (!myBleArr[index].pChr_rx)
         {
-          WARN_PRINT("[%d/%d] charUUID_rx not found %s\n", ++failCount, FAIL_LIMIT, MyGetIndex::bleInfo(myBleArr, index).c_str());
+          WARN_PRINT("[%d/%d] charUUID_rx not found %s\n", ++failCount, FAIL_LIMIT, MyGetIndex::bleInfo(&myScanCallbacks->bleDevices, index).c_str());
           if (failCount <= FAIL_LIMIT)
           {
             WARN_PRINT("return with false\n");
@@ -250,7 +252,7 @@ bool MyNotification::connectToServer()
           if (!myBleArr[index].pChr_rx->subscribe(true, [this](NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify)
                                                   { notifyCB(pRemoteCharacteristic, pData, length, isNotify); }))
           {
-            WARN_PRINT("[%d/%d] subscription failed %s\n", ++failCount, FAIL_LIMIT, MyGetIndex::bleInfo(myBleArr, index).c_str());
+            WARN_PRINT("[%d/%d] subscription failed %s\n", ++failCount, FAIL_LIMIT, MyGetIndex::bleInfo(&myScanCallbacks->bleDevices, index).c_str());
             if (failCount <= FAIL_LIMIT)
             {
               WARN_PRINT("return with false\n");
@@ -265,7 +267,7 @@ bool MyNotification::connectToServer()
         myBleArr[index].pChr_tx = pSvc->getCharacteristic(myScanCallbacks->charUUID_tx);
         if (!myBleArr[index].pChr_tx)
         {
-          WARN_PRINT("[%d/%d] charUUID_tx not found %s\n", ++failCount, FAIL_LIMIT, MyGetIndex::bleInfo(myBleArr, index).c_str());
+          WARN_PRINT("[%d/%d] charUUID_tx not found %s\n", ++failCount, FAIL_LIMIT, MyGetIndex::bleInfo(&myScanCallbacks->bleDevices, index).c_str());
           if (failCount <= FAIL_LIMIT)
           {
             WARN_PRINT("return with false\n");
@@ -279,7 +281,7 @@ bool MyNotification::connectToServer()
       }
       else
       {
-        WARN_PRINT("[%d/%d] serviceUUID not found %s\n", ++failCount, FAIL_LIMIT, MyGetIndex::bleInfo(myBleArr, index).c_str());
+        WARN_PRINT("[%d/%d] serviceUUID not found %s\n", ++failCount, FAIL_LIMIT, MyGetIndex::bleInfo(&myScanCallbacks->bleDevices, index).c_str());
         if (failCount <= FAIL_LIMIT)
         {
           WARN_PRINT("return with false\n");

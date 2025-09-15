@@ -64,13 +64,14 @@ public:
     NimBLEAddress peerAddress;
     String mac = "00:00:00:00:00:00";
     int numberOfTemperature = 2;
-    String topic = "NOT_DEFINED";
+    String topic = "NOT_DEFINED/";
     bool connected = false;
 
     int measurmentIntervalMs = 10000;
     unsigned long lastMeasurment = 0;
 
     MyBLE2();
+    MyBLE2(NimBLEAddress peerAddress_, String deviceName_);
     void sendInfoCommand();
     JsonDocument getMosfetState();
     JsonDocument getState();

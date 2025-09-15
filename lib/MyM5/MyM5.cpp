@@ -48,8 +48,8 @@ void MyM5::powerSave(int status)
 {
     if (status)
     {
-        println("goint to sleap in 2 seconds");
-        delay(2000);
+        println("sleeping in 3 sec");
+        delay(3000);
         M5.Lcd.sleep();
         M5.Axp.SetLcdVoltage(0);
         lcdState = 0;

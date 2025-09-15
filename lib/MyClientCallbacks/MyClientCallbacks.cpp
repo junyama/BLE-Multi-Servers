@@ -12,7 +12,8 @@ void MyClientCallbacks::onConnect(NimBLEClient *pClient)
     if (index > -1)
     {
         myBleArr[index].connected = true;
-        DEBUG4_PRINT("myBleArr[%d] Connected\n", index);
+        myScanCallbacks->bleDevices[index].connected = true;
+        DEBUG4_PRINT("myScanCallbacks->bleDevices[%d] Connected\n", index);
     }
     else
     {
@@ -36,6 +37,7 @@ void MyClientCallbacks::onDisconnect(NimBLEClient *pClient, int reason)
     int index = MyGetIndex::myBleArr(myBleArr, pClient);
     if (index > -1)
     {
+        myScanCallbacks->bleDevices[index].connected = false;
         myBleArr[index].connected = false;
         WARN_PRINT("Disconnected from %s\n", MyGetIndex::bleInfo(myBleArr, index).c_str());
     }

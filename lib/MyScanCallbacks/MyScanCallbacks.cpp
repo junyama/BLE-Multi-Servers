@@ -98,10 +98,10 @@ void MyScanCallbacks::onScanEnd(const NimBLEScanResults &results, int reason)
   {
     WARN_PRINT("no BMS found\n");
     return;
-    //WARN_PRINT("no BMS found and goint to rescan BLE\n");
-    // doRescan = true;
-    // delay(2000);
-    // myM5->reset();
+    // WARN_PRINT("no BMS found and goint to rescan BLE\n");
+    //  doRescan = true;
+    //  delay(2000);
+    //  myM5->reset();
   }
 
   for (int bleIndex = 0; bleIndex < numberOfBMS; bleIndex++)
@@ -115,6 +115,10 @@ void MyScanCallbacks::onScanEnd(const NimBLEScanResults &results, int reason)
     myM5->bmsInfoArr[bleIndex].deviceName = myBleArr[bleIndex].deviceName;
     DEBUG_PRINT("myBleArr[%d].deviceName set by %s\n", bleIndex, myBleArr[bleIndex].deviceName.c_str());
     // bleDevices->push_back(MyBLE(advDevices[bleIndex]->getAddress())); //crash
+
+    bleDevices.emplace_back(advDevices[bleIndex]->getAddress(), String(advDevices[bleIndex]->getName().c_str()));
+    DEBUG4_PRINT("bleDevices[%d] created with Name: %s, Address: %s\n",
+                 index, bleDevices[bleIndex].deviceName.c_str(), bleDevices[bleIndex].mac.c_str());
   }
   // NimBLEDevice::getScan()->start(scanTimeMs, false, true);
   if (numberOfBMS != 0 && !doConnect)
@@ -123,7 +127,7 @@ void MyScanCallbacks::onScanEnd(const NimBLEScanResults &results, int reason)
   }
 
   // added for Thermomater
-  //numberOfThermo = advThermoDevices.size(); ////////////////
+  // numberOfThermo = advThermoDevices.size(); ////////////////
 
   INFO_PRINT("Thermomater scan done, reason: %d, device count: %d, advThermoDevices.size(): %d\n",
              reason, results.getCount(), advThermoDevices.size());
@@ -158,8 +162,8 @@ void MyScanCallbacks::onScanEnd(const NimBLEScanResults &results, int reason)
     //thermoDevices.push_back(myThermo);
     */
     thermoDevices.emplace_back(advThermoDevices[index]->getAddress(), String(advThermoDevices[index]->getName().c_str()));
-    DEBUG4_PRINT("thermoDevices[%d] created with Name: %s, Address: %s\n", 
-      index, thermoDevices[index].deviceName.c_str(), thermoDevices[index].mac.c_str());
+    DEBUG4_PRINT("thermoDevices[%d] created with Name: %s, Address: %s\n",
+                 index, thermoDevices[index].deviceName.c_str(), thermoDevices[index].mac.c_str());
   }
   if (advThermoDevices.size() != 0 && !doConnectThermo)
   {

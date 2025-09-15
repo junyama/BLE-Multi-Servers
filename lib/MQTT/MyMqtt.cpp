@@ -73,12 +73,16 @@ void MyMqtt::bmsSetup()
           String mac = deviceObj["mac"];
           // DEBUG_PRINT("thermoSetup: myBleArr[%d].mac: %s, deviceList[%d][\"mac\"]: %s\n",
           // bmsIndex, myBleArr[bmsIndex].mac.c_str(), deviceIndex, mac.c_str());
-          if (NimBLEAddress(myBleArr[bmsIndex].mac.c_str(), 0).equals(NimBLEAddress(mac.c_str(), 0)))
+          //if (NimBLEAddress(myBleArr[bmsIndex].mac.c_str(), 0).equals(NimBLEAddress(mac.c_str(), 0)))
+          if (myScanCallbacks->bleDevices[bmsIndex].peerAddress == NimBLEAddress(mac.c_str(), 0))
           {
             String topic = deviceObj["mqtt"]["topic"];
             myBleArr[bmsIndex].topic = topic;
-            DEBUG2_PRINT("bmsSetup: myBleArr[%d].mac found at config and set topic: %s\n", bmsIndex,
-                         myBleArr[bmsIndex].topic.c_str());
+            
+            myScanCallbacks->bleDevices[bmsIndex].topic = topic;
+
+            DEBUG2_PRINT("bmsSetup: myScanCallbacks->bleDevices[%d].mac found at config and set topic: %s\n", bmsIndex,
+                         myScanCallbacks->bleDevices[bmsIndex].topic.c_str());
             // myBleArr[bmsIndex].available = true;
             // DEBUG_PRINT("mqttDeviceSetup: myBleArr[%d].available = true\n", bmsIndex);
             deviceFound = true;
@@ -89,8 +93,8 @@ void MyMqtt::bmsSetup()
       if (!deviceFound)
       {
         char buff[256];
-        sprintf(buff, "myBleArr[%d].mac: %s not found at config",
-                myBleArr[bmsIndex].mac.c_str(), bmsIndex);
+        sprintf(buff, "myScanCallbacks->bleDevices[%d].mac: %s not found at config",
+                myScanCallbacks->bleDevices[bmsIndex].mac.c_str(), bmsIndex);
         throw std::runtime_error(buff);
       }
     }
@@ -249,8 +253,8 @@ void MyMqtt::publishJson(String topic, JsonDocument doc, bool retained)
   String jsonStr;
   serializeJson(doc, jsonStr);
   String str = "publish(" + topic + ", " + jsonStr;
-  if (str.length() > 108)
-    str = str.substring(0, 108) + "...})";
+  if (str.length() > 106)
+    str = str.substring(0, 106) + "...})";
   else
     str += ")";
   INFO_PRINT("[%lu]%s\n", millis(), str.c_str());

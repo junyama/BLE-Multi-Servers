@@ -35,7 +35,7 @@
 #define CONFIG_FILE "/config.json"
 #define FAIL_LIMIT_MAIN 4
 #define PUBLISH_LEAD_TIME_BMS 60000
-#define PUBLISH_LEAD_TIME_THERMO 60000
+#define PUBLISH_LEAD_TIME_THERMO 20000
 
 const char *TAG = "main";
 const char *MyGetIndex::TAG = "MyGetIndex";
@@ -208,19 +208,19 @@ void loop()
   if (myScanCallbacks.doConnect)
   {
     myScanCallbacks.doConnect = false;
-    INFO_PRINT("Found %d of BMSs we want to connect to, do it now.\n", myScanCallbacks.numberOfBMS);
+    INFO_PRINT("Found %d of BMSs we want to connect to, do it now.\n", myScanCallbacks.bleDevices.size());
     myMqtt.bmsSetup();
-    myNotification.numberOfBMS = myScanCallbacks.numberOfBMS;
+    myNotification.numberOfBMS = myScanCallbacks.bleDevices.size();
     if (myNotification.connectToServer())
     {
       INFO_PRINT("Success! we should now be getting notifications from BMS(%d).\n", myNotification.numberOfConnectedBMS);
       // myMqtt.mqttDeviceSetup(myNotification.numberOfConnectedBMS);
       // myMqtt.bmsSetup();
       myM5.numberOfConnectedBMS = myNotification.numberOfConnectedBMS;
-      for (int index = 0; index < myScanCallbacks.numberOfBMS; index++)
+      for (int index = 0; index < myScanCallbacks.bleDevices.size(); index++)
       {
-        myBleArr[index].lastMeasurment = millis() + PUBLISH_LEAD_TIME_BMS + 4800 * index;
-        INFO_PRINT("myBleArr[%d].lastMeasurment: %lu\n", index, myBleArr[index].lastMeasurment);
+        myScanCallbacks.bleDevices[index].lastMeasurment = millis() + PUBLISH_LEAD_TIME_BMS + 4800 * index;
+        INFO_PRINT("myScanCallbacks.bleDevices[%d].lastMeasurment: %lu\n", index, myScanCallbacks.bleDevices[index].lastMeasurment);
       }
       // myClientCallbacks.numberOfConnectedBMS = myNotification.numberOfConnectedBMS;
       /*
@@ -236,14 +236,15 @@ void loop()
     else
     {
       WARN_PRINT("[%d/%d] Failed to connect BMS found[%d] %s\n",
-                 ++failCount, FAIL_LIMIT_MAIN, myScanCallbacks.numberOfBMS);
+                 ++failCount, FAIL_LIMIT_MAIN, myScanCallbacks.bleDevices.size());
       if (failCount <= FAIL_LIMIT_MAIN)
       {
         WARN_PRINT("rescan\n");
         myM5.println("Failed to connect BMS rescan");
         myNotification.clearResources();
-        myScanCallbacks.thermoDevices.clear();
 
+        myScanCallbacks.bleDevices.clear();
+        myScanCallbacks.thermoDevices.clear();
         NimBLEDevice::getScan()->start(myScanCallbacks.scanTimeMs, false, true);
       }
       else
@@ -251,10 +252,10 @@ void loop()
         WARN_PRINT("Exceeded the fail limit (%d) of main. Continue\n", FAIL_LIMIT_MAIN);
         // myMqtt.bmsSetup();
         myM5.numberOfConnectedBMS = myNotification.numberOfConnectedBMS;
-        for (int index = 0; index < myScanCallbacks.numberOfBMS; index++)
+        for (int index = 0; index < myScanCallbacks.bleDevices.size(); index++)
         {
-          myBleArr[index].lastMeasurment = millis() + PUBLISH_LEAD_TIME_BMS + 4800 * index;
-          INFO_PRINT("myBleArr[%d].lastMeasurment: %lu\n", index, myBleArr[index].lastMeasurment);
+          myScanCallbacks.bleDevices[index].lastMeasurment = millis() + PUBLISH_LEAD_TIME_BMS + 4800 * index;
+          INFO_PRINT("myScanCallbacks.bleDevices[%d].lastMeasurment: %lu\n", index, myScanCallbacks.bleDevices[index].lastMeasurment);
         }
       }
 
@@ -298,8 +299,9 @@ void loop()
         WARN_PRINT("rescan\n");
         myM5.println("Failed to connect thermo rescan");
         myNotification.clearResources();
-        myScanCallbacks.thermoDevices.clear();
 
+        myScanCallbacks.bleDevices.clear();
+        myScanCallbacks.thermoDevices.clear();
         NimBLEDevice::getScan()->start(myScanCallbacks.scanTimeMs, false, true);
       }
       else
@@ -324,7 +326,7 @@ void loop()
   }
 
   currentTime = millis();
-  for (int bleIndex = 0; bleIndex < myNotification.numberOfBMS; bleIndex++)
+  for (int bleIndex = 0; bleIndex < myScanCallbacks.bleDevices.size(); bleIndex++)
   {
     try
     {
@@ -332,16 +334,18 @@ void loop()
       {
         // bool timeout = false;
         // if (timeout = myTimerArr[bleIndex].timeout(millis()))
-        if (myBleArr[bleIndex].timeout(currentTime))
+        if (myScanCallbacks.bleDevices[bleIndex].timeout(currentTime))
         {
-          if (!myBleArr[bleIndex].connected)
+          if (!myScanCallbacks.bleDevices[bleIndex].connected)
           {
-            myMqtt.publish("stat/" + myBleArr[bleIndex].topic + "STATE", "{\"connected\": 0}");
+            myMqtt.publish("stat/" + myScanCallbacks.bleDevices[bleIndex].topic + "STATE", "{\"connected\": 0}");
             String msg = MyGetIndex::bleInfo(myBleArr, bleIndex) + " not connected";
             throw std::runtime_error(std::string(msg.c_str()));
           }
           myBleArr[bleIndex].sendInfoCommand();
           INFO_PRINT("[%lu] myBleArr[%d].sendInfoCommand()\n", millis(), bleIndex);
+          //myScanCallbacks.bleDevices[bleIndex].sendInfoCommand();
+          //INFO_PRINT("[%lu] myScanCallbacks.bleDevices[%d].sendInfoCommand()\n", millis(), bleIndex);
         }
         // DEBUG_PRINT("timeout: %d, myBleArr[%d].newPacketReceived: %d\n", timeout, bleIndex, myBleArr[bleIndex].newPacketReceived);
         if (myBleArr[bleIndex].newPacketReceived)
