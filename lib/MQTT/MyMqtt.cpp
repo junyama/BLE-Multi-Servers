@@ -393,7 +393,7 @@ void MyMqtt::mqttCallback(char *topic_, byte *payload, unsigned int length)
   bool connectionStatus;
   for (int bleIndex = 0; bleIndex < numberOfBleDevices; bleIndex++)
   {
-    DEBUG_PRINT("myBleArr[%d].topic = %s\n", bleIndex, myBleArr[bleIndex].topic.c_str());
+    DEBUG_PRINT("myScanCallbacks->bleDevices[%d].topic = %s\n", bleIndex, myScanCallbacks->bleDevices[bleIndex].topic.c_str());
     // DEBUG_PRINT("myBleArr[%d].available = %d", bleIndex, myBleArr[bleIndex].available);
     /*
     if (!myBleArr[bleIndex].available)
@@ -402,15 +402,15 @@ void MyMqtt::mqttCallback(char *topic_, byte *payload, unsigned int length)
       continue;
     }
     */
-    String deviceTopic = myBleArr[bleIndex].topic;
-    chargeStatus = myBleArr[bleIndex].packBasicInfo.MosfetStatus & 1;
-    dischargeStatus = (myBleArr[bleIndex].packBasicInfo.MosfetStatus & 2) >> 1;
+    String deviceTopic = myScanCallbacks->bleDevices[bleIndex].topic;
+    chargeStatus = myScanCallbacks->bleDevices[bleIndex].packBasicInfo.MosfetStatus & 1;
+    dischargeStatus = (myScanCallbacks->bleDevices[bleIndex].packBasicInfo.MosfetStatus & 2) >> 1;
     // connectionStatus = myBleArr[bleIndex].isConnected();
 
     if (String(topic_).equals("cmnd/" + deviceTopic + "getBmsState"))
     {
       DEBUG_PRINT("responding to getBmsState of %s\n", deviceTopic.c_str());
-      publishJson(("stat/" + deviceTopic + "RESULT").c_str(), myBleArr[bleIndex].getState(), false);
+      publishJson(("stat/" + deviceTopic + "RESULT").c_str(), myScanCallbacks->bleDevices[bleIndex].getState(), false);
       return;
     }
     if ((String(topic_).equals("cmnd/" + deviceTopic + "charge")) || ((String(topic_).equals("cmnd/" + deviceTopic + "discharge"))))
@@ -427,19 +427,19 @@ void MyMqtt::mqttCallback(char *topic_, byte *payload, unsigned int length)
         }
         else if (msgStr.equals("0"))
         {
-          myBleArr[bleIndex].mosfetCtrl(0, dischargeStatus);
+          myScanCallbacks->bleDevices[bleIndex].mosfetCtrl(0, dischargeStatus);
           chargeStatus = 0;
           msgStr = "OFF";
         }
         else if (msgStr.equals("1"))
         {
-          myBleArr[bleIndex].mosfetCtrl(1, dischargeStatus);
+          myScanCallbacks->bleDevices[bleIndex].mosfetCtrl(1, dischargeStatus);
           chargeStatus = 1;
           msgStr = "ON";
         }
         else if (msgStr.equals("toggle"))
         {
-          myBleArr[bleIndex].mosfetCtrl((chargeStatus ^ 1), dischargeStatus);
+          myScanCallbacks->bleDevices[bleIndex].mosfetCtrl((chargeStatus ^ 1), dischargeStatus);
           chargeStatus = chargeStatus ^ 1;
           msgStr = "TOGGLE";
         }
@@ -462,19 +462,19 @@ void MyMqtt::mqttCallback(char *topic_, byte *payload, unsigned int length)
         }
         else if (msgStr.equals("0"))
         {
-          myBleArr[bleIndex].mosfetCtrl(chargeStatus, 0);
+          myScanCallbacks->bleDevices[bleIndex].mosfetCtrl(chargeStatus, 0);
           dischargeStatus = 0;
           msgStr = "OFF";
         }
         else if (msgStr.equals("1"))
         {
-          myBleArr[bleIndex].mosfetCtrl(chargeStatus, 1);
+          myScanCallbacks->bleDevices[bleIndex].mosfetCtrl(chargeStatus, 1);
           dischargeStatus = 1;
           msgStr = "ON";
         }
         else if (msgStr.equals("toggle"))
         {
-          myBleArr[bleIndex].mosfetCtrl(chargeStatus, (dischargeStatus ^ 1));
+          myScanCallbacks->bleDevices[bleIndex].mosfetCtrl(chargeStatus, (dischargeStatus ^ 1));
           dischargeStatus = dischargeStatus ^ 1;
           msgStr = "TOGGLE";
         }
