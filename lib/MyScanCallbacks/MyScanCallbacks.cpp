@@ -106,6 +106,7 @@ void MyScanCallbacks::onScanEnd(const NimBLEScanResults &results, int reason)
 
   for (int bleIndex = 0; bleIndex < numberOfBMS; bleIndex++)
   {
+    /*
     std::string address = advDevices[bleIndex]->getAddress().toString();
     myBleArr[bleIndex].mac = String(address.c_str());
     myM5->bmsInfoArr[bleIndex].mac = myBleArr[bleIndex].mac;
@@ -115,6 +116,7 @@ void MyScanCallbacks::onScanEnd(const NimBLEScanResults &results, int reason)
     myM5->bmsInfoArr[bleIndex].deviceName = myBleArr[bleIndex].deviceName;
     DEBUG_PRINT("myBleArr[%d].deviceName set by %s\n", bleIndex, myBleArr[bleIndex].deviceName.c_str());
     // bleDevices->push_back(MyBLE(advDevices[bleIndex]->getAddress())); //crash
+    */
 
     bleDevices.emplace_back(advDevices[bleIndex]->getAddress(), String(advDevices[bleIndex]->getName().c_str()));
     DEBUG4_PRINT("bleDevices[%d] created with Name: %s, Address: %s\n",

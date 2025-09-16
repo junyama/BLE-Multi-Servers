@@ -77,7 +77,7 @@ void MyMqtt::bmsSetup()
           if (myScanCallbacks->bleDevices[bmsIndex].peerAddress == NimBLEAddress(mac.c_str(), 0))
           {
             String topic = deviceObj["mqtt"]["topic"];
-            myBleArr[bmsIndex].topic = topic;
+            //myBleArr[bmsIndex].topic = topic;
             
             myScanCallbacks->bleDevices[bmsIndex].topic = topic;
 

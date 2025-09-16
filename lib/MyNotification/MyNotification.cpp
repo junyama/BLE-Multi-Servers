@@ -3,43 +3,7 @@
 MyNotification::MyNotification(MyBLE2 *myBleArr_, MyScanCallbacks *myScanCallbacks_, MyClientCallbacks *myClientCallbacks_)
     : myBleArr(myBleArr_), myScanCallbacks(myScanCallbacks_), myClientCallbacks(myClientCallbacks_)
 {
-  DEBUG_PRINT("an instance created\n");
 }
-
-/*
-// int getIndexOfMyBleArr(NimBLERemoteCharacteristic *pRemoteCharacteristic)
-int MyNotification::getIndexOfMyBleArr(NimBLEClient *client)
-{
-  DEBUG_PRINT("getIndexOfMyBleArr: advDevices.size(): %d\n", myScanCallbacks->advDevices.size());
-  auto peerAddress = client->getPeerAddress();
-  DEBUG_PRINT("getIndexOfMyBleArr: peerAddress: %s\n", peerAddress.toString().c_str());
-  for (int index = 0; index < myScanCallbacks->advDevices.size(); index++)
-  {
-    DEBUG_PRINT("getIndexOfMyBleArr: myBleArr[index].mac: %s\n",
-                myBleArr[index].pChr_rx->getClient()->getPeerAddress().toString().c_str());
-    if (peerAddress == myBleArr[index].pChr_rx->getClient()->getPeerAddress())
-    {
-      return index;
-    }
-  }
-  return -1;
-}
-
-int MyNotification::getIndexOfMyThermoArr(NimBLEClient *client)
-{
-  auto peerAddress = client->getPeerAddress();
-  for (int index = 0; index < myScanCallbacks->advThermoDevices.size(); index++)
-  {
-    // if (peerAddress == myThermoArr[i].pChr_rx_temp->getClient()->getPeerAddress())
-    std::string macStr = myScanCallbacks->thermoDevices[index].mac.c_str();
-    if (peerAddress == NimBLEAddress(macStr, 0))
-    {
-      return index;
-    }
-  }
-  return -1;
-}
-*/
 
 /** Notification / Indication receiving handler callback */
 void MyNotification::notifyCB(NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify)
@@ -69,7 +33,8 @@ void MyNotification::notifyCB(NimBLERemoteCharacteristic *pRemoteCharacteristic,
       if (bleIndex > -1)
       {
         DEBUG3_PRINT("Notification from %s\n", MyGetIndex::bleInfo(&myScanCallbacks->bleDevices, bleIndex).c_str());
-        myBleArr[bleIndex].bleCollectPacket((char *)pData, length);
+        //myBleArr[bleIndex].bleCollectPacket((char *)pData, length);
+        myScanCallbacks->bleDevices[bleIndex].bleCollectPacket((char *)pData, length);
         return;
       }
       else
@@ -233,8 +198,9 @@ bool MyNotification::connectToServer()
       if (pSvc)
       {
         DEBUG2_PRINT("serviceDataUUID of BMS found: %s\n", pSvc->toString().c_str());
-        myBleArr[index].pChr_rx = pSvc->getCharacteristic(myScanCallbacks->charUUID_rx);
-        if (!myBleArr[index].pChr_rx)
+        //myBleArr[index].pChr_rx = pSvc->getCharacteristic(myScanCallbacks->charUUID_rx);
+        myScanCallbacks->bleDevices[index].pChr_rx = pSvc->getCharacteristic(myScanCallbacks->charUUID_rx);
+        if (/*!myBleArr[index].pChr_rx || */!myScanCallbacks->bleDevices[index].pChr_rx)
         {
           WARN_PRINT("[%d/%d] charUUID_rx not found %s\n", ++failCount, FAIL_LIMIT, MyGetIndex::bleInfo(&myScanCallbacks->bleDevices, index).c_str());
           if (failCount <= FAIL_LIMIT)
@@ -247,16 +213,17 @@ bool MyNotification::connectToServer()
           NimBLEDevice::deleteClient(pClient);
           continue;
         }
-        if (myBleArr[index].pChr_rx->canNotify())
+        if (/*myBleArr[index].pChr_rx->canNotify() || */myScanCallbacks->bleDevices[index].pChr_rx->canNotify())
         {
-          if (!myBleArr[index].pChr_rx->subscribe(true, [this](NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify)
+          if (/*!myBleArr[index].pChr_rx->subscribe(true, [this](NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify)
+                                                  { notifyCB(pRemoteCharacteristic, pData, length, isNotify); }) || */
+                                                   !myScanCallbacks->bleDevices[index].pChr_rx->subscribe(true, [this](NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify)
                                                   { notifyCB(pRemoteCharacteristic, pData, length, isNotify); }))
           {
             WARN_PRINT("[%d/%d] subscription failed %s\n", ++failCount, FAIL_LIMIT, MyGetIndex::bleInfo(&myScanCallbacks->bleDevices, index).c_str());
             if (failCount <= FAIL_LIMIT)
             {
               WARN_PRINT("return with false\n");
-              // clearResources();
               return false;
             }
             WARN_PRINT("Exceeded the fail limit (%d). Deletea client and continue to next device\n", FAIL_LIMIT);
@@ -264,8 +231,9 @@ bool MyNotification::connectToServer()
             continue;
           }
         }
-        myBleArr[index].pChr_tx = pSvc->getCharacteristic(myScanCallbacks->charUUID_tx);
-        if (!myBleArr[index].pChr_tx)
+        //myBleArr[index].pChr_tx = pSvc->getCharacteristic(myScanCallbacks->charUUID_tx);
+        myScanCallbacks->bleDevices[index].pChr_tx = pSvc->getCharacteristic(myScanCallbacks->charUUID_tx);
+        if (/*!myBleArr[index].pChr_tx ||*/ !myScanCallbacks->bleDevices[index].pChr_tx)
         {
           WARN_PRINT("[%d/%d] charUUID_tx not found %s\n", ++failCount, FAIL_LIMIT, MyGetIndex::bleInfo(&myScanCallbacks->bleDevices, index).c_str());
           if (failCount <= FAIL_LIMIT)
@@ -293,7 +261,7 @@ bool MyNotification::connectToServer()
         continue;
       }
       // INFO_PRINT("Connected with an advertized BMS[%d] in %d!\n", index, myScanCallbacks->advDevices.size());
-      INFO_PRINT("[%d/%d]: Connected with an myBleArr[%d]: %s <<<<<<<<\n", count, numberOfBMS, index, deviceName.c_str());
+      INFO_PRINT("[%d/%d]: Connected with an myScanCallbacks->bleDevices[%d]: %s <<<<<<<<\n", count, numberOfBMS, index, deviceName.c_str());
       atLeastOneConnected = true;
       numberOfConnectedBMS++;
 
@@ -572,10 +540,12 @@ void MyNotification::clearResources()
   numberOfConnectedThermo = 0;
   for (int i = 0; i < myScanCallbacks->numberOfBMS; i++)
   {
+    /*
     myBleArr[i].connected = false;
     myBleArr[i].mac = "00:00:00:00:00:00";
     myBleArr[i].deviceName = "UNKNOWN";
     myBleArr[i].topic = "NOT_DEFINED/";
+    */
   }
   myScanCallbacks->advDevices.clear();
   myScanCallbacks->numberOfBMS = 0;

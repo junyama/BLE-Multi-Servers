@@ -79,7 +79,6 @@ MyClientCallbacks myClientCallbacks(myBleArr, &myScanCallbacks);
 MyNotification myNotification(myBleArr, &myScanCallbacks, &myClientCallbacks);
 MyMqtt myMqtt(&mqttClient, myBleArr, &voltMater, &myM5, &myWiFi, &myNotification, &myScanCallbacks);
 
-// MyGetIndex myGetIndex(myBleArr, &myScanCallbacks.numberOfBMS, myThermoArr, &myScanCallbacks.advThermoDevices.size());
 
 // void loadConfig();
 // void saveConfig();
@@ -222,16 +221,6 @@ void loop()
         myScanCallbacks.bleDevices[index].lastMeasurment = millis() + PUBLISH_LEAD_TIME_BMS + 4800 * index;
         INFO_PRINT("myScanCallbacks.bleDevices[%d].lastMeasurment: %lu\n", index, myScanCallbacks.bleDevices[index].lastMeasurment);
       }
-      // myClientCallbacks.numberOfConnectedBMS = myNotification.numberOfConnectedBMS;
-      /*
-      if (!mqttClient.connected())
-      {
-        myMqtt.reConnectMqttServer();
-      }
-      myM5.println("publishing Home assistant discovery");
-      myMqtt.publishHaDiscovery();
-      myM5.powerSave(1);
-      */
     }
     else
     {
@@ -258,16 +247,6 @@ void loop()
           INFO_PRINT("myScanCallbacks.bleDevices[%d].lastMeasurment: %lu\n", index, myScanCallbacks.bleDevices[index].lastMeasurment);
         }
       }
-
-      // WARN_PRINT("Failed to connect all BMS found\n");
-      // WARN_PRINT("goint to rescan\n");
-      // NimBLEDevice::getScan()->start(myScanCallbacks.scanTimeMs, false, true);
-      /*
-      DEBUG_PRINT("Failed to connect BMS, goint to reset\n");
-      myM5.println("Failed to connect BMS, goint to reset");
-      delay(2000);
-      myM5.reset();
-      */
     }
   }
 
@@ -315,13 +294,6 @@ void loop()
           INFO_PRINT("myScanCallbacks.thermoDevices[%d].lastMeasurment: %lu\n", index, myScanCallbacks.thermoDevices[index].lastMeasurment);
         }
       }
-
-      /*
-      WARN_PRINT("goint to reconnect\n");
-      myScanCallbacks.doConnectThermo = true;
-      */
-      // WARN_PRINT("goint to rescan\n");
-      // NimBLEDevice::getScan()->start(myScanCallbacks.scanTimeMs, false, true);
     }
   }
 
@@ -330,33 +302,54 @@ void loop()
   {
     try
     {
-      if (myBleArr[bleIndex].pChr_tx)
+      if (myScanCallbacks.bleDevices[bleIndex].pChr_tx)
       {
-        // bool timeout = false;
-        // if (timeout = myTimerArr[bleIndex].timeout(millis()))
         if (myScanCallbacks.bleDevices[bleIndex].timeout(currentTime))
         {
           if (!myScanCallbacks.bleDevices[bleIndex].connected)
           {
             myMqtt.publish("stat/" + myScanCallbacks.bleDevices[bleIndex].topic + "STATE", "{\"connected\": 0}");
-            String msg = MyGetIndex::bleInfo(myBleArr, bleIndex) + " not connected";
+            String msg = MyGetIndex::bleInfo(&myScanCallbacks.bleDevices, bleIndex) + " not connected";
             throw std::runtime_error(std::string(msg.c_str()));
           }
-          myBleArr[bleIndex].sendInfoCommand();
-          INFO_PRINT("[%lu] myBleArr[%d].sendInfoCommand()\n", millis(), bleIndex);
-          //myScanCallbacks.bleDevices[bleIndex].sendInfoCommand();
-          //INFO_PRINT("[%lu] myScanCallbacks.bleDevices[%d].sendInfoCommand()\n", millis(), bleIndex);
+          //myBleArr[bleIndex].sendInfoCommand();
+          //INFO_PRINT("[%lu] myBleArr[%d].sendInfoCommand()\n", millis(), bleIndex);
+
+          myScanCallbacks.bleDevices[bleIndex].sendInfoCommand();
+          INFO_PRINT("[%lu] myScanCallbacks.bleDevices[%d].sendInfoCommand()\n", millis(), bleIndex);
         }
         // DEBUG_PRINT("timeout: %d, myBleArr[%d].newPacketReceived: %d\n", timeout, bleIndex, myBleArr[bleIndex].newPacketReceived);
+        
+        /*
         if (myBleArr[bleIndex].newPacketReceived)
         {
           DEBUG_PRINT("myBleArr[%d].newPacketReceived: %d\n", bleIndex, myBleArr[bleIndex].newPacketReceived);
           myBleArr[bleIndex].newPacketReceived = false;
+
+          DEBUG_PRINT("myScanCallbacks.bleDevices[%d].newPacketReceived: %d\n", bleIndex, myScanCallbacks.bleDevices[bleIndex].newPacketReceived);
+          myScanCallbacks.bleDevices[bleIndex].newPacketReceived = false;
+
           myM5.updateBmsInfo(bleIndex, myBleArr[bleIndex].packBasicInfo.Volts, myBleArr[bleIndex].packBasicInfo.Amps,
                              myBleArr[bleIndex].packCellInfo.CellDiff,
                              myBleArr[bleIndex].packBasicInfo.Temp1, myBleArr[bleIndex].packBasicInfo.Temp2,
                              myBleArr[bleIndex].packBasicInfo.CapacityRemainPercent);
           myMqtt.publishJson("stat/" + myBleArr[bleIndex].topic + "STATE", myBleArr[bleIndex].getState(), true);
+        }
+        */
+
+        if (myScanCallbacks.bleDevices[bleIndex].newPacketReceived)
+        {
+          DEBUG_PRINT("myScanCallbacks.bleDevices[%d].newPacketReceived: %d\n", bleIndex, myScanCallbacks.bleDevices[bleIndex].newPacketReceived);
+          myScanCallbacks.bleDevices[bleIndex].newPacketReceived = false;
+
+          DEBUG_PRINT("myScanCallbacks.bleDevices[%d].newPacketReceived: %d\n", bleIndex, myScanCallbacks.bleDevices[bleIndex].newPacketReceived);
+          myScanCallbacks.bleDevices[bleIndex].newPacketReceived = false;
+
+          myM5.updateBmsInfo(bleIndex, myScanCallbacks.bleDevices[bleIndex].packBasicInfo.Volts, myScanCallbacks.bleDevices[bleIndex].packBasicInfo.Amps,
+                             myScanCallbacks.bleDevices[bleIndex].packCellInfo.CellDiff,
+                             myScanCallbacks.bleDevices[bleIndex].packBasicInfo.Temp1, myScanCallbacks.bleDevices[bleIndex].packBasicInfo.Temp2,
+                             myScanCallbacks.bleDevices[bleIndex].packBasicInfo.CapacityRemainPercent);
+          myMqtt.publishJson("stat/" + myScanCallbacks.bleDevices[bleIndex].topic + "STATE", myScanCallbacks.bleDevices[bleIndex].getState(), true);
         }
       }
     }
@@ -365,50 +358,7 @@ void loop()
       WARN_PRINT("%s\n", e.what());
       continue;
     }
-
-    /*
-    if (!myBleArr[bleIndex].connected)
-    {
-      /*
-      WARN_PRINT("[%d}check myBleArr[%d].connected == false, going to skip the next bleIndex\n", FailCount, bleIndex);
-      if (FailCount > 100)
-      {
-        DEBUG_PRINT("exceeaded the limit\n");
-        delay(2000);
-        throw std::runtime_error("BMS disconnected");
-        // DEBUG_PRINT(", goint to reconnect\n");
-        // delay(2000);
-        // myScanCallbacks.doConnect = true; // does not work
-
-        // DEBUG_PRINT(", goint to reset\n");
-        // delay(2000);
-        // myM5.reset();
-      }
-      failCount++;
-      continue;
-      throw std::runtime_error("BMS disconnected");
-    }
-    */
   }
-
-  /*
-  for (int index = 0; index < myNotification.numberOfConnectedBMS; index++)
-  {
-    try
-    {
-      if (myBleArr[index].timeout(millis() + index * 3000))
-      {
-        //WARN_PRINT("myMqtt.publishJson(\"stat/\" + myBleArr[%d].topic + \"STATE\", myBleArr[%d].getState(), true)", index, index);
-        myMqtt.publishJson("stat/" + myBleArr[index].topic + "STATE", myBleArr[index].getState(), true);
-      }
-    }
-    catch (const std::runtime_error &e)
-    {
-      ERROR_PRINT("%s\n", e.what());
-      continue;
-    }
-  }
-  */
 
   if (voltMater.connected && voltMater.timeout(millis()))
   {

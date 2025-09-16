@@ -6,7 +6,6 @@ MyGetIndex::MyGetIndex(MyBLE2 *myBleArr_, MyThermo *myThermoArr_, MyScanCallback
 {
   DEBUG_PRINT("an instance created\n");
 }
-*/
 
 int MyGetIndex::myBleArr(MyBLE2 *myBleArr, NimBLEClient *client)
 {
@@ -25,7 +24,6 @@ int MyGetIndex::myBleArr(MyBLE2 *myBleArr, NimBLEClient *client)
   return -1;
 }
 
-/*
 int MyGetIndex::myThermoArr(MyThermo *myThermoArr, NimBLEClient *client)
 {
   DEBUG_PRINT("myThermoArr() called, THERMO_ARR_SIZE: %d\n", THERMO_ARR_SIZE);
@@ -42,7 +40,6 @@ int MyGetIndex::myThermoArr(MyThermo *myThermoArr, NimBLEClient *client)
   }
   return -1;
 }
-*/
 
 String MyGetIndex::bleInfo(MyBLE2 *myBleArr, int index)
 {
@@ -52,7 +49,6 @@ String MyGetIndex::bleInfo(MyBLE2 *myBleArr, int index)
   return String(buff);
 }
 
-/*
 String MyGetIndex::thermoInfo(MyThermo *myThermoArr, int index)
 {
   char buff[256];

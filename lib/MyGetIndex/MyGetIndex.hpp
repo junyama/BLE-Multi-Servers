@@ -30,10 +30,10 @@ public:
     // int numberOfConnectedThermo = 0;
 
     // MyGetIndex(MyBLE2 *myBleArr_, MyThermo *myThermoArr_, MyScanCallbacks *myScanCallbacks_);
-    static int myBleArr(MyBLE2 *myBleArr, NimBLEClient *client);
+    //static int myBleArr(MyBLE2 *myBleArr, NimBLEClient *client);
     //static int myThermoArr(MyThermo *myThermoArr, NimBLEClient *client);
 
-    static String bleInfo(MyBLE2 *myBleArr, int index);
+    //static String bleInfo(MyBLE2 *myBleArr, int index);
     //static String thermoInfo(MyThermo *myThermoArr, int index);
 
     static int bleDevices(std::vector<MyBLE2> *bleDevices, NimBLEClient *client);
