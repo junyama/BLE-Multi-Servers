@@ -4,8 +4,8 @@ MyScanCallbacks::MyScanCallbacks()
 {
 }
 
-MyScanCallbacks::MyScanCallbacks(MyBLE2 *myBleArr_, MyM5 *myM5_)
-    : myBleArr(myBleArr_), myM5(myM5_)
+MyScanCallbacks::MyScanCallbacks(MyM5 *myM5_)
+    : myM5(myM5_)
 {
 }
 
@@ -83,18 +83,18 @@ void MyScanCallbacks::onResult(const NimBLEAdvertisedDevice *advertisedDevice)
 /** Callback to process the results of the completed scan or restart it */
 void MyScanCallbacks::onScanEnd(const NimBLEScanResults &results, int reason)
 {
-  numberOfBMS = advDevices.size();
-  INFO_PRINT("BMS scan done, reason: %d, device count: %d, numberOfBMS: %d\n",
-             reason, results.getCount(), numberOfBMS);
+  //numberOfBMS = advDevices.size();
+  INFO_PRINT("BMS scan done, reason: %d, device count: %d, advDevices.size(): %d\n",
+             reason, results.getCount(), advDevices.size());
   // numberOfAdvDevices = advDevices.size();
   // DEBUG_PRINT("advDevices.size(): %d\n", advDevices.size());
   //*numberOfDevicesFound *= numberOfAdvDevices;
   // DEBUG_PRINT("numberOfDevicesFound: %d\n", *numberOfDevicesFound);
   char buff[256];
-  sprintf(buff, "BMS scan done, found %d", numberOfBMS);
+  sprintf(buff, "BMS scan done, found %d", advDevices.size());
   myM5->println(String(buff));
 
-  if (numberOfBMS == 0)
+  if (advDevices.size() == 0)
   {
     WARN_PRINT("no BMS found\n");
     return;
@@ -104,7 +104,7 @@ void MyScanCallbacks::onScanEnd(const NimBLEScanResults &results, int reason)
     //  myM5->reset();
   }
 
-  for (int bleIndex = 0; bleIndex < numberOfBMS; bleIndex++)
+  for (int bleIndex = 0; bleIndex < advDevices.size(); bleIndex++)
   {
     /*
     std::string address = advDevices[bleIndex]->getAddress().toString();
@@ -123,7 +123,7 @@ void MyScanCallbacks::onScanEnd(const NimBLEScanResults &results, int reason)
                  index, bleDevices[bleIndex].deviceName.c_str(), bleDevices[bleIndex].mac.c_str());
   }
   // NimBLEDevice::getScan()->start(scanTimeMs, false, true);
-  if (numberOfBMS != 0 && !doConnect)
+  if (advDevices.size() != 0 && !doConnect)
   {
     doConnect = true;
   }

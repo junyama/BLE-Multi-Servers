@@ -1,8 +1,8 @@
 #include "MyMqtt.hpp"
 
-MyMqtt::MyMqtt(PubSubClient *mqttClient_, MyBLE2 *myBleArr_, VoltMater *voltMater_,
+MyMqtt::MyMqtt(PubSubClient *mqttClient_,  VoltMater *voltMater_,
                MyM5 *myM5_, MyWiFi *myWiFi_, MyNotification *myNotification_, MyScanCallbacks *myScanCallbacks_)
-    : mqttClient(mqttClient_), myBleArr(myBleArr_), voltMater(voltMater_),
+    : mqttClient(mqttClient_), voltMater(voltMater_),
       myM5(myM5_), myWiFi(myWiFi_), myNotification(myNotification_), myScanCallbacks(myScanCallbacks_)
 {
 }
@@ -59,7 +59,7 @@ void MyMqtt::deviceSetup()
 
 void MyMqtt::bmsSetup()
 {
-  for (int bmsIndex = 0; bmsIndex < myScanCallbacks->numberOfBMS; bmsIndex++)
+  for (int bmsIndex = 0; bmsIndex < myScanCallbacks->advDevices.size(); bmsIndex++)
   {
     try
     {
@@ -368,14 +368,14 @@ void MyMqtt::mqttCallback(char *topic_, byte *payload, unsigned int length)
   if (String(topic_).equals("cmnd/" + myM5->topic + "numberOfBleDevices"))
   {
     DEBUG_PRINT("responding to numberOfBleDevices!\n");
-    publish(("stat/" + myM5->topic + "RESULT").c_str(), String(numberOfBleDevices));
+    publish(("stat/" + myM5->topic + "RESULT").c_str(), String(myScanCallbacks->advDevices.size()));
     return;
   }
 
   if (String(topic_).equals("cmnd/" + myM5->topic + "numberOfThermoDevices"))
   {
     DEBUG_PRINT("responding to numberOfThermoDevices!\n");
-    publish(("stat/" + myM5->topic + "RESULT").c_str(), String(numberOfThermoDevices));
+    publish(("stat/" + myM5->topic + "RESULT").c_str(), String(myScanCallbacks->advThermoDevices.size()));
     return;
   }
 
@@ -391,7 +391,7 @@ void MyMqtt::mqttCallback(char *topic_, byte *payload, unsigned int length)
   int chargeStatus;
   int dischargeStatus;
   bool connectionStatus;
-  for (int bleIndex = 0; bleIndex < numberOfBleDevices; bleIndex++)
+  for (int bleIndex = 0; bleIndex < myScanCallbacks->advDevices.size(); bleIndex++)
   {
     DEBUG_PRINT("myScanCallbacks->bleDevices[%d].topic = %s\n", bleIndex, myScanCallbacks->bleDevices[bleIndex].topic.c_str());
     // DEBUG_PRINT("myBleArr[%d].available = %d", bleIndex, myBleArr[bleIndex].available);

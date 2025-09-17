@@ -72,12 +72,10 @@ PubSubClient mqttClient(wifiClient);
 // int timeoutCount = 0;
 VoltMater voltMater;
 
-// std::vector<MyBLE2> *bleDevices;
-
-MyScanCallbacks myScanCallbacks(myBleArr, &myM5);
-MyClientCallbacks myClientCallbacks(myBleArr, &myScanCallbacks);
-MyNotification myNotification(myBleArr, &myScanCallbacks, &myClientCallbacks);
-MyMqtt myMqtt(&mqttClient, myBleArr, &voltMater, &myM5, &myWiFi, &myNotification, &myScanCallbacks);
+MyScanCallbacks myScanCallbacks(&myM5);
+MyClientCallbacks myClientCallbacks(&myScanCallbacks, &myM5);
+MyNotification myNotification(&myScanCallbacks, &myClientCallbacks);
+MyMqtt myMqtt(&mqttClient, &voltMater, &myM5, &myWiFi, &myNotification, &myScanCallbacks);
 
 
 // void loadConfig();
@@ -209,13 +207,13 @@ void loop()
     myScanCallbacks.doConnect = false;
     INFO_PRINT("Found %d of BMSs we want to connect to, do it now.\n", myScanCallbacks.bleDevices.size());
     myMqtt.bmsSetup();
-    myNotification.numberOfBMS = myScanCallbacks.bleDevices.size();
+    //myNotification.numberOfBMS = myScanCallbacks.bleDevices.size();
     if (myNotification.connectToServer())
     {
-      INFO_PRINT("Success! we should now be getting notifications from BMS(%d).\n", myNotification.numberOfConnectedBMS);
+      INFO_PRINT("Success! we should now be getting notifications from BMS(%d).\n", myClientCallbacks.numberOfConnectedBMS);
       // myMqtt.mqttDeviceSetup(myNotification.numberOfConnectedBMS);
       // myMqtt.bmsSetup();
-      myM5.numberOfConnectedBMS = myNotification.numberOfConnectedBMS;
+      //myM5.numberOfConnectedBMS = myClientCallbacks.numberOfConnectedBMS;
       for (int index = 0; index < myScanCallbacks.bleDevices.size(); index++)
       {
         myScanCallbacks.bleDevices[index].lastMeasurment = millis() + PUBLISH_LEAD_TIME_BMS + 4800 * index;
@@ -240,7 +238,7 @@ void loop()
       {
         WARN_PRINT("Exceeded the fail limit (%d) of main. Continue\n", FAIL_LIMIT_MAIN);
         // myMqtt.bmsSetup();
-        myM5.numberOfConnectedBMS = myNotification.numberOfConnectedBMS;
+        //myM5.numberOfConnectedBMS = myClientCallbacks.numberOfConnectedBMS;
         for (int index = 0; index < myScanCallbacks.bleDevices.size(); index++)
         {
           myScanCallbacks.bleDevices[index].lastMeasurment = millis() + PUBLISH_LEAD_TIME_BMS + 4800 * index;
@@ -258,10 +256,10 @@ void loop()
     //myNotification.numberOfThermo = myScanCallbacks.advThermoDevices.size();
     if (myNotification.connectToThermo())
     {
-      INFO_PRINT("Success! we should now be getting notifications from Thermometers(%d).\n", myNotification.numberOfConnectedThermo);
+      INFO_PRINT("Success! we should now be getting notifications from Thermometers(%d).\n", myClientCallbacks.numberOfConnectedThermo);
       // myMqtt.mqttThermoSetup(myNotification.numberOfConnectedThermo);
       // myMqtt.thermoSetup();
-      myM5.numberOfConnectedThermo = myNotification.numberOfConnectedThermo;
+      //myM5.numberOfConnectedThermo = myClientCallbacks.numberOfConnectedThermo;
       // myClientCallbacks.numberOfConnectedThermo = myNotification.numberOfConnectedThermo;
       for (int index = 0; index < myScanCallbacks.advThermoDevices.size(); index++)
       {
@@ -287,7 +285,7 @@ void loop()
       {
         WARN_PRINT("Exceeded the fail limit (%d) of main. Continue\n", FAIL_LIMIT_MAIN);
         // myMqtt.thermoSetup();
-        myM5.numberOfConnectedThermo = myNotification.numberOfConnectedThermo;
+        //myM5.numberOfConnectedThermo = myClientCallbacks.numberOfConnectedThermo;
         for (int index = 0; index < myScanCallbacks.advThermoDevices.size(); index++)
         {
           myScanCallbacks.thermoDevices[index].lastMeasurment = millis() + PUBLISH_LEAD_TIME_THERMO + 6500 * index;

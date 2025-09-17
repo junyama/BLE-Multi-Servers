@@ -1,7 +1,7 @@
 #include "MyNotification.hpp"
 
-MyNotification::MyNotification(MyBLE2 *myBleArr_, MyScanCallbacks *myScanCallbacks_, MyClientCallbacks *myClientCallbacks_)
-    : myBleArr(myBleArr_), myScanCallbacks(myScanCallbacks_), myClientCallbacks(myClientCallbacks_)
+MyNotification::MyNotification(MyScanCallbacks *myScanCallbacks_, MyClientCallbacks *myClientCallbacks_)
+    : myScanCallbacks(myScanCallbacks_), myClientCallbacks(myClientCallbacks_)
 {
 }
 
@@ -98,7 +98,7 @@ bool MyNotification::connectToServer()
   NimBLEClient *pClient = nullptr;
   unsigned long initalMesurementTime = 0;
   bool atLeastOneConnected = false;
-  numberOfConnectedBMS = 0;
+  //numberOfConnectedBMS = 0;
   for (int index = 0; index < myScanCallbacks->advDevices.size(); index++)
   {
     int count = index + 1;
@@ -107,7 +107,7 @@ bool MyNotification::connectToServer()
       std::string deviceName = myScanCallbacks->advDevices.at(index)->getName();
       // INFO_PRINT("Start connecting a BMS[%d] in %d: %s\n", index, myScanCallbacks->advDevices.size(), deviceName.c_str());
       INFO_PRINT("[%d/%d]: Start connecting a BMS[%d]: %s >>>>>>>\n",
-                 count, numberOfBMS, index, deviceName.c_str());
+                 count, myScanCallbacks->advDevices.size(), index, deviceName.c_str());
       // Check if we have a client we should reuse first
       if (NimBLEDevice::getCreatedClientCount())
       {
@@ -261,9 +261,9 @@ bool MyNotification::connectToServer()
         continue;
       }
       // INFO_PRINT("Connected with an advertized BMS[%d] in %d!\n", index, myScanCallbacks->advDevices.size());
-      INFO_PRINT("[%d/%d]: Connected with an myScanCallbacks->bleDevices[%d]: %s <<<<<<<<\n", count, numberOfBMS, index, deviceName.c_str());
+      INFO_PRINT("[%d/%d]: Connected with an myScanCallbacks->bleDevices[%d]: %s <<<<<<<<\n", count, myScanCallbacks->advDevices.size(), index, deviceName.c_str());
       atLeastOneConnected = true;
-      numberOfConnectedBMS++;
+      //numberOfConnectedBMS++;
 
       /*
       new (myTimerArr + index) MyTimer(initalMesurementTime, 5000);
@@ -279,9 +279,9 @@ bool MyNotification::connectToServer()
     }
   }
   INFO_PRINT("Done with all the advertized BMS, connected(%d/%d)!\n",
-             numberOfConnectedBMS, myScanCallbacks->advDevices.size());
+             myClientCallbacks->numberOfConnectedBMS, myScanCallbacks->advDevices.size());
   // return atLeastOneConnected;
-  if (numberOfConnectedBMS > 0)
+  if (myClientCallbacks->numberOfConnectedBMS > 0)
     return true;
   return false;
 }
@@ -291,7 +291,7 @@ bool MyNotification::connectToThermo()
   DEBUG_PRINT("connectToThermo() called\n");
   NimBLEClient *pClient = nullptr;
   bool atLeastOneConnected = false;
-  numberOfConnectedThermo = 0;
+  //numberOfConnectedThermo = 0;
   int exceptionType = 0;
   for (int index = 0; index < myScanCallbacks->advThermoDevices.size(); index++)
   {
@@ -516,15 +516,15 @@ bool MyNotification::connectToThermo()
     }
 
     INFO_PRINT("[%d/%d]: Connected with an myScanCallbacks->thermoDevices[%d]: %s <<<<<<<<\n", count, myScanCallbacks->thermoDevices.size(), index, deviceName.c_str());
-    INFO_PRINT("Now getting notifications from myScanCallbacks->thermoDevices[%d]\n", numberOfConnectedThermo);
+    INFO_PRINT("Now getting notifications from myScanCallbacks->thermoDevices[%d]\n", myClientCallbacks->numberOfConnectedThermo);
     // myThermoArr[index].connected = true;
     //  thermomater[index].available = true;
     atLeastOneConnected = true;
-    numberOfConnectedThermo++;
+    //numberOfConnectedThermo++;
   }
   // INFO_PRINT("Done with all the advertized thermomaters, connected (%d/%d)\n", numberOfConnectedThermo, myScanCallbacks->myScanCallbacks->thermoDevices.size());
   //  return atLeastOneConnected;
-  if (numberOfConnectedThermo > 0)
+  if (myClientCallbacks->numberOfConnectedThermo > 0)
     return true;
   return false;
 }
@@ -536,9 +536,9 @@ void MyNotification::clearResources()
   {
     NimBLEDevice::deleteClient(pClient);
   }
-  numberOfConnectedBMS = 0;
-  numberOfConnectedThermo = 0;
-  for (int i = 0; i < myScanCallbacks->numberOfBMS; i++)
+  //numberOfConnectedBMS = 0;
+  //numberOfConnectedThermo = 0;
+  for (int i = 0; i < myScanCallbacks->advDevices.size(); i++)
   {
     /*
     myBleArr[i].connected = false;
@@ -548,7 +548,7 @@ void MyNotification::clearResources()
     */
   }
   myScanCallbacks->advDevices.clear();
-  myScanCallbacks->numberOfBMS = 0;
+  //myScanCallbacks->numberOfBMS = 0;
   /*
   for (int i = 0; i < myScanCallbacks->numberOfThermo; i++)
   {

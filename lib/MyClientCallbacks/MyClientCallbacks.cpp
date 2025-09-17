@@ -1,7 +1,7 @@
 #include "MyClientCallbacks.hpp"
 
-MyClientCallbacks::MyClientCallbacks(MyBLE2 *myBleArr_, MyScanCallbacks *myScanCallbacks_)
-    : myBleArr(myBleArr_), myScanCallbacks(myScanCallbacks_)
+MyClientCallbacks::MyClientCallbacks(MyScanCallbacks *myScanCallbacks_, MyM5 *myM5_)
+    : myScanCallbacks(myScanCallbacks_), myM5(myM5_)
 {
 }
 
@@ -16,6 +16,7 @@ void MyClientCallbacks::onConnect(NimBLEClient *pClient)
         //DEBUG4_PRINT("myBleArr[%d] Connected\n", index);
 
         myScanCallbacks->bleDevices[index].connected = true;
+        myM5->numberOfConnectedBMS = ++numberOfConnectedBMS;
         DEBUG4_PRINT("myScanCallbacks->bleDevices[%d] Connected\n", index);
     }
     else
@@ -24,6 +25,7 @@ void MyClientCallbacks::onConnect(NimBLEClient *pClient)
         if (index > -1)
         {
             myScanCallbacks->thermoDevices[index].connected = true;
+            myM5->numberOfConnectedThermo = ++numberOfConnectedThermo;
             DEBUG4_PRINT("myScanCallbacks->thermoDevices[%d] Connected\n", index);
         }
         else
@@ -41,6 +43,7 @@ void MyClientCallbacks::onDisconnect(NimBLEClient *pClient, int reason)
     if (index > -1)
     {
         myScanCallbacks->bleDevices[index].connected = false;
+        myM5->numberOfConnectedBMS = --numberOfConnectedBMS;
         WARN_PRINT("Disconnected from %s\n", MyGetIndex::bleInfo(&myScanCallbacks->bleDevices, index).c_str());
 
         //myBleArr[index].connected = false;
@@ -52,6 +55,7 @@ void MyClientCallbacks::onDisconnect(NimBLEClient *pClient, int reason)
         if (index > -1)
         {
             myScanCallbacks->thermoDevices[index].connected = false;
+            myM5->numberOfConnectedThermo = --numberOfConnectedThermo;
             WARN_PRINT("Disconnected from %s\n", MyGetIndex::thermoInfo(&myScanCallbacks->thermoDevices, index).c_str());
         }
         else

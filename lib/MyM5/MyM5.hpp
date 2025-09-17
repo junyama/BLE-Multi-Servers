@@ -51,6 +51,7 @@ public:
 
     int numberOfConnectedBMS;
     int numberOfConnectedThermo;
+    
     int bmsIndexShown = 0;
     BmsInfoStruct bmsInfoArr[3];
 
