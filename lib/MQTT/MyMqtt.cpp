@@ -381,8 +381,9 @@ void MyMqtt::mqttCallback(char *topic_, byte *payload, unsigned int length)
 
   if (String(topic_).equals("cmnd/" + myM5->topic + "reset"))
   {
-    INFO_PRINT("goint to reset\n");
-    myM5->println("goint to reset");
+    WARN_PRINT("going to reset\n");
+    myM5->lcdSwitch(1);
+    myM5->println("going to reset");
     delay(2000);
     myM5->reset();
     return;

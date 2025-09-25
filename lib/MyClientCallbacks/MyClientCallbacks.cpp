@@ -8,15 +8,16 @@ MyClientCallbacks::MyClientCallbacks(MyScanCallbacks *myScanCallbacks_, MyM5 *my
 void MyClientCallbacks::onConnect(NimBLEClient *pClient)
 {
     DEBUG4_PRINT("Connected to %s\n", pClient->getPeerAddress().toString().c_str());
-    //int index = MyGetIndex::myBleArr(myBleArr, pClient);
+    // int index = MyGetIndex::myBleArr(myBleArr, pClient);
     int index = MyGetIndex::bleDevices(&myScanCallbacks->bleDevices, pClient);
     if (index > -1)
     {
-        //myBleArr[index].connected = true;
-        //DEBUG4_PRINT("myBleArr[%d] Connected\n", index);
+        // myBleArr[index].connected = true;
+        // DEBUG4_PRINT("myBleArr[%d] Connected\n", index);
 
         myScanCallbacks->bleDevices[index].connected = true;
         myM5->numberOfConnectedBMS = ++numberOfConnectedBMS;
+        // myM5->createBmsInfoVec(myScanCallbacks->bleDevices[index].deviceName, myScanCallbacks->bleDevices[index].mac);
         DEBUG4_PRINT("myScanCallbacks->bleDevices[%d] Connected\n", index);
     }
     else
@@ -26,6 +27,7 @@ void MyClientCallbacks::onConnect(NimBLEClient *pClient)
         {
             myScanCallbacks->thermoDevices[index].connected = true;
             myM5->numberOfConnectedThermo = ++numberOfConnectedThermo;
+            // myM5->createThermoInfoVec(myScanCallbacks->thermoDevices[index].deviceName, myScanCallbacks->thermoDevices[index].mac);
             DEBUG4_PRINT("myScanCallbacks->thermoDevices[%d] Connected\n", index);
         }
         else
@@ -44,10 +46,13 @@ void MyClientCallbacks::onDisconnect(NimBLEClient *pClient, int reason)
     {
         myScanCallbacks->bleDevices[index].connected = false;
         myM5->numberOfConnectedBMS = --numberOfConnectedBMS;
-        WARN_PRINT("Disconnected from %s\n", MyGetIndex::bleInfo(&myScanCallbacks->bleDevices, index).c_str());
+        WARN_PRINT("Disconnected from %s, reason: %d\n", MyGetIndex::bleInfo(&myScanCallbacks->bleDevices, index).c_str(), reason);
 
-        //myBleArr[index].connected = false;
-        //WARN_PRINT("Disconnected from %s\n", MyGetIndex::bleInfo(myBleArr, index).c_str());
+        // myBleArr[index].connected = false;
+        // WARN_PRINT("Disconnected from %s\n", MyGetIndex::bleInfo(myBleArr, index).c_str());
+
+        clearResources();
+        NimBLEDevice::getScan()->start(myScanCallbacks->scanTimeMs, false, true);
     }
     else
     {
@@ -57,10 +62,13 @@ void MyClientCallbacks::onDisconnect(NimBLEClient *pClient, int reason)
             myScanCallbacks->thermoDevices[index].connected = false;
             myM5->numberOfConnectedThermo = --numberOfConnectedThermo;
             WARN_PRINT("Disconnected from %s\n", MyGetIndex::thermoInfo(&myScanCallbacks->thermoDevices, index).c_str());
+
+            clearResources();
+            NimBLEDevice::getScan()->start(myScanCallbacks->scanTimeMs, false, true);
         }
         else
         {
-            ERROR_PRINT("Disconnected event from unkown Address: %s\n", pClient->getPeerAddress().toString().c_str());
+            WARN_PRINT("Disconnected event from unkown Address: %s\n", pClient->getPeerAddress().toString().c_str());
         }
     }
 }
@@ -93,4 +101,17 @@ void MyClientCallbacks::onAuthenticationComplete(NimBLEConnInfo &connInfo)
         NimBLEDevice::getClientByHandle(connInfo.getConnHandle())->disconnect();
         return;
     }
+}
+
+void MyClientCallbacks::clearResources()
+{
+    auto clientList = NimBLEDevice::getConnectedClients();
+    for (NimBLEClient *pClient : clientList)
+    {
+        NimBLEDevice::deleteClient(pClient);
+    }
+    numberOfConnectedBMS = 0;
+    numberOfConnectedThermo = 0;
+    myScanCallbacks->advDevices.clear();
+    myScanCallbacks->advThermoDevices.clear();
 }

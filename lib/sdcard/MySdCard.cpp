@@ -294,70 +294,96 @@ void MySdCard::updatePOI0(JsonDocument configJson)
     }
 */
 
-void MySdCard::updatePOI(JsonDocument configJson)
+bool MySdCard::updatePOI(String poiURL)
 {
-    JsonDocument poiIndexJson;
+    // JsonDocument poiIndexJson;
     HTTPClient http;
-    const char *poiURL_ = configJson["poiURL"];
-    DEBUG_PRINT("poiURL_: %s\n", poiURL_);
-    String poiURL = poiURL_;
-    http.begin(poiURL + "/gpxIndex");
-    int httpResponseCode = http.GET();
-    DEBUG_PRINT("HTTP Response code: %d\n", httpResponseCode);
-    if (httpResponseCode == 200)
+    //String poiURL = configJson["poiURL"];
+    INFO_PRINT("poiURL: %s\n", poiURL.c_str());
+    try
     {
-        String indexJsonStr = http.getString();
-        DEBUG_PRINT("indexJsonStr: %s\n", indexJsonStr.c_str());
-        DeserializationError error = deserializeJson(poiIndexJson, indexJsonStr);
-        if (error)
+        /*
+        const char *poiURL_ = configJson["poiURL"];
+        DEBUG_PRINT("poiURL_: %s\n", poiURL_);
+        String poiURL = poiURL_;
+        */
+        http.begin(poiURL + "/gpxIndex");
+        int httpResponseCode = http.GET();
+        DEBUG_PRINT("HTTP Response code: %d\n", httpResponseCode);
+        if (httpResponseCode == 200)
         {
-            DEBUG_PRINT("deserializeJson() failed\n");
-            DEBUG_PRINT("error description: %s\n", error.f_str());
-            return;
+            String indexJsonStr = http.getString();
+            DEBUG_PRINT("indexJsonStr: %s\n", indexJsonStr.c_str());
+            JsonDocument poiIndexJson;
+            DeserializationError error = deserializeJson(poiIndexJson, indexJsonStr);
+            if (error)
+            {
+                char buff[256];
+                sprintf(buff, "deserializeJson() failed: %s", error.f_str());
+                throw std::runtime_error(buff);
+            }
+            else
+            {
+                myM5->println("Updating POI...");
+
+                listDir(SD, "/PersonalPOI", 0);
+                removeDirR(SD, "/PersonalPOI");
+                createDir(SD, "/PersonalPOI");
+                writeFile(SD, "/PersonalPOI/index.json", indexJsonStr.c_str());
+                JsonArray poiIndexArray = poiIndexJson.as<JsonArray>();
+                INFO_PRINT("%d of POI files being written\n", poiIndexArray.size());
+                myM5->println(String(poiIndexArray.size()) + " of POI found");
+                myM5->numberOfPoi = poiIndexArray.size();
+                
+                int fileIndex = 1;
+                for (JsonVariant v : poiIndexArray)
+                {
+                    String POIFileName = v.as<String>();
+                    DEBUG_PRINT("(%d) POI file name: %s\n", fileIndex, POIFileName.c_str());
+                    http.begin(poiURL + "/gpx/" + POIFileName);
+                    httpResponseCode = http.GET();
+                    if (httpResponseCode == 200)
+                    {
+                        String gpxStr = http.getString();
+                        // DEBUG_PRINT("gpxStr: %s\n", gpxStr.c_str());
+                        //  writeFile("/poi/" + POIFileName, gpxStr);
+                        String path = "/PersonalPOI/" + POIFileName;
+                        writeFile(SD, path.c_str(), gpxStr.c_str());
+                    }
+                    else
+                    {
+                        char buff[256];
+                        sprintf(buff, "GET %s failed, HTTP Response code: %d\n", POIFileName.c_str(), httpResponseCode);
+                        throw std::runtime_error(buff);
+                    }
+                    fileIndex++;
+                }
+                myM5->println("POI update done");
+                INFO_PRINT("POI update done\n")
+                delay(5000);
+            }
         }
         else
         {
-            myM5->println("Updating POI...");
-
-            listDir(SD, "/PersonalPOI", 0);
-            removeDirR(SD, "/PersonalPOI");
-            createDir(SD, "/PersonalPOI");
-            writeFile(SD, "/PersonalPOI/index.json", indexJsonStr.c_str());
-            JsonArray poiIndexArray = poiIndexJson.as<JsonArray>();
-            DEBUG_PRINT("%d of POI files being written\n", poiIndexArray.size());
-            myM5->println(String(poiIndexArray.size()) + " of POI found");
-
-            int fileIndex = 1;
-            for (JsonVariant v : poiIndexArray)
-            {
-                String POIFileName = v.as<String>();
-                DEBUG_PRINT("(%d) POI file name: %s\n", fileIndex, POIFileName.c_str());
-                http.begin(poiURL + "/gpx/" + POIFileName);
-                httpResponseCode = http.GET();
-                if (httpResponseCode == 200)
-                {
-                    String gpxStr = http.getString();
-                    // DEBUG_PRINT("gpxStr: %s\n", gpxStr.c_str());
-                    //  writeFile("/poi/" + POIFileName, gpxStr);
-                    String path = "/PersonalPOI/" + POIFileName;
-                    writeFile(SD, path.c_str(), gpxStr.c_str());
-                }
-                else
-                {
-                    DEBUG_PRINT("GET %s failed, HTTP Response code: %d\n", POIFileName.c_str(), httpResponseCode);
-                }
-                fileIndex++;
-            }
-            myM5->println("POI update done!");
-            delay(5000);
+            char buff[256];
+            sprintf(buff, "GET index.json failed, HTTP Response code: %d\n" + httpResponseCode);
+            throw std::runtime_error(buff);
         }
+        // Free resources
+        http.end();
+        // SD.end();
+        return true;
     }
-    else
+    catch (const std::exception &e)
     {
-        DEBUG_PRINT("GET index.json failed, HTTP Response code: %d\n" + httpResponseCode);
+        ERROR_PRINT("exception happened: %s\n", e.what());
+        http.end();
+        return false;
     }
-    // Free resources
-    http.end();
-    // SD.end();
-    return;
+    catch (...)
+    {
+        ERROR_PRINT("other error happened\n");
+        http.end();
+        return false;
+    }
 }

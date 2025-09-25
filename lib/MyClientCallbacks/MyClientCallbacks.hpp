@@ -36,6 +36,8 @@ public:
 
     /** Pairing process complete, we can check the results in connInfo */
     void onAuthenticationComplete(NimBLEConnInfo &connInfo) override;
+
+    void clearResources();
 };
 
 #endif /* MY_CLIENT_HPP_ */

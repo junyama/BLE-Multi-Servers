@@ -1,7 +1,7 @@
 #include "MyNotification.hpp"
 
-MyNotification::MyNotification(MyScanCallbacks *myScanCallbacks_, MyClientCallbacks *myClientCallbacks_)
-    : myScanCallbacks(myScanCallbacks_), myClientCallbacks(myClientCallbacks_)
+MyNotification::MyNotification(MyScanCallbacks *myScanCallbacks_, MyClientCallbacks *myClientCallbacks_, MyM5 *myM5_)
+    : myScanCallbacks(myScanCallbacks_), myClientCallbacks(myClientCallbacks_), myM5(myM5_)
 {
 }
 
@@ -33,13 +33,13 @@ void MyNotification::notifyCB(NimBLERemoteCharacteristic *pRemoteCharacteristic,
       if (bleIndex > -1)
       {
         DEBUG3_PRINT("Notification from %s\n", MyGetIndex::bleInfo(&myScanCallbacks->bleDevices, bleIndex).c_str());
-        //myBleArr[bleIndex].bleCollectPacket((char *)pData, length);
+        // myBleArr[bleIndex].bleCollectPacket((char *)pData, length);
         myScanCallbacks->bleDevices[bleIndex].bleCollectPacket((char *)pData, length);
         return;
       }
       else
       {
-        throw std::runtime_error("Notification from a BMS with a wrong mac\n");
+        throw std::runtime_error("Notification from a BMS with a wrong mac");
       }
       return;
     }
@@ -61,7 +61,7 @@ void MyNotification::notifyCB(NimBLERemoteCharacteristic *pRemoteCharacteristic,
           DEBUG3_PRINT("Notification from %s, tempatarure: %.1fC\n",
                        MyGetIndex::thermoInfo(&myScanCallbacks->thermoDevices, thermoIndex).c_str(),
                        myScanCallbacks->thermoDevices[thermoIndex].processTempPacket((char *)pData, length));
-          //myThermoArr[thermoIndex].processTempPacket((char *)pData, length);
+          // myThermoArr[thermoIndex].processTempPacket((char *)pData, length);
 
           // DEBUG3_PRINT("Notification from myThermoArr[%d], topic: %s, tempatarure: 0x%x\n",thermoIndex, myThermoArr[thermoIndex].topic.c_str(), (int)pData);
           return;
@@ -80,11 +80,11 @@ void MyNotification::notifyCB(NimBLERemoteCharacteristic *pRemoteCharacteristic,
       }
       else
       {
-        throw std::runtime_error("Notification from a Thermomater with a wrong mac\n");
+        throw std::runtime_error("Notification from a Thermomater with a wrong mac");
       }
       return;
     }
-    throw std::runtime_error("Notification from a device other than BMS or Thermomater\n");
+    throw std::runtime_error("Notification from a device other than BMS or Thermomater");
   }
   catch (const std::runtime_error &e)
   {
@@ -98,7 +98,7 @@ bool MyNotification::connectToServer()
   NimBLEClient *pClient = nullptr;
   unsigned long initalMesurementTime = 0;
   bool atLeastOneConnected = false;
-  //numberOfConnectedBMS = 0;
+  // numberOfConnectedBMS = 0;
   for (int index = 0; index < myScanCallbacks->advDevices.size(); index++)
   {
     int count = index + 1;
@@ -198,9 +198,9 @@ bool MyNotification::connectToServer()
       if (pSvc)
       {
         DEBUG2_PRINT("serviceDataUUID of BMS found: %s\n", pSvc->toString().c_str());
-        //myBleArr[index].pChr_rx = pSvc->getCharacteristic(myScanCallbacks->charUUID_rx);
+        // myBleArr[index].pChr_rx = pSvc->getCharacteristic(myScanCallbacks->charUUID_rx);
         myScanCallbacks->bleDevices[index].pChr_rx = pSvc->getCharacteristic(myScanCallbacks->charUUID_rx);
-        if (/*!myBleArr[index].pChr_rx || */!myScanCallbacks->bleDevices[index].pChr_rx)
+        if (/*!myBleArr[index].pChr_rx || */ !myScanCallbacks->bleDevices[index].pChr_rx)
         {
           WARN_PRINT("[%d/%d] charUUID_rx not found %s\n", ++failCount, FAIL_LIMIT, MyGetIndex::bleInfo(&myScanCallbacks->bleDevices, index).c_str());
           if (failCount <= FAIL_LIMIT)
@@ -213,12 +213,12 @@ bool MyNotification::connectToServer()
           NimBLEDevice::deleteClient(pClient);
           continue;
         }
-        if (/*myBleArr[index].pChr_rx->canNotify() || */myScanCallbacks->bleDevices[index].pChr_rx->canNotify())
+        if (/*myBleArr[index].pChr_rx->canNotify() || */ myScanCallbacks->bleDevices[index].pChr_rx->canNotify())
         {
           if (/*!myBleArr[index].pChr_rx->subscribe(true, [this](NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify)
                                                   { notifyCB(pRemoteCharacteristic, pData, length, isNotify); }) || */
-                                                   !myScanCallbacks->bleDevices[index].pChr_rx->subscribe(true, [this](NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify)
-                                                  { notifyCB(pRemoteCharacteristic, pData, length, isNotify); }))
+              !myScanCallbacks->bleDevices[index].pChr_rx->subscribe(true, [this](NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify)
+                                                                     { notifyCB(pRemoteCharacteristic, pData, length, isNotify); }))
           {
             WARN_PRINT("[%d/%d] subscription failed %s\n", ++failCount, FAIL_LIMIT, MyGetIndex::bleInfo(&myScanCallbacks->bleDevices, index).c_str());
             if (failCount <= FAIL_LIMIT)
@@ -231,7 +231,7 @@ bool MyNotification::connectToServer()
             continue;
           }
         }
-        //myBleArr[index].pChr_tx = pSvc->getCharacteristic(myScanCallbacks->charUUID_tx);
+        // myBleArr[index].pChr_tx = pSvc->getCharacteristic(myScanCallbacks->charUUID_tx);
         myScanCallbacks->bleDevices[index].pChr_tx = pSvc->getCharacteristic(myScanCallbacks->charUUID_tx);
         if (/*!myBleArr[index].pChr_tx ||*/ !myScanCallbacks->bleDevices[index].pChr_tx)
         {
@@ -261,9 +261,9 @@ bool MyNotification::connectToServer()
         continue;
       }
       // INFO_PRINT("Connected with an advertized BMS[%d] in %d!\n", index, myScanCallbacks->advDevices.size());
-      INFO_PRINT("[%d/%d]: Connected with an myScanCallbacks->bleDevices[%d]: %s <<<<<<<<\n", count, myScanCallbacks->advDevices.size(), index, deviceName.c_str());
+      INFO_PRINT("[%d/%d]: Connected with a bleDevices[%d]: %s <<<<<<<<\n", count, myScanCallbacks->advDevices.size(), index, deviceName.c_str());
       atLeastOneConnected = true;
-      //numberOfConnectedBMS++;
+      // numberOfConnectedBMS++;
 
       /*
       new (myTimerArr + index) MyTimer(initalMesurementTime, 5000);
@@ -280,6 +280,7 @@ bool MyNotification::connectToServer()
   }
   INFO_PRINT("Done with all the advertized BMS, connected(%d/%d)!\n",
              myClientCallbacks->numberOfConnectedBMS, myScanCallbacks->advDevices.size());
+  myM5->println("BMS connections done");
   // return atLeastOneConnected;
   if (myClientCallbacks->numberOfConnectedBMS > 0)
     return true;
@@ -291,7 +292,7 @@ bool MyNotification::connectToThermo()
   DEBUG_PRINT("connectToThermo() called\n");
   NimBLEClient *pClient = nullptr;
   bool atLeastOneConnected = false;
-  //numberOfConnectedThermo = 0;
+  // numberOfConnectedThermo = 0;
   int exceptionType = 0;
   for (int index = 0; index < myScanCallbacks->advThermoDevices.size(); index++)
   {
@@ -451,7 +452,7 @@ bool MyNotification::connectToThermo()
         if (myScanCallbacks->thermoDevices[index].pChr_rx_temp->canNotify())
         {
           if (!myScanCallbacks->thermoDevices[index].pChr_rx_temp->subscribe(true, [this](NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify)
-                                                          { notifyCB(pRemoteCharacteristic, pData, length, isNotify); }))
+                                                                             { notifyCB(pRemoteCharacteristic, pData, length, isNotify); }))
           {
             WARN_PRINT("[%d/%d] Failed subscribeing charUUID_thermo_temp.\n", ++failCount, FAIL_LIMIT);
             if (failCount <= FAIL_LIMIT)
@@ -485,7 +486,7 @@ bool MyNotification::connectToThermo()
         if (myScanCallbacks->thermoDevices[index].pChr_rx_humid->canNotify())
         {
           if (!myScanCallbacks->thermoDevices[index].pChr_rx_humid->subscribe(true, [this](NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify)
-                                                           { notifyCB(pRemoteCharacteristic, pData, length, isNotify); }))
+                                                                              { notifyCB(pRemoteCharacteristic, pData, length, isNotify); }))
           {
             WARN_PRINT("[%d/%d] Failed subscribeing charUUID_thermo_humid.\n", ++failCount, FAIL_LIMIT);
             if (failCount <= FAIL_LIMIT)
@@ -515,13 +516,14 @@ bool MyNotification::connectToThermo()
       }
     }
 
-    INFO_PRINT("[%d/%d]: Connected with an myScanCallbacks->thermoDevices[%d]: %s <<<<<<<<\n", count, myScanCallbacks->thermoDevices.size(), index, deviceName.c_str());
+    INFO_PRINT("[%d/%d]: Connected with a thermoDevices[%d]: %s <<<<<<<<\n", count, myScanCallbacks->thermoDevices.size(), index, deviceName.c_str());
     INFO_PRINT("Now getting notifications from myScanCallbacks->thermoDevices[%d]\n", myClientCallbacks->numberOfConnectedThermo);
     // myThermoArr[index].connected = true;
     //  thermomater[index].available = true;
     atLeastOneConnected = true;
-    //numberOfConnectedThermo++;
+    // numberOfConnectedThermo++;
   }
+  myM5->println("Thermos connections done");
   // INFO_PRINT("Done with all the advertized thermomaters, connected (%d/%d)\n", numberOfConnectedThermo, myScanCallbacks->myScanCallbacks->thermoDevices.size());
   //  return atLeastOneConnected;
   if (myClientCallbacks->numberOfConnectedThermo > 0)
@@ -536,19 +538,19 @@ void MyNotification::clearResources()
   {
     NimBLEDevice::deleteClient(pClient);
   }
-  //numberOfConnectedBMS = 0;
-  //numberOfConnectedThermo = 0;
+  myClientCallbacks->numberOfConnectedBMS = 0;
+  myClientCallbacks->numberOfConnectedThermo = 0;
+  /*
   for (int i = 0; i < myScanCallbacks->advDevices.size(); i++)
   {
-    /*
     myBleArr[i].connected = false;
     myBleArr[i].mac = "00:00:00:00:00:00";
     myBleArr[i].deviceName = "UNKNOWN";
     myBleArr[i].topic = "NOT_DEFINED/";
-    */
   }
+  */
   myScanCallbacks->advDevices.clear();
-  //myScanCallbacks->numberOfBMS = 0;
+  // myScanCallbacks->numberOfBMS = 0;
   /*
   for (int i = 0; i < myScanCallbacks->numberOfThermo; i++)
   {
@@ -559,5 +561,5 @@ void MyNotification::clearResources()
   }
   */
   myScanCallbacks->advThermoDevices.clear();
-  //myScanCallbacks->numberOfThermo = 0;
+  // myScanCallbacks->numberOfThermo = 0;
 }

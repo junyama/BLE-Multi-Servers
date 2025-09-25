@@ -83,7 +83,8 @@ void MyScanCallbacks::onResult(const NimBLEAdvertisedDevice *advertisedDevice)
 /** Callback to process the results of the completed scan or restart it */
 void MyScanCallbacks::onScanEnd(const NimBLEScanResults &results, int reason)
 {
-  //numberOfBMS = advDevices.size();
+  INFO_PRINT("increament scan count: %d\n", ++myM5->numberOfScan);
+  // numberOfBMS = advDevices.size();
   INFO_PRINT("BMS scan done, reason: %d, device count: %d, advDevices.size(): %d\n",
              reason, results.getCount(), advDevices.size());
   // numberOfAdvDevices = advDevices.size();
@@ -104,23 +105,20 @@ void MyScanCallbacks::onScanEnd(const NimBLEScanResults &results, int reason)
     //  myM5->reset();
   }
 
+  bleDevices.clear();
+  myM5->bmsInfoVec.clear();
   for (int bleIndex = 0; bleIndex < advDevices.size(); bleIndex++)
   {
-    /*
-    std::string address = advDevices[bleIndex]->getAddress().toString();
-    myBleArr[bleIndex].mac = String(address.c_str());
-    myM5->bmsInfoArr[bleIndex].mac = myBleArr[bleIndex].mac;
-    DEBUG_PRINT("myBleArr[%d].mac set by %s\n", bleIndex, address.c_str());
-    std::string deviceName = advDevices[bleIndex]->getName();
-    myBleArr[bleIndex].deviceName = String(deviceName.c_str());
-    myM5->bmsInfoArr[bleIndex].deviceName = myBleArr[bleIndex].deviceName;
-    DEBUG_PRINT("myBleArr[%d].deviceName set by %s\n", bleIndex, myBleArr[bleIndex].deviceName.c_str());
-    // bleDevices->push_back(MyBLE(advDevices[bleIndex]->getAddress())); //crash
-    */
-
     bleDevices.emplace_back(advDevices[bleIndex]->getAddress(), String(advDevices[bleIndex]->getName().c_str()));
     DEBUG4_PRINT("bleDevices[%d] created with Name: %s, Address: %s\n",
                  index, bleDevices[bleIndex].deviceName.c_str(), bleDevices[bleIndex].mac.c_str());
+
+    /*
+    myM5->bmsInfoArr[bleIndex].mac = bleDevices[bleIndex].mac;
+    myM5->bmsInfoArr[bleIndex].deviceName = bleDevices[bleIndex].deviceName;
+    */
+
+    myM5->createBmsInfoVec(bleDevices[bleIndex].deviceName, bleDevices[bleIndex].mac);
   }
   // NimBLEDevice::getScan()->start(scanTimeMs, false, true);
   if (advDevices.size() != 0 && !doConnect)
@@ -148,24 +146,13 @@ void MyScanCallbacks::onScanEnd(const NimBLEScanResults &results, int reason)
     // doRescan = true;
   }
 
+  thermoDevices.clear();
   for (int index = 0; index < advThermoDevices.size(); index++)
   {
-    /*
-    std::string address = advThermoDevices[index]->getAddress().toString();
-    myThermoArr[index].mac = String(address.c_str());
-    // myM5->bmsInfoArr[bleIndex].mac = myBleArr[index].mac;
-    DEBUG2_PRINT("myThermoArr[%d].mac set by %s\n", index, address.c_str());
-    std::string deviceName = advThermoDevices[index]->getName();
-    myThermoArr[index].deviceName = String(deviceName.c_str());
-    // myM5->bmsInfoArr[index].deviceName = myBleArr[index].deviceName;
-    DEBUG2_PRINT("myThermoArr[%d].deviceName set by %s\n", index, myThermoArr[index].deviceName.c_str());
-
-    //MyThermo myThermo(advThermoDevices[index]->getAddress(), String(advThermoDevices[index]->getName().c_str()));
-    //thermoDevices.push_back(myThermo);
-    */
     thermoDevices.emplace_back(advThermoDevices[index]->getAddress(), String(advThermoDevices[index]->getName().c_str()));
     DEBUG4_PRINT("thermoDevices[%d] created with Name: %s, Address: %s\n",
                  index, thermoDevices[index].deviceName.c_str(), thermoDevices[index].mac.c_str());
+    myM5->createThermoInfoVec(thermoDevices[index].deviceName, thermoDevices[index].mac);
   }
   if (advThermoDevices.size() != 0 && !doConnectThermo)
   {

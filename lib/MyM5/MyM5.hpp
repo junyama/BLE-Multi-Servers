@@ -6,7 +6,7 @@
 #include <ArduinoJson.h>
 
 #include "MyLog.hpp"
-//#include "MyLcd2.hpp"
+// #include "MyLcd2.hpp"
 
 #define MSG_BUFFER_SIZE (50)
 
@@ -14,7 +14,7 @@ class MyM5
 {
 private:
     const String TAG = "PowerSaving";
-    //MyLcd2 *myLcd;
+    // MyLcd2 *myLcd;
     int height;
     int width;
     bool isBatteryInfoShown = false;
@@ -30,6 +30,14 @@ private:
         float temparature1 = 0.0; // unit 0.1C
         float temparature2 = 0.0;
     } BmsInfoStruct;
+
+    struct ThermoInfo
+    {
+        String deviceName = "== UNKOWN ==";
+        String mac = "== UNKNOWN ==";
+        float temparature = 0.0;
+        float humidity = 0.0;
+    };
 
     typedef struct
     {
@@ -49,11 +57,16 @@ public:
     int resetIntervalSec = 3600;
     unsigned long lastReset;
 
-    int numberOfConnectedBMS;
-    int numberOfConnectedThermo;
-    
+    int numberOfConnectedBMS = 0;
+    int numberOfConnectedThermo = 0;
+
+    int numberOfPoi = 0;
+    int numberOfScan = 0;
+
     int bmsIndexShown = 0;
-    BmsInfoStruct bmsInfoArr[3];
+    //BmsInfoStruct bmsInfoArr[3];
+    std::vector<BmsInfoStruct> bmsInfoVec;
+    std::vector<ThermoInfo> thermoInfoVec;
 
     String topic;
 
@@ -71,7 +84,11 @@ public:
     void reset();
 
     void println(String text);
+
+    void createBmsInfoVec(String deviceName, String mac);
+    void createThermoInfoVec(String deviceName, String mac);
     void updateBmsInfo(int bmsIndex, float packVoltage, float current, float cellDiff, float temparature, float mainVolt, int capacityRemain);
+    void updateThermoInfo(int index, float temparature, float humidity);
     void updateVoltMaterInfo(float volt);
     void updateLipoInfo();
     void showBatteryInfo();

@@ -19,6 +19,7 @@
     }
   ],
   "poiURL": "http://192.168.0.21:8000",
+  "poiURL2": "http://junichi.ddns.net:8000",
   "ambient": {
     "channelId": 50366,
     "writeKey": "ccb476294fe16acd",
@@ -701,6 +702,22 @@
               "unit_of_measurement": "A",
               "value_template": "{{ value_json.numberOfThermoDevices}}",
               "unique_id": "7a916f30-0bcf-4d03-bfa0-f9f508a5abbe"
+            },
+            "number_of_POI": {
+              "platform": "sensor",
+              "name": "Number of POIs",
+              "device_class": "current",
+              "unit_of_measurement": "A",
+              "value_template": "{{ value_json.numberOfPoi}}",
+              "unique_id": "8cbe62c9-643c-46f9-9df7-fd5f6e4174ff"
+            },
+            "number_of_scan": {
+              "platform": "sensor",
+              "name": "Number of scan",
+              "device_class": "current",
+              "unit_of_measurement": "A",
+              "value_template": "{{ value_json.numberOfScan}}",
+              "unique_id": "f2209aa6-178e-4f81-9812-1b55899e8184"
             }
           },
           "state_topic": "stat/M5Core2_0/STATE",
@@ -714,11 +731,11 @@
       "measurmentIntervalMs": 60000,
       "resetIntervalSec": 86400,
       "mqtt": {
-        "topic": "M5Core2_1/",
+        "topic": "M5Core2_2/",
         "discoveryPayload": {
           "device": {
-            "identifiers": "M5Core2_1",
-            "name": "M5Core2_1",
+            "identifiers": "M5Core2_2",
+            "name": "M5Core2_2",
             "manufacturer": "M5Stack",
             "hw_version": "1.0rev2"
           },
@@ -734,7 +751,7 @@
               "device_class": "voltage",
               "unit_of_measurement": "V",
               "value_template": "{{ value_json.voltage}}",
-              "unique_id": "56054740-47df-44ae-9bb9-985ecf7fd273"
+              "unique_id": "042f81a2-dbd3-42a9-a408-0eac6f19cdce"
             },
             "lipo_current": {
               "platform": "sensor",
@@ -742,54 +759,70 @@
               "device_class": "current",
               "unit_of_measurement": "A",
               "value_template": "{{ value_json.current}}",
-              "unique_id": "7f148628-91fe-44fc-9c52-8e65dc71c4c4"
+              "unique_id": "bac48c31-bdad-4c93-9c5f-f983c884a36a"
             },
             "lcd_switch": {
               "platform": "switch",
               "name": "LCD Switch",
-              "command_topic": "cmnd/M5Core2_1/lcd",
+              "command_topic": "cmnd/M5Core2_2/lcd",
               "payload_on": "1",
               "payload_off": "0",
               "state_on": 1,
               "state_off": 0,
               "value_template": "{{ value_json.lcdStatus }}",
-              "unique_id": "ce0690c1-502d-4714-b2ee-7aee67d3d15e"
+              "unique_id": "f42c4e91-cfe2-469b-a90c-6a5a4253b05d"
             },
             "led_switch": {
               "platform": "switch",
               "name": "LED Switch",
-              "command_topic": "cmnd/M5Core2_1/led",
+              "command_topic": "cmnd/M5Core2_2/led",
               "payload_on": "1",
               "payload_off": "0",
               "state_on": 1,
               "state_off": 0,
               "value_template": "{{ value_json.ledStatus }}",
-              "unique_id": "bd833f01-771b-429d-bfc6-b240ff5ee6a9"
+              "unique_id": "6b4e1521-5c5a-41b6-ab4f-a9afddb8a5c2"
             },
             "reset_button": {
               "platform": "button",
               "name": "Reset Button",
-              "command_topic": "cmnd/M5Core2_1/reset",
-              "unique_id": "176fbff6-6229-46e1-92d0-56ca80126bc4"
+              "command_topic": "cmnd/M5Core2_2/reset",
+              "unique_id": "c93b6222-0734-4f96-a942-0abbec3cae33"
             },
             "number_of_bms": {
               "platform": "sensor",
               "name": "Number of BMS",
               "device_class": "current",
-              "unit_of_measurement": "Unit",
+              "unit_of_measurement": "A",
               "value_template": "{{ value_json.numberOfBleDevices}}",
-              "unique_id": "2703d77b-bcec-4639-8088-7f72bce2d2c5"
+              "unique_id": "92606ead-c9cf-4b39-ba4f-49bf1935d4de"
             },
             "number_of_thermo": {
               "platform": "sensor",
               "name": "Number of Thermometers",
               "device_class": "current",
-              "unit_of_measurement": "Unit",
+              "unit_of_measurement": "A",
               "value_template": "{{ value_json.numberOfThermoDevices}}",
-              "unique_id": "fa386ebb-487f-47d8-87c9-7ec767074ab1"
+              "unique_id": "178365c4-17ca-4119-8cdd-12c17eca35b4"
+            },
+            "number_of_POI": {
+              "platform": "sensor",
+              "name": "Number of POIs",
+              "device_class": "current",
+              "unit_of_measurement": "A",
+              "value_template": "{{ value_json.numberOfPoi}}",
+              "unique_id": "159e5a68-c311-4da2-a7a7-c58582e19f35"
+            },
+            "number_of_scan": {
+              "platform": "sensor",
+              "name": "Number of scan",
+              "device_class": "current",
+              "unit_of_measurement": "A",
+              "value_template": "{{ value_json.numberOfScan}}",
+              "unique_id": "0c5f6fec-7382-417a-8334-52f163b33afe"
             }
           },
-          "state_topic": "stat/M5Core2_1/STATE",
+          "state_topic": "stat/M5Core2_2/STATE",
           "qos": 2
         }
       }

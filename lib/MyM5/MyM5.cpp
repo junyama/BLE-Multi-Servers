@@ -1,6 +1,6 @@
 #include "MyM5.hpp"
 
-MyM5::MyM5() 
+MyM5::MyM5()
 {
     M5.Lcd.setTextFont(1);
     M5.Lcd.setTextSize(2);
@@ -111,6 +111,8 @@ void MyM5::reset()
 JsonDocument MyM5::getState()
 {
     JsonDocument doc;
+    doc["numberOfScan"] = numberOfScan;
+    doc["numberOfPoi"] = numberOfPoi;
     doc["numberOfBleDevices"] = numberOfConnectedBMS;
     doc["numberOfThermoDevices"] = numberOfConnectedThermo;
     doc["lcdStatus"] = lcdState;
@@ -161,37 +163,65 @@ void MyM5::println(String text)
         M5.Lcd.clear();
         M5.Lcd.setTextFont(1);
         M5.Lcd.setTextSize(2);
-        M5.Lcd.setCursor(1,1);
+        M5.Lcd.setCursor(1, 1);
         M5.Lcd.setTextColor(WHITE, BLACK);
         isBatteryInfoShown = false;
     }
     M5.Lcd.println(text);
 }
 
+void MyM5::createBmsInfoVec(String deviceName, String mac)
+{
+    BmsInfoStruct bmsInfo;
+    bmsInfo.deviceName = deviceName;
+    bmsInfo.mac = mac;
+    bmsInfoVec.push_back(bmsInfo);
+}
+
+void MyM5::createThermoInfoVec(String deviceName, String mac)
+{
+    ThermoInfo thermoInfo;
+    thermoInfo.deviceName = deviceName;
+    thermoInfo.mac = mac;
+    thermoInfoVec.push_back(thermoInfo);
+}
+
 void MyM5::updateBmsInfo(int bmsIndex, float volt, float current, float cellDiff, float temparature1, float temparature2, int capacityRemain)
 {
-    // LOGD(TAG, "showBatteryInfo called with bmsIndex: " + String(bmsIndex));
-    // LOGD(TAG, "show volt: " + String(volt));
-    // LOGD(TAG, "show current: " + String(current));
-
+    /*
     bmsInfoArr[bmsIndex].volt = volt;
     bmsInfoArr[bmsIndex].current = current;
     bmsInfoArr[bmsIndex].cellDiff = cellDiff;
     bmsInfoArr[bmsIndex].temparature1 = temparature1;
     bmsInfoArr[bmsIndex].temparature2 = temparature2;
     bmsInfoArr[bmsIndex].capacityRemain = capacityRemain;
+    */
+
+    bmsInfoVec[bmsIndex].volt = volt;
+    bmsInfoVec[bmsIndex].current = current;
+    bmsInfoVec[bmsIndex].cellDiff = cellDiff;
+    bmsInfoVec[bmsIndex].temparature1 = temparature1;
+    bmsInfoVec[bmsIndex].temparature2 = temparature2;
+    bmsInfoVec[bmsIndex].capacityRemain = capacityRemain;
 
     showBatteryInfo();
 }
 
+void MyM5::updateThermoInfo(int index, float temparature, float humidity)
+{
+    thermoInfoVec[index].temparature = temparature;
+    thermoInfoVec[index].humidity = humidity;
+}
+
 void MyM5::showBatteryInfo()
 {
-    // LOGD(TAG, "showBatteryInfo() called with bmsIndex: " + String(bmsIndexShown));
     char str[16];
     M5.Lcd.clear();
     M5.Lcd.setTextSize(1);
     M5.Lcd.setCursor(10, 1, 2);
     M5.Lcd.setTextColor(WHITE, BLACK);
+
+    /*
     M5.Lcd.print(bmsInfoArr[bmsIndexShown].deviceName);
     M5.Lcd.print("(" + bmsInfoArr[bmsIndexShown].mac + ")");
     M5.Lcd.setCursor(1, 17, 7);
@@ -217,6 +247,34 @@ void MyM5::showBatteryInfo()
     M5.Lcd.print("%");
     M5.Lcd.setCursor(1, 131, 7);
     sprintf(str, "%05.2f", bmsInfoArr[bmsIndexShown].temparature1 / 10);
+    */
+
+    M5.Lcd.print(bmsInfoVec[bmsIndexShown].deviceName);
+    M5.Lcd.print("(" + bmsInfoVec[bmsIndexShown].mac + ")");
+    M5.Lcd.setCursor(1, 17, 7);
+    M5.Lcd.setTextColor(GREEN, BLACK);
+    sprintf(str, "%05.2f", bmsInfoVec[bmsIndexShown].volt / 1000);
+    M5.Lcd.print(str);
+    M5.Lcd.setTextFont(4);
+    M5.Lcd.print("V");
+    sprintf(str, "%05.2f", bmsInfoVec[bmsIndexShown].current / 1000);
+    M5.Lcd.setCursor(158, 17, 7);
+    M5.Lcd.print(str);
+    M5.Lcd.setTextFont(4);
+    M5.Lcd.print("A");
+    M5.Lcd.setCursor(46, 73, 7);
+    sprintf(str, "%03.0f", bmsInfoVec[bmsIndexShown].cellDiff);
+    M5.Lcd.print(str);
+    M5.Lcd.setTextFont(4);
+    M5.Lcd.print("mV");
+    M5.Lcd.setCursor(202, 73, 7);
+    sprintf(str, "%03d", bmsInfoVec[bmsIndexShown].capacityRemain);
+    M5.Lcd.print(str);
+    M5.Lcd.setTextFont(4);
+    M5.Lcd.print("%");
+    M5.Lcd.setCursor(1, 131, 7);
+    sprintf(str, "%05.2f", bmsInfoVec[bmsIndexShown].temparature1 / 10);
+
     M5.Lcd.print(str);
     M5.Lcd.setTextFont(4);
     M5.Lcd.print("C");

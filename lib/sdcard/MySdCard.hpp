@@ -32,7 +32,7 @@ public:
 	void testFileIO(fs::FS &fs, const char *path);
 	JsonDocument loadConfig(String fileName);
 	void saveConfig(JsonDocument configJson, String fileName);
-	void updatePOI(JsonDocument configJson);
+	bool updatePOI(String poiURL);
 };
 
 #endif /* MY_SDCARD_HPP */
