@@ -360,7 +360,7 @@ bool MyNotification::connectToThermo()
         if (failCount <= FAIL_LIMIT)
         {
           WARN_PRINT("return with false\n");
-          clearResources();
+          //clearResources();
           /*
           auto clientList = NimBLEDevice::getConnectedClients();
           for (NimBLEClient *pClient : clientList)
@@ -531,6 +531,7 @@ bool MyNotification::connectToThermo()
   return false;
 }
 
+/*
 void MyNotification::clearResources()
 {
   auto clientList = NimBLEDevice::getConnectedClients();
@@ -549,7 +550,7 @@ void MyNotification::clearResources()
     myBleArr[i].topic = "NOT_DEFINED/";
   }
   */
-  myScanCallbacks->advDevices.clear();
+  //myScanCallbacks->advDevices.clear();
   // myScanCallbacks->numberOfBMS = 0;
   /*
   for (int i = 0; i < myScanCallbacks->numberOfThermo; i++)
@@ -560,6 +561,8 @@ void MyNotification::clearResources()
     myThermoArr[i].topic = "NOT_DEFINED/";
   }
   */
+  /*
   myScanCallbacks->advThermoDevices.clear();
   // myScanCallbacks->numberOfThermo = 0;
 }
+*/

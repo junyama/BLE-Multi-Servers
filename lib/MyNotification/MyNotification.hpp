@@ -44,7 +44,7 @@ public:
     bool connectToServer();
     bool connectToThermo();
     // void printBatteryInfo(int bleIndex, int numberOfAdvDevices, MyBLE2 myBle);
-    void clearResources();
+    //void clearResources();
 };
 
 #endif /* MY_NOTIFICATION_HPP */

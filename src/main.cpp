@@ -232,7 +232,7 @@ void loop()
       {
         WARN_PRINT("rescan\n");
         myM5.println("Failed to connect BMS rescan");
-        myNotification.clearResources();
+        myClientCallbacks.clearResources();
 
         //myScanCallbacks.bleDevices.clear();
         //myScanCallbacks.thermoDevices.clear();
@@ -281,7 +281,7 @@ void loop()
       {
         WARN_PRINT("rescan\n");
         myM5.println("Failed to connect thermo rescan");
-        myNotification.clearResources();
+        myClientCallbacks.clearResources();
 
         //myScanCallbacks.bleDevices.clear();
         //myScanCallbacks.thermoDevices.clear();
