@@ -43,6 +43,7 @@ public:
     /** Handles the provisioning of clients and connects / interfaces with the server */
     bool connectToServer();
     bool connectToThermo();
+    bool connectToBm6();
     // void printBatteryInfo(int bleIndex, int numberOfAdvDevices, MyBLE2 myBle);
     //void clearResources();
 };

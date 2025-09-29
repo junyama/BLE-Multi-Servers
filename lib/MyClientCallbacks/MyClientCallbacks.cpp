@@ -32,7 +32,17 @@ void MyClientCallbacks::onConnect(NimBLEClient *pClient)
         }
         else
         {
-            ERROR_PRINT("Connected event from unkown Address: %s\n", pClient->getPeerAddress().toString().c_str());
+            index = MyGetIndex::bm6Devices(&myScanCallbacks->bm6Devices, pClient);
+            if (index > -1)
+            {
+                myScanCallbacks->bm6Devices[index].connected = true;
+                myM5->numberOfConnectedBm6 = ++numberOfConnectedBm6;
+                DEBUG4_PRINT("myScanCallbacks->bm6Devices[%d] Connected\n", index);
+            }
+            else
+            {
+                ERROR_PRINT("Connected event from unkown Address: %s\n", pClient->getPeerAddress().toString().c_str());
+            }
         }
     }
 }
@@ -68,7 +78,20 @@ void MyClientCallbacks::onDisconnect(NimBLEClient *pClient, int reason)
         }
         else
         {
-            WARN_PRINT("Disconnected event from unkown Address: %s\n", pClient->getPeerAddress().toString().c_str());
+            index = MyGetIndex::bm6Devices(&myScanCallbacks->bm6Devices, pClient);
+            if (index > -1)
+            {
+                myScanCallbacks->bm6Devices[index].connected = false;
+                myM5->numberOfConnectedThermo = --numberOfConnectedThermo;
+                WARN_PRINT("Disconnected from %s\n", MyGetIndex::bm6Info(&myScanCallbacks->bm6Devices, index).c_str());
+
+                clearResources();
+                NimBLEDevice::getScan()->start(myScanCallbacks->scanTimeMs, false, true);
+            }
+            else
+            {
+                WARN_PRINT("Disconnected event from unkown Address: %s\n", pClient->getPeerAddress().toString().c_str());
+            }
         }
     }
 }

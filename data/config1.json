@@ -581,6 +581,65 @@
       }
     },
     {
+      "type": "BM6",
+      "mac": "3c:ab:72:7f:f1:91",
+      "mqtt": {
+        "topic": "junichiBm6_0/",
+        "discoveryPayload": {
+          "device": {
+            "identifiers": "junichiBm6_0",
+            "name": "BM6_7FF191",
+            "manufacturer": "Xiaomi",
+            "hw_version": "1.0rev2"
+          },
+          "origin": {
+            "name": "bla2mqtt",
+            "sw_version": "2.1",
+            "support_url": "https://bla2mqtt.example.com/support"
+          },
+          "components": {
+            "voltage": {
+              "platform": "sensor",
+              "name": "Voltage",
+              "device_class": "voltage",
+              "unit_of_measurement": "V",
+              "value_template": "{{ value_json.voltage }}",
+              "unique_id": "48c6c585-5bff-4692-8d6d-55a27196e76a"
+            },
+             "temparature": {
+              "platform": "sensor",
+              "name": "Temperature",
+              "device_class": "temperature",
+              "unit_of_measurement": "°C",
+              "value_template": "{{ value_json.temperature}}",
+              "unique_id": "f6f56235-3252-4e2f-80dc-0d6459bec18c"
+            },
+            "soc": {
+              "platform": "sensor",
+              "device_class": "battery",
+              "name": "State of Capacity",
+              "unit_of_measurement": "%",
+              "value_template": "{{ value_json.soc}}",
+              "unique_id": "d7edaf80-eb8e-443f-a7ba-0d1b982f0ad0"
+            },
+            "connected_state": {
+              "platform": "switch",
+              "name": "Connected State",
+              "command_topic": "cmnd/junichiBm6_0/connected",
+              "payload_on": "1",
+              "payload_off": "0",
+              "state_on": 1,
+              "state_off": 0,
+              "value_template": "{{ value_json.connected }}",
+              "unique_id": "11766c6c-b7c8-43df-a238-5555e5759fdd"
+            }
+          },
+          "state_topic": "stat/junichiBm6_0/STATE",
+          "qos": 2
+        }
+      }
+    },
+    {
       "type": "VAMater",
       "measurmentIntervalMs": 60000,
       "mqtt": {
@@ -703,6 +762,14 @@
               "value_template": "{{ value_json.numberOfThermoDevices}}",
               "unique_id": "7a916f30-0bcf-4d03-bfa0-f9f508a5abbe"
             },
+            "number_of_BM6": {
+              "platform": "sensor",
+              "name": "Number of BM6",
+              "device_class": "current",
+              "unit_of_measurement": "A",
+              "value_template": "{{ value_json.numberOfBm6Devices}}",
+              "unique_id": "07c7bebd-cb7e-4cc8-afe4-5f2e09bc4689"
+            },
             "number_of_POI": {
               "platform": "sensor",
               "name": "Number of POIs",
@@ -804,6 +871,14 @@
               "unit_of_measurement": "A",
               "value_template": "{{ value_json.numberOfThermoDevices}}",
               "unique_id": "178365c4-17ca-4119-8cdd-12c17eca35b4"
+            },
+            "number_of_BM6": {
+              "platform": "sensor",
+              "name": "Number of BM6",
+              "device_class": "current",
+              "unit_of_measurement": "A",
+              "value_template": "{{ value_json.numberOfBm6Devices}}",
+              "unique_id": "222b08d2-1e43-49ee-8698-040f03a11860"
             },
             "number_of_POI": {
               "platform": "sensor",

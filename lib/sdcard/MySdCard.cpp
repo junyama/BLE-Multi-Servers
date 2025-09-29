@@ -376,13 +376,13 @@ bool MySdCard::updatePOI(String poiURL)
     }
     catch (const std::exception &e)
     {
-        ERROR_PRINT("exception happened: %s\n", e.what());
+        WARN_PRINT("exception happened: %s\n", e.what());
         http.end();
         return false;
     }
     catch (...)
     {
-        ERROR_PRINT("other error happened\n");
+        WARN_PRINT("other error happened\n");
         http.end();
         return false;
     }

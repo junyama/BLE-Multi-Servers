@@ -4,6 +4,7 @@
 #include <NimBLEDevice.h>
 #include "MyBLE2.hpp"
 #include "MyThermo.hpp"
+#include "MyBm6.hpp"
 
 // #include "MyScanCallbacks.hpp"
 // #include "MyClientCallbacks.hpp"
@@ -11,7 +12,7 @@
 // #include "MyTimer.hpp"
 
 #define BLE_ARR_SIZE 3
-//#define THERMO_ARR_SIZE 5
+// #define THERMO_ARR_SIZE 5
 
 class MyGetIndex
 {
@@ -30,17 +31,19 @@ public:
     // int numberOfConnectedThermo = 0;
 
     // MyGetIndex(MyBLE2 *myBleArr_, MyThermo *myThermoArr_, MyScanCallbacks *myScanCallbacks_);
-    //static int myBleArr(MyBLE2 *myBleArr, NimBLEClient *client);
-    //static int myThermoArr(MyThermo *myThermoArr, NimBLEClient *client);
+    // static int myBleArr(MyBLE2 *myBleArr, NimBLEClient *client);
+    // static int myThermoArr(MyThermo *myThermoArr, NimBLEClient *client);
 
-    //static String bleInfo(MyBLE2 *myBleArr, int index);
-    //static String thermoInfo(MyThermo *myThermoArr, int index);
+    // static String bleInfo(MyBLE2 *myBleArr, int index);
+    // static String thermoInfo(MyThermo *myThermoArr, int index);
 
     static int bleDevices(std::vector<MyBLE2> *bleDevices, NimBLEClient *client);
     static int thermoDevices(std::vector<MyThermo> *thermoDevices, NimBLEClient *client);
+    static int bm6Devices(std::vector<MyBm6> *bm6Devices, NimBLEClient *client);
 
     static String bleInfo(std::vector<MyBLE2> *bleDevices, int index);
     static String thermoInfo(std::vector<MyThermo> *thermoDevices, int index);
+    static String bm6Info(std::vector<MyBm6> *bm6Devices, int index);
 };
 
 #endif /* MY_GET_INDEX_HPP */

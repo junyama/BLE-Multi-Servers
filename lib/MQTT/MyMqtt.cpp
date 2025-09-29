@@ -1,6 +1,6 @@
 #include "MyMqtt.hpp"
 
-MyMqtt::MyMqtt(PubSubClient *mqttClient_,  VoltMater *voltMater_,
+MyMqtt::MyMqtt(PubSubClient *mqttClient_, VoltMater *voltMater_,
                MyM5 *myM5_, MyWiFi *myWiFi_, MyNotification *myNotification_, MyScanCallbacks *myScanCallbacks_)
     : mqttClient(mqttClient_), voltMater(voltMater_),
       myM5(myM5_), myWiFi(myWiFi_), myNotification(myNotification_), myScanCallbacks(myScanCallbacks_)
@@ -73,12 +73,12 @@ void MyMqtt::bmsSetup()
           String mac = deviceObj["mac"];
           // DEBUG_PRINT("thermoSetup: myBleArr[%d].mac: %s, deviceList[%d][\"mac\"]: %s\n",
           // bmsIndex, myBleArr[bmsIndex].mac.c_str(), deviceIndex, mac.c_str());
-          //if (NimBLEAddress(myBleArr[bmsIndex].mac.c_str(), 0).equals(NimBLEAddress(mac.c_str(), 0)))
+          // if (NimBLEAddress(myBleArr[bmsIndex].mac.c_str(), 0).equals(NimBLEAddress(mac.c_str(), 0)))
           if (myScanCallbacks->bleDevices[bmsIndex].peerAddress == NimBLEAddress(mac.c_str(), 0))
           {
             String topic = deviceObj["mqtt"]["topic"];
-            //myBleArr[bmsIndex].topic = topic;
-            
+            // myBleArr[bmsIndex].topic = topic;
+
             myScanCallbacks->bleDevices[bmsIndex].topic = topic;
 
             DEBUG2_PRINT("bmsSetup: myScanCallbacks->bleDevices[%d].mac found at config and set topic: %s\n", bmsIndex,
@@ -126,10 +126,10 @@ void MyMqtt::thermoSetup()
           if (myScanCallbacks->thermoDevices.at(thermoIndex).peerAddress == NimBLEAddress(mac.c_str(), 0))
           {
             String topic = deviceObj["mqtt"]["topic"];
-            //myThermoArr[thermoIndex].topic = topic;
+            // myThermoArr[thermoIndex].topic = topic;
             myScanCallbacks->thermoDevices.at(thermoIndex).topic = topic;
             DEBUG2_PRINT("thermoSetup: thermoDevices[%d].mac found at config and set topic: %s\n", thermoIndex,
-                         //myThermoArr[thermoIndex].topic.c_str());
+                         // myThermoArr[thermoIndex].topic.c_str());
                          myScanCallbacks->thermoDevices.at(thermoIndex).topic.c_str());
             // myThermoArr[thermoIndex].available = true;
             // DEBUG_PRINT("mqttDeviceSetup: myThermoArr[%d].available = true\n", thermoIndex);
@@ -143,6 +143,47 @@ void MyMqtt::thermoSetup()
         char buff[256];
         sprintf(buff, "thermoDevices[%d].mac: %s not found at config",
                 myScanCallbacks->thermoDevices[thermoIndex].mac.c_str(), thermoIndex);
+        throw std::runtime_error(buff);
+      }
+    }
+    catch (const std::runtime_error &e)
+    {
+      ERROR_PRINT("%s\n", e.what());
+      continue;
+    }
+  }
+}
+
+void MyMqtt::bm6Setup()
+{
+  for (int index = 0; index < myScanCallbacks->bm6Devices.size(); index++)
+  {
+    try
+    {
+      bool deviceFound = false;
+      for (int deviceIndex = 0; deviceIndex < deviceList.size(); deviceIndex++)
+      {
+        JsonDocument deviceObj = deviceList[deviceIndex];
+        String type = deviceObj["type"];
+        if (type.equals("BM6"))
+        {
+          String mac = deviceObj["mac"];
+          if (myScanCallbacks->bm6Devices.at(index).peerAddress == NimBLEAddress(mac.c_str(), 0))
+          {
+            String topic = deviceObj["mqtt"]["topic"];
+            myScanCallbacks->bm6Devices.at(index).topic = topic;
+            DEBUG2_PRINT("thermoSetup: bm6Devices[%d].mac found at config and set topic: %s\n", index,
+                         myScanCallbacks->bm6Devices.at(index).topic.c_str());
+            deviceFound = true;
+            break;
+          }
+        }
+      }
+      if (!deviceFound)
+      {
+        char buff[256];
+        sprintf(buff, "bm6Devices[%d].mac: %s not found at config",
+                myScanCallbacks->bm6Devices[index].mac.c_str(), index);
         throw std::runtime_error(buff);
       }
     }

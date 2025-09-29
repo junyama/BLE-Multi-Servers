@@ -115,6 +115,7 @@ JsonDocument MyM5::getState()
     doc["numberOfPoi"] = numberOfPoi;
     doc["numberOfBleDevices"] = numberOfConnectedBMS;
     doc["numberOfThermoDevices"] = numberOfConnectedThermo;
+    doc["numberOfBm6Devices"] = numberOfConnectedBm6;
     doc["lcdStatus"] = lcdState;
     doc["ledStatus"] = ledState;
     doc["voltage"] = vMaterLipoInfo.lipoVolt;

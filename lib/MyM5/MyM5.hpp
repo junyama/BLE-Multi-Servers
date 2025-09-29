@@ -59,6 +59,7 @@ public:
 
     int numberOfConnectedBMS = 0;
     int numberOfConnectedThermo = 0;
+    int numberOfConnectedBm6 = 0;
 
     int numberOfPoi = 0;
     int numberOfScan = 0;

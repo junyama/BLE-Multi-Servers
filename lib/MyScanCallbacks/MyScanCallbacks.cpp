@@ -77,7 +77,34 @@ void MyScanCallbacks::onResult(const NimBLEAdvertisedDevice *advertisedDevice)
     }
     return;
   }
-  DEBUG_PRINT("Advertized device is not BSM or Thermomater: %s\n", advertisedDevice->toString().c_str());
+
+  if (advertisedDevice->getName() == deviceName_bm6)
+  {
+    DEBUG4_PRINT("Found BM6 device, Name: %s, Address: %s\n",
+                 advertisedDevice->getName().c_str(),
+                 advertisedDevice->getAddress().toString().c_str());
+    if (advBm6Devices.size() == 0)
+    {
+      advBm6Devices.push_back(advertisedDevice);
+      DEBUG_PRINT("onResult> first push_back> advBm6Devices.size(): %d\n", advBm6Devices.size());
+    }
+    else
+    {
+      for (int index = 0; index < advBm6Devices.size(); index++)
+      {
+        if (advBm6Devices.at(index)->getAddress().equals(advertisedDevice->getAddress()))
+        {
+          DEBUG_PRINT("onResult>BM6 device already added\n");
+          return;
+        }
+      }
+      advBm6Devices.push_back(advertisedDevice);
+      DEBUG_PRINT("onResult> push_back add> advBm6Devices.size(): %d\n", advBm6Devices.size());
+    }
+    return;
+  }
+
+  DEBUG_PRINT("Advertized device is not BSM or Thermomater or BM6: %s\n", advertisedDevice->toString().c_str());
 }
 
 /** Callback to process the results of the completed scan or restart it */
@@ -157,5 +184,29 @@ void MyScanCallbacks::onScanEnd(const NimBLEScanResults &results, int reason)
   if (advThermoDevices.size() != 0 && !doConnectThermo)
   {
     doConnectThermo = true;
+  }
+
+  INFO_PRINT("BM6 scan done, reason: %d, device count: %d, advBm6Devices.size(): %d\n",
+             reason, results.getCount(), advBm6Devices.size());
+  sprintf(buff, "BM6 scan done, found %d", advBm6Devices.size());
+  myM5->println(String(buff));
+
+  if (advBm6Devices.size() == 0)
+  {
+    WARN_PRINT("no BM6 found\n");
+    return;
+  }
+
+  bm6Devices.clear();
+  for (int index = 0; index < advBm6Devices.size(); index++)
+  {
+    bm6Devices.emplace_back(advBm6Devices[index]->getAddress(), String(advBm6Devices[index]->getName().c_str()));
+    DEBUG4_PRINT("bm6Devices[%d] created with Name: %s, Address: %s\n",
+                 index, bm6Devices[index].deviceName.c_str(), bm6Devices[index].mac.c_str());
+    //myM5->createBm6InfoVec(bm6Devices[index].deviceName, bm6Devices[index].mac);
+  }
+  if (advBm6Devices.size() != 0 && !doConnectBm6)
+  {
+    doConnectBm6 = true;
   }
 }

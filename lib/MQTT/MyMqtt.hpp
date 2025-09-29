@@ -56,6 +56,7 @@ public:
     void deviceSetup();
     void bmsSetup();
     void thermoSetup();
+    void bm6Setup();
     void reConnectMqttServer();
     void publish(String topic, String message);
     void publishJson(String topic, JsonDocument doc, bool retained);

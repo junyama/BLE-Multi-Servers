@@ -22,6 +22,7 @@ private:
 public:
     int numberOfConnectedBMS = 0;
     int numberOfConnectedThermo = 0;
+    int numberOfConnectedBm6 = 0;
 
     MyClientCallbacks(MyScanCallbacks *myScanCallbacks_, MyM5 *myM5_);
 
