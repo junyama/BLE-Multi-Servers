@@ -38,7 +38,7 @@ JsonDocument MyBm6::getState()
     return doc;
 }
 
-bool MyBm6::bleCollectPacket(char *data, uint32_t dataSize)
+String MyBm6::bleCollectPacket(char *data, uint32_t dataSize)
 {
     newPacketReceived = true;
     if (MyLog::DEBUG)
@@ -68,19 +68,20 @@ bool MyBm6::bleCollectPacket(char *data, uint32_t dataSize)
     int volt_i = (int)bytes[0] * 256 + (int)bytes[1];
     DEBUG_PRINT("volt_i: %d\n", volt_i);
     voltage = volt_i / 100.0;
-    DEBUG4_PRINT("voltage: %5.2f volt\n", voltage);
 
     bytes[0] = myAes.decryptedText[4];
     DEBUG_PRINT("bytes[0]: %02X\n", bytes[0]);
-    bytes[1] = myAes.decryptedText[5];
-    DEBUG_PRINT("bytes[1]: %02X\n", bytes[1]);
+    //bytes[1] = myAes.decryptedText[5];
+    //DEBUG_PRINT("bytes[1]: %02X\n", bytes[1]);
     temperature = (int)bytes[0];
-    DEBUG4_PRINT("temprature: %d C\n", temperature);
 
     soc = (int)myAes.decryptedText[6];
-    DEBUG4_PRINT("soc: %d %%\n", soc);
 
-    return true;
+    char buff[128];
+    sprintf(buff, "voltage: %5.2fV, temprature: %dC, soc: %d%%", voltage, temperature, soc);
+    //DEBUG4_PRINT("%s\n", buff);
+
+    return String(buff);
 }
 
 /*

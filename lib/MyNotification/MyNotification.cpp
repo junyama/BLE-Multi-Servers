@@ -88,8 +88,8 @@ void MyNotification::notifyCB(NimBLERemoteCharacteristic *pRemoteCharacteristic,
       int index = MyGetIndex::bm6Devices(&myScanCallbacks->bm6Devices, pRemoteCharacteristic->getClient());
       if (index > -1)
       {
-        DEBUG3_PRINT("Notification from %s\n", MyGetIndex::bm6Info(&myScanCallbacks->bm6Devices, index).c_str());
-        myScanCallbacks->bm6Devices[index].bleCollectPacket((char *)pData, length);
+        DEBUG3_PRINT("Notification from %s, %s\n", MyGetIndex::bm6Info(&myScanCallbacks->bm6Devices, index).c_str(),
+                     myScanCallbacks->bm6Devices[index].bleCollectPacket((char *)pData, length).c_str());
         return;
       }
       else

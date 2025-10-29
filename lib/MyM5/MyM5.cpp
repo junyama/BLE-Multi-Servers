@@ -20,18 +20,6 @@ void MyM5::setup(JsonDocument deviceObj)
         topic = topic_;
 }
 
-bool MyM5::timeout(int currentTime)
-{
-    if ((currentTime - lastMeasurment) >= measurmentIntervalMs)
-    {
-        DEBUG_PRINT("millis() - lastMeasument: %ld - %ld >= measurmentIntervalMs: %d\n", currentTime, lastMeasurment, measurmentIntervalMs);
-        lastMeasurment = currentTime;
-        return true;
-    }
-    else
-        return false;
-}
-
 bool MyM5::resetTimeout(int currentTime)
 {
     if ((currentTime - lastReset) >= resetIntervalSec)
@@ -44,12 +32,39 @@ bool MyM5::resetTimeout(int currentTime)
         return false;
 }
 
+bool MyM5::timeout(unsigned long currentTime)
+{
+    if (currentTime > measurmentIntervalMs + lastMeasurment)
+    {
+        DEBUG4_PRINT("timeout: currentTime(%ld) > measurmentIntervalMs + lastMeasurment(%lu)\n",
+             currentTime, measurmentIntervalMs + lastMeasurment);
+        lastMeasurment = currentTime;
+        return true;
+    }
+    else
+        return false;
+}
+
+bool MyM5::resetTimeout2(unsigned long currentTime)
+{
+    if (currentTime >= resetIntervalMs + lastReset)
+    {
+        DEBUG_PRINT("currentTime(%lu) >= resetIntervalMs + lastReset(%lu)\n",
+             currentTime, resetIntervalMs + lastReset);
+        lastReset = currentTime;
+        return true;
+    }
+    else
+        return false;
+}
+
 void MyM5::powerSave(int status)
 {
     if (status)
     {
-        println("sleeping in 3 sec");
-        delay(3000);
+        DEBUG4_PRINT("sleeping in 5 sec\n");
+        println("sleeping in 5 sec");
+        delay(5000);
         M5.Lcd.sleep();
         M5.Axp.SetLcdVoltage(0);
         lcdState = 0;

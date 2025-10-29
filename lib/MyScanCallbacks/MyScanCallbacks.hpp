@@ -38,7 +38,7 @@ public:
   const NimBLEUUID charUUID_bm6_tx = BLEUUID("FFF3");
   const NimBLEUUID charUUID_bm6_rx = BLEUUID("FFF4");
 
-  uint32_t scanTimeMs = 10000; /** scan time in milliseconds, 0 = scan forever */
+  uint32_t scanTimeMs = 15000; /** scan time in milliseconds, 0 = scan forever */
   std::vector<const NimBLEAdvertisedDevice *> advDevices;
   std::vector<const NimBLEAdvertisedDevice *> advThermoDevices;
   std::vector<const NimBLEAdvertisedDevice *> advBm6Devices;

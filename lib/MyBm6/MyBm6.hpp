@@ -35,7 +35,7 @@ public:
     MyBm6(NimBLEAddress peerAddress_, String deviceName_);
     void sendInfoCommand();
     void sendCommand(NimBLERemoteCharacteristic *pChr, uint8_t *data, uint32_t dataLen);
-    bool bleCollectPacket(char *data, uint32_t dataSize);
+    String bleCollectPacket(char *data, uint32_t dataSize);
     //bool processInfo(byte *data, unsigned int dataLen);
     JsonDocument getState();
 

@@ -15,8 +15,8 @@ void VoltMater::setup(JsonDocument deviceObj)
         // M5.Lcd.println("Unit vmeter Init Fail");
         if (i > 2)
         {
-            WARN_PRINT("No response from a volt mater\n");
-            M5.Lcd.println("gave up using volt mater");
+            WARN_PRINT("No response from an I2C volt mater\n");
+            M5.Lcd.println("I2C volt mater unavailable");
             connected = false;
             return;
         }

@@ -52,9 +52,12 @@ public:
     int ledState = 0;
     float lipoVoltage;
     float lipoCurrent;
+
     int measurmentIntervalMs = 60000;
     unsigned long lastMeasurment = 0;
-    int resetIntervalSec = 3600;
+
+    int resetIntervalSec = 86400;
+    int resetIntervalMs = 86400000;
     unsigned long lastReset;
 
     int numberOfConnectedBMS = 0;
@@ -65,7 +68,7 @@ public:
     int numberOfScan = 0;
 
     int bmsIndexShown = 0;
-    //BmsInfoStruct bmsInfoArr[3];
+    // BmsInfoStruct bmsInfoArr[3];
     std::vector<BmsInfoStruct> bmsInfoVec;
     std::vector<ThermoInfo> thermoInfoVec;
 
@@ -78,8 +81,10 @@ public:
     void ledSwitch(int state);
     JsonDocument getState();
 
-    bool timeout(int currentTime);
+    bool timeout(unsigned long currentTime);
     bool resetTimeout(int currentTime);
+    bool resetTimeout2(unsigned long currentTime);
+
     void detectButton();
     void shutdown(int sec);
     void reset();

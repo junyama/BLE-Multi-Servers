@@ -640,6 +640,65 @@
       }
     },
     {
+      "type": "BM6",
+      "mac": "50:54:7b:85:2c:07",
+      "mqtt": {
+        "topic": "junichiBm6_1/",
+        "discoveryPayload": {
+          "device": {
+            "identifiers": "junichiBm6_1",
+            "name": "BM6_852C07",
+            "manufacturer": "Xiaomi",
+            "hw_version": "1.0rev2"
+          },
+          "origin": {
+            "name": "bla2mqtt",
+            "sw_version": "2.1",
+            "support_url": "https://bla2mqtt.example.com/support"
+          },
+          "components": {
+            "voltage": {
+              "platform": "sensor",
+              "name": "Voltage",
+              "device_class": "voltage",
+              "unit_of_measurement": "V",
+              "value_template": "{{ value_json.voltage }}",
+              "unique_id": "4d9afc9e-0fe3-4608-b1bd-c1c8e84c8087"
+            },
+             "temparature": {
+              "platform": "sensor",
+              "name": "Temperature",
+              "device_class": "temperature",
+              "unit_of_measurement": "°C",
+              "value_template": "{{ value_json.temperature}}",
+              "unique_id": "7be855b7-c334-4511-a722-ea77db121a57"
+            },
+            "soc": {
+              "platform": "sensor",
+              "device_class": "battery",
+              "name": "State of Capacity",
+              "unit_of_measurement": "%",
+              "value_template": "{{ value_json.soc}}",
+              "unique_id": "8e84b7c9-80b0-4064-9127-1ee09fb36692"
+            },
+            "connected_state": {
+              "platform": "switch",
+              "name": "Connected State",
+              "command_topic": "cmnd/junichiBm6_1/connected",
+              "payload_on": "1",
+              "payload_off": "0",
+              "state_on": 1,
+              "state_off": 0,
+              "value_template": "{{ value_json.connected }}",
+              "unique_id": "1dde88a7-f4d6-4051-b1d1-f84786e8910e"
+            }
+          },
+          "state_topic": "stat/junichiBm6_1/STATE",
+          "qos": 2
+        }
+      }
+    },
+    {
       "type": "VAMater",
       "measurmentIntervalMs": 60000,
       "mqtt": {

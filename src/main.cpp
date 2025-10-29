@@ -15,6 +15,7 @@
 #include <StreamUtils.h>
 #include <NimBLEDevice.h>
 #include <M5Core2.h>
+#include <ESPDateTime.h>
 
 // #include "MyBLE2.hpp"
 // #include "MyThermo.hpp"
@@ -28,6 +29,7 @@
 #include "MyMqtt.hpp"
 #include "VoltMater.hpp"
 #include "MyM5.hpp"
+#include "MyImu.hpp"
 #include "MyGetIndex.hpp"
 
 #define CONFIG_FILE "/config.json"
@@ -35,6 +37,7 @@
 #define PUBLISH_LEAD_TIME_BMS 30000
 #define PUBLISH_LEAD_TIME_THERMO 11000
 #define PUBLISH_LEAD_TIME_BM6 8100
+#define PUBLISH_LEAD_TIME_M5 85000
 
 const char *TAG = "main";
 const char *MyGetIndex::TAG = "MyGetIndex";
@@ -56,6 +59,7 @@ int failCount = 0;
 //  int numberOfConnectedThermo = 0;
 
 MyM5 myM5;
+//MyImu myImu;
 MySdCard mySdCard(&myM5);
 JsonDocument configJson;
 // JsonArray deviceList;
@@ -191,12 +195,16 @@ void setup()
   }
 
   // setup BLE and start scanning
-  INFO_PRINT("Disconnecting WiFi\n");
+  INFO_PRINT("Disconnecting WiFi for BLE scan\n");
+  myM5.println("Disconnect WiFi for scan");
   myWiFi.disconnect();
   INFO_PRINT("Starting NimBLE Client\n");
-  myM5.println("Setting up BLE");
+  myM5.println("Scanning BLE devices");
   INFO_PRINT("Scanning for BLE devices\n");
   scanBle();
+
+  myM5.lastMeasurment = millis() + PUBLISH_LEAD_TIME_M5;
+  INFO_PRINT("myM5.lastMeasurment: %ld\n", myM5.lastMeasurment);
 }
 
 // int failCount = 0;
@@ -320,6 +328,28 @@ void loop()
         INFO_PRINT("[%lu] myScanCallbacks.bm6Devices[%d].sendInfoCommand()\n", millis(), index);
       }
     }
+    else
+    {
+      WARN_PRINT("[%d/%d] Failed to connect BM6 found[%d] %s\n",
+                 ++failCount, FAIL_LIMIT_MAIN, myScanCallbacks.advBm6Devices.size());
+      if (failCount <= FAIL_LIMIT_MAIN)
+      {
+        WARN_PRINT("rescan\n");
+        myM5.println("Failed to connect thermo rescan");
+        myClientCallbacks.clearResources();
+        myM5.numberOfScan++;
+        NimBLEDevice::getScan()->start(myScanCallbacks.scanTimeMs, false, true);
+      }
+      else
+      {
+        WARN_PRINT("Exceeded the fail limit (%d) of main. Continue\n", FAIL_LIMIT_MAIN);
+        for (int index = 0; index < myScanCallbacks.advBm6Devices.size(); index++)
+        {
+          myScanCallbacks.bm6Devices[index].lastMeasurment = millis() + PUBLISH_LEAD_TIME_BM6 + 6500 * index;
+          INFO_PRINT("myScanCallbacks.bm6Devices[%d].lastMeasurment: %lu\n", index, myScanCallbacks.bm6Devices[index].lastMeasurment);
+        }
+      }
+    }
   }
 
   currentTime = millis();
@@ -433,7 +463,15 @@ void loop()
     }
   }
 
-  if (myM5.resetTimeout(DateTime.getTime()))
+  /*
+  if(myImu.timeout(millis()))
+  {
+    myMqtt.publishJson("stat/" + myM5.topic + "STATE", myImu.getState(), true);
+  }
+  */
+
+  //if (myM5.resetTimeout(DateTime.getTime()))
+  if (myM5.resetTimeout2(millis()))
   {
     DEBUG_PRINT("reset once everyday\n");
     myM5.println("reset once everyday");

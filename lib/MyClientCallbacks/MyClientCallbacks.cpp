@@ -82,7 +82,7 @@ void MyClientCallbacks::onDisconnect(NimBLEClient *pClient, int reason)
             if (index > -1)
             {
                 myScanCallbacks->bm6Devices[index].connected = false;
-                myM5->numberOfConnectedThermo = --numberOfConnectedThermo;
+                myM5->numberOfConnectedBm6 = --numberOfConnectedBm6;
                 WARN_PRINT("Disconnected from %s\n", MyGetIndex::bm6Info(&myScanCallbacks->bm6Devices, index).c_str());
 
                 clearResources();
@@ -135,6 +135,12 @@ void MyClientCallbacks::clearResources()
     }
     numberOfConnectedBMS = 0;
     numberOfConnectedThermo = 0;
+    numberOfConnectedBm6 = 0;
     myScanCallbacks->advDevices.clear();
     myScanCallbacks->advThermoDevices.clear();
+    myScanCallbacks->advBm6Devices.clear();
+
+    myScanCallbacks->bleDevices.clear();
+    myScanCallbacks->thermoDevices.clear();
+    myScanCallbacks->bm6Devices.clear();
 }
